@@ -1,0 +1,48 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{36527058-A909-4263-AE44-BCF13A9446B7}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="CoinTrader\CoinTrader.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="CoinDataSvc\CoinDataSvc.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="CoinTrader">
+        <MSBuild Projects="CoinTrader\CoinTrader.dproj"/>
+    </Target>
+    <Target Name="CoinTrader:Clean">
+        <MSBuild Projects="CoinTrader\CoinTrader.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="CoinTrader:Make">
+        <MSBuild Projects="CoinTrader\CoinTrader.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="CoinDataSvc">
+        <MSBuild Projects="CoinDataSvc\CoinDataSvc.dproj"/>
+    </Target>
+    <Target Name="CoinDataSvc:Clean">
+        <MSBuild Projects="CoinDataSvc\CoinDataSvc.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="CoinDataSvc:Make">
+        <MSBuild Projects="CoinDataSvc\CoinDataSvc.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="CoinTrader;CoinDataSvc"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="CoinTrader:Clean;CoinDataSvc:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="CoinTrader:Make;CoinDataSvc:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>
