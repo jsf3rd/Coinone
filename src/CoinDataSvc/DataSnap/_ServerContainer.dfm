@@ -43,4 +43,8 @@ object ServerContainer: TServerContainer
     Left = 208
     Top = 75
   end
+  object FDPhysPgDriverLink: TFDPhysPgDriverLink
+    Left = 208
+    Top = 136
+  end
 end

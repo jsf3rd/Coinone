@@ -7,7 +7,9 @@ uses
   ctGlobal in 'Global\ctGlobal.pas',
   ctOption in 'Global\ctOption.pas',
   Coinone in '..\common\Coinone.pas',
-  Common in '..\common\Common.pas';
+  Common in '..\common\Common.pas',
+  _dmDataProvider in 'Core\_dmDataProvider.pas' {dmDataProvider: TDataModule},
+  ClientClassesUnit in 'Global\ClientClassesUnit.pas';
 
 {$R *.res}
 
@@ -26,6 +28,7 @@ begin
   Application.Title := APPLICATION_TITLE;
   Application.MainFormOnTaskbar := True;
   Application.CreateForm(TfmMain, fmMain);
+  Application.CreateForm(TdmDataProvider, dmDataProvider);
   Application.Run;
 
 end.

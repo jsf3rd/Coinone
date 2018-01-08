@@ -68,8 +68,8 @@ const
   URL_RECENT_COMPLETE_ORDERS = 'https://api.coinone.co.kr/trades/';
   URL_TICKER = 'https://api.coinone.co.kr/ticker/';
 
-  Coins: array [0 .. 8] of string = ('btc', 'bch', 'eth', 'etc', 'xrp', 'qtum', 'iota',
-    'ltc', 'btg');
+  Coins: array [0 .. 9] of string = ('btc', 'bch', 'eth', 'etc', 'xrp', 'qtum', 'iota', 'ltc',
+    'btg', 'krw');
 
 implementation
 

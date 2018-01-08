@@ -71,10 +71,18 @@ begin
     begin
       while not TThread.CurrentThread.CheckTerminated do
       begin
-        Sleep(10);
+        Sleep(100);
 
-        if SecondOf(now) = 0 then
-          dmDataLoader.Tick;
+        if Secondof(Now) = 0 then
+        begin
+          try
+            dmDataLoader.Tick;
+          except
+            on E: Exception do
+              TGlobal.Obj.ApplicationMessage(msError, 'Tick', E.Message);
+          end;
+          Sleep(1000);
+        end;
       end;
     end);
   FTickerTask.FreeOnTerminate := false;

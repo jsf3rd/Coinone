@@ -11,7 +11,8 @@ uses System.SysUtils, System.Classes,
   JdcConnectionPool, FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Error,
   FireDAC.UI.Intf, FireDAC.Phys.Intf, FireDAC.Stan.Def, FireDAC.Stan.Pool,
   FireDAC.Stan.Async, FireDAC.Phys, FireDAC.VCLUI.Wait, Data.DB,
-  FireDAC.Comp.Client, System.JSON, FireDAC.Stan.Param, System.StrUtils, _smDataLoader;
+  FireDAC.Comp.Client, System.JSON, FireDAC.Stan.Param, System.StrUtils, _smDataLoader,
+  FireDAC.Phys.PGDef, FireDAC.Phys.PG;
 
 type
   TServerContainer = class(TService)
@@ -20,6 +21,7 @@ type
     DSHTTPService: TDSHTTPService;
     dscDataProvider: TDSServerClass;
     dsDataLoader: TDSServerClass;
+    FDPhysPgDriverLink: TFDPhysPgDriverLink;
     procedure dscDataProviderGetClass(DSServerClass: TDSServerClass;
       var PersistentClass: TPersistentClass);
     procedure ServiceStart(Sender: TService; var Started: Boolean);

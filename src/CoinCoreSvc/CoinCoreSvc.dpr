@@ -2,14 +2,14 @@ program CoinCoreSvc;
 
 uses
   Vcl.SvcMgr,
-  _ServiceMain in '_ServiceMain.pas' {ServiceMain: TService} ,
+  _ServiceMain in '_ServiceMain.pas' {ServiceMain: TService},
   cbGlobal in 'Global\cbGlobal.pas',
   cbOption in 'Global\cbOption.pas',
   Core in 'Core\Core.pas',
   Coinone in '..\common\Coinone.pas',
   Common in '..\common\Common.pas',
-  _dmDataLoader in 'Core\_dmDataLoader.pas' {dmDataLoader: TDataModule} ,
-  ServerMethodsClient in 'Core\ServerMethodsClient.pas';
+  ServerMethodsClient in 'Core\ServerMethodsClient.pas',
+  _dmDataLoader in 'Core\_dmDataLoader.pas' {dmDataLoader: TDataModule};
 
 {$R *.RES}
 

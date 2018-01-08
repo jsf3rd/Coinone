@@ -9,6 +9,9 @@
         <Projects Include="CoinDataSvc\CoinDataSvc.dproj">
             <Dependencies/>
         </Projects>
+        <Projects Include="CoinCoreSvc\CoinCoreSvc.dproj">
+            <Dependencies/>
+        </Projects>
     </ItemGroup>
     <ProjectExtensions>
         <Borland.Personality>Default.Personality.12</Borland.Personality>
@@ -35,14 +38,23 @@
     <Target Name="CoinDataSvc:Make">
         <MSBuild Projects="CoinDataSvc\CoinDataSvc.dproj" Targets="Make"/>
     </Target>
+    <Target Name="CoinCoreSvc">
+        <MSBuild Projects="CoinCoreSvc\CoinCoreSvc.dproj"/>
+    </Target>
+    <Target Name="CoinCoreSvc:Clean">
+        <MSBuild Projects="CoinCoreSvc\CoinCoreSvc.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="CoinCoreSvc:Make">
+        <MSBuild Projects="CoinCoreSvc\CoinCoreSvc.dproj" Targets="Make"/>
+    </Target>
     <Target Name="Build">
-        <CallTarget Targets="CoinTrader;CoinDataSvc"/>
+        <CallTarget Targets="CoinTrader;CoinDataSvc;CoinCoreSvc"/>
     </Target>
     <Target Name="Clean">
-        <CallTarget Targets="CoinTrader:Clean;CoinDataSvc:Clean"/>
+        <CallTarget Targets="CoinTrader:Clean;CoinDataSvc:Clean;CoinCoreSvc:Clean"/>
     </Target>
     <Target Name="Make">
-        <CallTarget Targets="CoinTrader:Make;CoinDataSvc:Make"/>
+        <CallTarget Targets="CoinTrader:Make;CoinDataSvc:Make;CoinCoreSvc:Make"/>
     </Target>
     <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
 </Project>

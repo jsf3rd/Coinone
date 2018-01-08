@@ -4,10 +4,11 @@ uses
   Vcl.SvcMgr,
   _smDataProvider in 'DataSnap\_smDataProvider.pas' {smDataProvider: TDSServerModule},
   _ServerContainer in 'DataSnap\_ServerContainer.pas' {ServerContainer: TService},
-  cdGlobal in 'Global\cdGlobal.pas',
   cdOption in 'Global\cdOption.pas',
   Common in '..\common\Common.pas',
-  _smDataLoader in 'DataSnap\_smDataLoader.pas' {smDataLoader: TDSServerModule};
+  _smDataLoader in 'DataSnap\_smDataLoader.pas' {smDataLoader: TDSServerModule},
+  cdGlobal in 'Global\cdGlobal.pas',
+  Coinone in '..\common\Coinone.pas';
 
 {$R *.RES}
 

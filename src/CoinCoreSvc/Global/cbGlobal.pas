@@ -6,8 +6,8 @@ uses
   Classes, SysUtils, IOUtils, JdcGlobal, Common;
 
 const
-  SERVICE_CODE = 'CoinBaseSvc';
-  SERVICE_NAME = 'Coin Base Data Uploader Service Application';
+  SERVICE_CODE = 'CoinCoreSvc';
+  SERVICE_NAME = 'Coin Currency Data Uploader Service Application';
   SERVICE_DESCRIPTION = '분석을 위한 초기 데이터를 수집 합니다.';
 
 type

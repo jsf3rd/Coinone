@@ -11,10 +11,12 @@ uses
 
 type
   TsmDataLoader = class(TDSServerModule)
-    qryUplaodTicker: TFDQuery;
+    qryUploadTicker: TFDQuery;
+    qryUploadDay: TFDQuery;
   private
   public
-    function UploadTicker(AParams: TJSONObject): boolean;
+    function UploadTicker(AParams: TJSONValue): boolean;
+    function UploadDay(AParams: TJSONValue): boolean;
   end;
 
 implementation
@@ -24,9 +26,14 @@ uses _ServerContainer;
 {$R *.dfm}
 { TsmDataLoader }
 
-function TsmDataLoader.UploadTicker(AParams: TJSONObject): boolean;
+function TsmDataLoader.UploadDay(AParams: TJSONValue): boolean;
 begin
-  result := ServerContainer.ExecQuery(qryUplaodTicker, AParams, 'UploadTicker');
+  result := ServerContainer.ExecQuery(qryUploadDay, AParams as TJSONArray, 'UploadDay');
+end;
+
+function TsmDataLoader.UploadTicker(AParams: TJSONValue): boolean;
+begin
+  result := ServerContainer.ExecQuery(qryUploadTicker, AParams as TJSONArray, 'UploadTicker');
 end;
 
 end.

@@ -116,12 +116,12 @@
         <DCCReference Include="Core\Core.pas"/>
         <DCCReference Include="..\common\Coinone.pas"/>
         <DCCReference Include="..\common\Common.pas"/>
+        <DCCReference Include="Core\ServerMethodsClient.pas"/>
         <DCCReference Include="Core\_dmDataLoader.pas">
             <Form>dmDataLoader</Form>
             <FormType>dfm</FormType>
             <DesignClass>TDataModule</DesignClass>
         </DCCReference>
-        <DCCReference Include="Core\ServerMethodsClient.pas"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>
