@@ -47,6 +47,17 @@ type
     function PublicInfo(AType: TRequestType; AParam: string): TJSONObject;
   end;
 
+  TOrder = record
+    timestamp: string;
+    price: string;
+    order_type: string;
+    qty: string;
+    feeRate: string;
+    fee: string;
+    orderId: string;
+    function GetValue: Integer;
+  end;
+
 const
   // Account
   URL_BALANCE = 'https://api.coinone.co.kr/v2/account/balance/';
@@ -70,6 +81,11 @@ const
 
   Coins: array [0 .. 9] of string = ('btc', 'bch', 'eth', 'etc', 'xrp', 'qtum', 'iota', 'ltc',
     'btg', 'krw');
+
+  RequestType: array [0 .. 13] of string = ('Balance', 'DailyBalance', 'DepositAddress',
+    'UserInformation', 'VirtualAccount', 'CancelOrder', 'LimitBuy', 'LimitSell',
+    'MyCompleteOrders', 'MyLimitOrders', 'MyOrderInformation', 'Orderbook',
+    'RecentCompleteOrders', 'Ticker');
 
 implementation
 
@@ -239,6 +255,13 @@ end;
 function TCoinone.PublicInfo(AType: TRequestType; AParam: string): TJSONObject;
 begin
   result := Get(AType, AParam);
+end;
+
+{ TOrder }
+
+function TOrder.GetValue: Integer;
+begin
+  result := round(Self.price.ToInteger * Self.qty.ToDouble);
 end;
 
 end.

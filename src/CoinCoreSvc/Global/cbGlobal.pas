@@ -24,6 +24,11 @@ type
     procedure Finalize; override;
   end;
 
+  THigLow = record
+    high_price: integer;
+    low_price: integer;
+  end;
+
 implementation
 
 uses cbOption;

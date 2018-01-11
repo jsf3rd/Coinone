@@ -19,6 +19,10 @@ type
     function GetHttpPort: Integer;
     function GetUseCloudLog: boolean;
     procedure SetUseCloudLog(const Value: boolean);
+    function GetTraderOption: string;
+    procedure SetTraderOption(const Value: string);
+    function GetAccessToken: string;
+    function GetSecretKey: string;
   public
     class function Obj: TOption;
 
@@ -28,6 +32,10 @@ type
     property HttpPort: Integer read GetHttpPort write SetHttpPort;
     property DBInfo: String read GetDBInfo write SetDBInfo;
     property UseCloudLog: boolean read GetUseCloudLog write SetUseCloudLog;
+    property TraderOption: string read GetTraderOption write SetTraderOption;
+
+    property AccessToken: string read GetAccessToken;
+    property SecretKey: string read GetSecretKey;
   end;
 
 implementation
@@ -61,6 +69,11 @@ begin
   inherited;
 end;
 
+function TOption.GetAccessToken: string;
+begin
+  result := FIniFile.ReadString('Auth', 'AccessToken', '');
+end;
+
 function TOption.GetDBInfo: String;
 begin
   // Server=db.playiot.biz,DataBase=mydb,User_Name=playiot,Password=playiot,Port=5432
@@ -70,6 +83,11 @@ end;
 function TOption.GetTcpPort: Integer;
 begin
   result := FIniFile.ReadInteger('DSServer', 'TCPPort', 211);
+end;
+
+function TOption.GetTraderOption: string;
+begin
+  result := FIniFile.ReadString('Config', 'TraderOption', '');
 end;
 
 function TOption.GetUseCloudLog: boolean;
@@ -82,6 +100,11 @@ begin
   result := FIniFile.ReadInteger('DSServer', 'HTTPPort', 80);
 end;
 
+function TOption.GetSecretKey: string;
+begin
+  result := FIniFile.ReadString('Auth', 'SecretKey', '');
+end;
+
 procedure TOption.SetDBInfo(ADBInfo: String);
 begin
   FIniFile.WriteString('DB', 'Params', ADBInfo);
@@ -90,6 +113,11 @@ end;
 procedure TOption.SetTcpPort(const Value: Integer);
 begin
   FIniFile.WriteInteger('DSServer', 'TCPPort', Value);
+end;
+
+procedure TOption.SetTraderOption(const Value: string);
+begin
+  FIniFile.WriteString('Config', 'TraderOption', Value);
 end;
 
 procedure TOption.SetUseCloudLog(const Value: boolean);

@@ -1,7 +1,7 @@
 //
 // Created by the DataSnap proxy generator.
-// 2018-01-11 오후 6:39:44
-// 
+// 2018-01-11 오후 11:06:59
+//
 
 unit ServerMethodsClient;
 
@@ -27,6 +27,9 @@ type
     FHighLowCommand: TDSRestCommand;
     FHighLowCommand_Cache: TDSRestCommand;
     FTotalValueCommand: TDSRestCommand;
+    FGetTraderOptionCommand: TDSRestCommand;
+    FGetTraderOptionCommand_Cache: TDSRestCommand;
+    FSetTraderOptionCommand: TDSRestCommand;
   public
     constructor Create(ARestConnection: TDSRestConnection); overload;
     constructor Create(ARestConnection: TDSRestConnection; AInstanceOwner: Boolean); overload;
@@ -43,9 +46,12 @@ type
     function Day_Cache(AParams: TJSONObject; const ARequestFilter: string = ''): IDSRestCachedStream;
     function Tick(AParams: TJSONObject; const ARequestFilter: string = ''): TStream;
     function Tick_Cache(AParams: TJSONObject; const ARequestFilter: string = ''): IDSRestCachedStream;
-    function HighLow(AParams: TJSONObject; const ARequestFilter: string = ''): TStream;
-    function HighLow_Cache(AParams: TJSONObject; const ARequestFilter: string = ''): IDSRestCachedStream;
+    function HighLow(ACoin: string; const ARequestFilter: string = ''): TJSONObject;
+    function HighLow_Cache(ACoin: string; const ARequestFilter: string = ''): IDSRestCachedJSONObject;
     function TotalValue(DateTime: Double; const ARequestFilter: string = ''): Double;
+    function GetTraderOption(const ARequestFilter: string = ''): TJSONObject;
+    function GetTraderOption_Cache(const ARequestFilter: string = ''): IDSRestCachedJSONObject;
+    procedure SetTraderOption(AValue: TJSONObject);
   end;
 
   TsmDataLoaderClient = class(TDSAdminRestClient)
@@ -137,13 +143,13 @@ const
 
   TsmDataProvider_HighLow: array [0..1] of TDSRestParameterMetaData =
   (
-    (Name: 'AParams'; Direction: 1; DBXType: 37; TypeName: 'TJSONObject'),
-    (Name: ''; Direction: 4; DBXType: 33; TypeName: 'TStream')
+    (Name: 'ACoin'; Direction: 1; DBXType: 26; TypeName: 'string'),
+    (Name: ''; Direction: 4; DBXType: 37; TypeName: 'TJSONObject')
   );
 
   TsmDataProvider_HighLow_Cache: array [0..1] of TDSRestParameterMetaData =
   (
-    (Name: 'AParams'; Direction: 1; DBXType: 37; TypeName: 'TJSONObject'),
+    (Name: 'ACoin'; Direction: 1; DBXType: 26; TypeName: 'string'),
     (Name: ''; Direction: 4; DBXType: 26; TypeName: 'String')
   );
 
@@ -151,6 +157,21 @@ const
   (
     (Name: 'DateTime'; Direction: 1; DBXType: 7; TypeName: 'Double'),
     (Name: ''; Direction: 4; DBXType: 7; TypeName: 'Double')
+  );
+
+  TsmDataProvider_GetTraderOption: array [0..0] of TDSRestParameterMetaData =
+  (
+    (Name: ''; Direction: 4; DBXType: 37; TypeName: 'TJSONObject')
+  );
+
+  TsmDataProvider_GetTraderOption_Cache: array [0..0] of TDSRestParameterMetaData =
+  (
+    (Name: ''; Direction: 4; DBXType: 26; TypeName: 'String')
+  );
+
+  TsmDataProvider_SetTraderOption: array [0..0] of TDSRestParameterMetaData =
+  (
+    (Name: 'AValue'; Direction: 1; DBXType: 37; TypeName: 'TJSONObject')
   );
 
   TsmDataLoader_UploadTicker: array [0..1] of TDSRestParameterMetaData =
@@ -361,32 +382,32 @@ begin
   Result := TDSRestCachedStream.Create(FTickCommand_Cache.Parameters[1].Value.GetString);
 end;
 
-function TsmDataProviderClient.HighLow(AParams: TJSONObject; const ARequestFilter: string): TStream;
+function TsmDataProviderClient.HighLow(ACoin: string; const ARequestFilter: string): TJSONObject;
 begin
   if FHighLowCommand = nil then
   begin
     FHighLowCommand := FConnection.CreateCommand;
-    FHighLowCommand.RequestType := 'POST';
-    FHighLowCommand.Text := 'TsmDataProvider."HighLow"';
+    FHighLowCommand.RequestType := 'GET';
+    FHighLowCommand.Text := 'TsmDataProvider.HighLow';
     FHighLowCommand.Prepare(TsmDataProvider_HighLow);
   end;
-  FHighLowCommand.Parameters[0].Value.SetJSONValue(AParams, FInstanceOwner);
+  FHighLowCommand.Parameters[0].Value.SetWideString(ACoin);
   FHighLowCommand.Execute(ARequestFilter);
-  Result := FHighLowCommand.Parameters[1].Value.GetStream(FInstanceOwner);
+  Result := TJSONObject(FHighLowCommand.Parameters[1].Value.GetJSONValue(FInstanceOwner));
 end;
 
-function TsmDataProviderClient.HighLow_Cache(AParams: TJSONObject; const ARequestFilter: string): IDSRestCachedStream;
+function TsmDataProviderClient.HighLow_Cache(ACoin: string; const ARequestFilter: string): IDSRestCachedJSONObject;
 begin
   if FHighLowCommand_Cache = nil then
   begin
     FHighLowCommand_Cache := FConnection.CreateCommand;
-    FHighLowCommand_Cache.RequestType := 'POST';
-    FHighLowCommand_Cache.Text := 'TsmDataProvider."HighLow"';
+    FHighLowCommand_Cache.RequestType := 'GET';
+    FHighLowCommand_Cache.Text := 'TsmDataProvider.HighLow';
     FHighLowCommand_Cache.Prepare(TsmDataProvider_HighLow_Cache);
   end;
-  FHighLowCommand_Cache.Parameters[0].Value.SetJSONValue(AParams, FInstanceOwner);
+  FHighLowCommand_Cache.Parameters[0].Value.SetWideString(ACoin);
   FHighLowCommand_Cache.ExecuteCache(ARequestFilter);
-  Result := TDSRestCachedStream.Create(FHighLowCommand_Cache.Parameters[1].Value.GetString);
+  Result := TDSRestCachedJSONObject.Create(FHighLowCommand_Cache.Parameters[1].Value.GetString);
 end;
 
 function TsmDataProviderClient.TotalValue(DateTime: Double; const ARequestFilter: string): Double;
@@ -401,6 +422,45 @@ begin
   FTotalValueCommand.Parameters[0].Value.SetDouble(DateTime);
   FTotalValueCommand.Execute(ARequestFilter);
   Result := FTotalValueCommand.Parameters[1].Value.GetDouble;
+end;
+
+function TsmDataProviderClient.GetTraderOption(const ARequestFilter: string): TJSONObject;
+begin
+  if FGetTraderOptionCommand = nil then
+  begin
+    FGetTraderOptionCommand := FConnection.CreateCommand;
+    FGetTraderOptionCommand.RequestType := 'GET';
+    FGetTraderOptionCommand.Text := 'TsmDataProvider.GetTraderOption';
+    FGetTraderOptionCommand.Prepare(TsmDataProvider_GetTraderOption);
+  end;
+  FGetTraderOptionCommand.Execute(ARequestFilter);
+  Result := TJSONObject(FGetTraderOptionCommand.Parameters[0].Value.GetJSONValue(FInstanceOwner));
+end;
+
+function TsmDataProviderClient.GetTraderOption_Cache(const ARequestFilter: string): IDSRestCachedJSONObject;
+begin
+  if FGetTraderOptionCommand_Cache = nil then
+  begin
+    FGetTraderOptionCommand_Cache := FConnection.CreateCommand;
+    FGetTraderOptionCommand_Cache.RequestType := 'GET';
+    FGetTraderOptionCommand_Cache.Text := 'TsmDataProvider.GetTraderOption';
+    FGetTraderOptionCommand_Cache.Prepare(TsmDataProvider_GetTraderOption_Cache);
+  end;
+  FGetTraderOptionCommand_Cache.ExecuteCache(ARequestFilter);
+  Result := TDSRestCachedJSONObject.Create(FGetTraderOptionCommand_Cache.Parameters[0].Value.GetString);
+end;
+
+procedure TsmDataProviderClient.SetTraderOption(AValue: TJSONObject);
+begin
+  if FSetTraderOptionCommand = nil then
+  begin
+    FSetTraderOptionCommand := FConnection.CreateCommand;
+    FSetTraderOptionCommand.RequestType := 'POST';
+    FSetTraderOptionCommand.Text := 'TsmDataProvider."SetTraderOption"';
+    FSetTraderOptionCommand.Prepare(TsmDataProvider_SetTraderOption);
+  end;
+  FSetTraderOptionCommand.Parameters[0].Value.SetJSONValue(AValue, FInstanceOwner);
+  FSetTraderOptionCommand.Execute;
 end;
 
 constructor TsmDataProviderClient.Create(ARestConnection: TDSRestConnection);
@@ -430,6 +490,9 @@ begin
   FHighLowCommand.DisposeOf;
   FHighLowCommand_Cache.DisposeOf;
   FTotalValueCommand.DisposeOf;
+  FGetTraderOptionCommand.DisposeOf;
+  FGetTraderOptionCommand_Cache.DisposeOf;
+  FSetTraderOptionCommand.DisposeOf;
   inherited;
 end;
 
@@ -479,3 +542,4 @@ begin
 end;
 
 end.
+

@@ -13,14 +13,14 @@ type
     constructor Create;
 
   private
-    function GetInterval: Integer;
-    procedure SetInterval(const Value: Integer);
-
+    function GetAccessToken: string;
+    function GetSecretKey: string;
   public
     class function Obj: TOption;
     destructor Destroy; override;
 
-    property Interval: Integer read GetInterval write SetInterval;
+    property AccessToken: string read GetAccessToken;
+    property SecretKey: string read GetSecretKey;
   end;
 
 implementation
@@ -55,9 +55,14 @@ begin
   inherited;
 end;
 
-function TOption.GetInterval: Integer;
+function TOption.GetAccessToken: string;
 begin
-  result := FIniFile.ReadInteger('Config', 'Inverval', 1000);
+  result := FIniFile.ReadString('Auth', 'AccessToken', '');
+end;
+
+function TOption.GetSecretKey: string;
+begin
+  result := FIniFile.ReadString('Auth', 'SecretKey', '');
 end;
 
 class function TOption.Obj: TOption;
@@ -67,11 +72,6 @@ begin
     MyObj := TOption.Create;
   end;
   result := MyObj;
-end;
-
-procedure TOption.SetInterval(const Value: Integer);
-begin
-  FIniFile.WriteInteger('Config', 'Inverval', Value);
 end;
 
 end.

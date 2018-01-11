@@ -53,22 +53,23 @@ object dmDataProvider: TdmDataProvider
       FieldName = 'volume'
       DisplayFormat = '#,##0'
     end
-    object mtTickyesterday_volume: TFloatField
-      DisplayLabel = #51204#51068#44144#47000#47049
-      DisplayWidth = 13
-      FieldName = 'yesterday_volume'
-      DisplayFormat = '#,##0'
-    end
     object mtTickhigh: TFloatField
-      DisplayLabel = #44552#51068' '#52572#44256#44032
+      DisplayLabel = #51204#51068' '#52572#44256#44032
       DisplayWidth = 13
       FieldName = 'high_price'
       DisplayFormat = '#,##0'
     end
     object mtTicklow_price: TFloatField
-      DisplayLabel = #44552#51068' '#52572#51200#44032
+      DisplayLabel = #51204#51068' '#52572#51200#44032
       DisplayWidth = 13
       FieldName = 'low_price'
+      DisplayFormat = '#,##0'
+    end
+    object mtTickyesterday_volume: TFloatField
+      DisplayLabel = #51204#51068#44144#47000#47049
+      DisplayWidth = 13
+      FieldName = 'yesterday_volume'
+      Visible = False
       DisplayFormat = '#,##0'
     end
     object mtTickfirst: TFloatField
@@ -108,14 +109,6 @@ object dmDataProvider: TdmDataProvider
       FieldName = 'price'
       DisplayFormat = '#,##0'
     end
-    object FloatField3: TFloatField
-      DisplayLabel = #51204#51068#45824#48708' '#44144#47000#47049
-      DisplayWidth = 15
-      FieldKind = fkCalculated
-      FieldName = 'volume_rate'
-      DisplayFormat = '#0.00'
-      Calculated = True
-    end
     object FloatField4: TFloatField
       FieldName = 'volume'
       Visible = False
@@ -127,24 +120,30 @@ object dmDataProvider: TdmDataProvider
     object mtTickPeriodyesterday_last: TFloatField
       FieldName = 'yesterday_last'
     end
-    object mtTickPeriodprice_rate: TFloatField
-      FieldKind = fkCalculated
-      FieldName = 'price_rate'
-      Calculated = True
-    end
     object mtTickPeriodtick_stamp: TSQLTimeStampField
       FieldName = 'tick_stamp'
     end
     object mtTickPeriodstoch: TFloatField
       FieldKind = fkCalculated
-      FieldName = 'stoch'
+      FieldName = 'price_stoch'
       Calculated = True
     end
     object mtTickPeriodvolume_avg: TFloatField
       FieldKind = fkCalculated
-      FieldName = 'volume_avg'
+      FieldName = 'volume_stoch'
       LookupDataSet = mtTick
       Calculated = True
+    end
+    object mtTickPeriodhigh_price: TFloatField
+      FieldName = 'high_price'
+    end
+    object mtTickPeriodlow_price: TFloatField
+      FieldName = 'low_price'
+    end
+    object mtTickPeriodma12: TFloatField
+      DisplayLabel = 'MA'
+      FieldName = 'ma'
+      DisplayFormat = '#,##0'
     end
   end
   object DSRestConnection: TDSRestConnection
@@ -235,7 +234,7 @@ object dmDataProvider: TdmDataProvider
     Left = 360
     Top = 112
   end
-  object mtMyLimitOrder: TFDMemTable
+  object mtLimitOrders: TFDMemTable
     OnCalcFields = mtTickCalcFields
     FetchOptions.AssignedValues = [evMode]
     FetchOptions.Mode = fmAll
@@ -246,48 +245,143 @@ object dmDataProvider: TdmDataProvider
     UpdateOptions.AutoCommitUpdates = True
     Left = 288
     Top = 192
-    object mtMyLimitOrdercoin: TWideStringField
+    object mtLimitOrderscoin: TWideStringField
       DisplayLabel = #53076#51064
-      DisplayWidth = 10
+      DisplayWidth = 6
       FieldName = 'coin'
       OnGetText = mtTickcoinGetText
       Size = 16
     end
-    object mtMyLimitOrderorder_stamp: TSQLTimeStampField
+    object mtLimitOrdersorder_stamp: TSQLTimeStampField
       Alignment = taCenter
       DisplayLabel = #49884#44036
-      DisplayWidth = 25
+      DisplayWidth = 18
       FieldName = 'order_stamp'
       DisplayFormat = 'YYYY-MM-DD hh:nn:ss'
     end
     object FloatField11: TFloatField
       DisplayLabel = #52404#44208#44032
-      DisplayWidth = 15
+      DisplayWidth = 6
       FieldName = 'price'
       DisplayFormat = '#,##0'
     end
     object FloatField10: TFloatField
       DisplayLabel = #49688#47049
-      DisplayWidth = 15
+      DisplayWidth = 6
       FieldName = 'amount'
       DisplayFormat = '#,##0.00'
     end
-    object mtMyLimitOrderorder_type: TWideStringField
+    object mtLimitOrdersorder_type: TWideStringField
       Alignment = taCenter
       DisplayLabel = #44396#48516
+      DisplayWidth = 6
       FieldName = 'order_type'
-      OnGetText = mtMyLimitOrderorder_typeGetText
+      OnGetText = mtLimitOrdersorder_typeGetText
       Size = 16
     end
-    object mtMyLimitOrderorder_id: TWideStringField
+    object mtLimitOrdersorder_id: TWideStringField
       FieldName = 'order_id'
       Visible = False
       Size = 64
     end
   end
-  object msMylimitOrder: TDataSource
-    DataSet = mtMyLimitOrder
-    Left = 368
+  object dsLimitOrders: TDataSource
+    DataSet = mtLimitOrders
+    Left = 384
     Top = 192
+  end
+  object mtCompleteOrders: TFDMemTable
+    OnCalcFields = mtTickCalcFields
+    FieldDefs = <>
+    IndexDefs = <>
+    FetchOptions.AssignedValues = [evMode]
+    FetchOptions.Mode = fmAll
+    ResourceOptions.AssignedValues = [rvSilentMode]
+    ResourceOptions.SilentMode = True
+    UpdateOptions.AssignedValues = [uvCheckRequired, uvAutoCommitUpdates]
+    UpdateOptions.CheckRequired = False
+    UpdateOptions.AutoCommitUpdates = True
+    StoreDefs = True
+    Left = 288
+    Top = 264
+    object WideStringField3: TWideStringField
+      DisplayLabel = #53076#51064
+      DisplayWidth = 6
+      FieldName = 'coin'
+      OnGetText = mtTickcoinGetText
+      Size = 10
+    end
+    object SQLTimeStampField1: TSQLTimeStampField
+      Alignment = taCenter
+      DisplayLabel = #49884#44036
+      DisplayWidth = 18
+      FieldName = 'order_stamp'
+      DisplayFormat = 'YYYY-MM-DD hh:nn:ss'
+    end
+    object FloatField12: TFloatField
+      DisplayLabel = #52404#44208#44032
+      DisplayWidth = 6
+      FieldName = 'price'
+      DisplayFormat = '#,##0'
+    end
+    object FloatField13: TFloatField
+      DisplayLabel = #49688#47049
+      DisplayWidth = 6
+      FieldName = 'amount'
+      DisplayFormat = '#,##0.00'
+    end
+    object WideStringField4: TWideStringField
+      Alignment = taCenter
+      DisplayLabel = #44396#48516
+      DisplayWidth = 6
+      FieldName = 'order_type'
+      OnGetText = mtLimitOrdersorder_typeGetText
+      Size = 16
+    end
+    object mtCompleteOrderslast: TFloatField
+      DisplayLabel = #49688#49688#47308
+      DisplayWidth = 6
+      FieldName = 'fee'
+      DisplayFormat = '#,##0.00'
+    end
+    object WideStringField5: TWideStringField
+      FieldName = 'order_id'
+      Visible = False
+      Size = 64
+    end
+  end
+  object dsCompleteOrders: TDataSource
+    DataSet = mtCompleteOrders
+    Left = 384
+    Top = 264
+  end
+  object mtStoch: TFDMemTable
+    Active = True
+    FieldDefs = <
+      item
+        Name = 'tick_stamp'
+        DataType = ftTimeStamp
+      end
+      item
+        Name = 'price_stoch'
+        DataType = ftFloat
+      end>
+    IndexDefs = <>
+    FetchOptions.AssignedValues = [evMode]
+    FetchOptions.Mode = fmAll
+    ResourceOptions.AssignedValues = [rvSilentMode]
+    ResourceOptions.SilentMode = True
+    UpdateOptions.AssignedValues = [uvCheckRequired, uvAutoCommitUpdates]
+    UpdateOptions.CheckRequired = False
+    UpdateOptions.AutoCommitUpdates = True
+    StoreDefs = True
+    Left = 56
+    Top = 328
+    object SQLTimeStampField2: TSQLTimeStampField
+      FieldName = 'tick_stamp'
+    end
+    object FloatField17: TFloatField
+      FieldName = 'price_stoch'
+    end
   end
 end

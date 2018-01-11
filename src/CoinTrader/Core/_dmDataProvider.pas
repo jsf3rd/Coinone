@@ -9,7 +9,7 @@ uses
   FireDAC.DApt.Intf, FireDAC.Comp.DataSet, FireDAC.Comp.Client, Coinone, System.JSON,
   REST.JSON, JdcGlobal.ClassHelper, System.DateUtils, JdcGlobal.DSCommon,
   Datasnap.DSClientRest, FireDAC.Stan.StorageBin, System.Math, JdcView, JdcGlobal, ctGlobal,
-  Data.SqlTimSt;
+  Data.SqlTimSt, IdBaseComponent, IdComponent, IdTCPConnection, IdTCPClient, IdHTTP;
 
 type
   TdmDataProvider = class(TDataModule)
@@ -26,12 +26,10 @@ type
     mtTickPeriod: TFDMemTable;
     WideStringField1: TWideStringField;
     FloatField1: TFloatField;
-    FloatField3: TFloatField;
     FloatField4: TFloatField;
     FloatField6: TFloatField;
     DSRestConnection: TDSRestConnection;
     mtTickPeriodyesterday_last: TFloatField;
-    mtTickPeriodprice_rate: TFloatField;
     mtTickPeriodtick_stamp: TSQLTimeStampField;
     FDStanStorageBinLink: TFDStanStorageBinLink;
     mtTickPeriodvolume_avg: TFloatField;
@@ -49,25 +47,42 @@ type
     FloatField8: TFloatField;
     FloatField9: TFloatField;
     dsBalance: TDataSource;
-    mtMyLimitOrder: TFDMemTable;
+    mtLimitOrders: TFDMemTable;
     FloatField10: TFloatField;
     FloatField11: TFloatField;
-    mtMyLimitOrderorder_stamp: TSQLTimeStampField;
-    mtMyLimitOrderorder_type: TWideStringField;
-    msMylimitOrder: TDataSource;
-    mtMyLimitOrderorder_id: TWideStringField;
-    mtMyLimitOrdercoin: TWideStringField;
+    mtLimitOrdersorder_stamp: TSQLTimeStampField;
+    mtLimitOrdersorder_type: TWideStringField;
+    dsLimitOrders: TDataSource;
+    mtLimitOrdersorder_id: TWideStringField;
+    mtLimitOrderscoin: TWideStringField;
+    mtCompleteOrders: TFDMemTable;
+    WideStringField3: TWideStringField;
+    SQLTimeStampField1: TSQLTimeStampField;
+    FloatField12: TFloatField;
+    FloatField13: TFloatField;
+    WideStringField4: TWideStringField;
+    WideStringField5: TWideStringField;
+    dsCompleteOrders: TDataSource;
+    mtCompleteOrderslast: TFloatField;
+    mtTickPeriodhigh_price: TFloatField;
+    mtTickPeriodlow_price: TFloatField;
+    mtTickPeriodma12: TFloatField;
+    mtStoch: TFDMemTable;
+    SQLTimeStampField2: TSQLTimeStampField;
+    FloatField17: TFloatField;
     procedure mtTickCalcFields(DataSet: TDataSet);
     procedure DataModuleCreate(Sender: TObject);
     procedure mtTickPeriodCalcFields(DataSet: TDataSet);
     procedure mtTickcoinGetText(Sender: TField; var Text: string; DisplayText: Boolean);
-    procedure mtMyLimitOrderorder_typeGetText(Sender: TField; var Text: string;
+    procedure mtLimitOrdersorder_typeGetText(Sender: TField; var Text: string;
       DisplayText: Boolean);
   private
     FInstanceOwner: Boolean;
     FsmDataProviderClient: TsmDataProviderClient;
     FsmDataLoaderClient: TsmDataLoaderClient;
     FYesterDayValue: double;
+
+    FOldPrice, FUpSum, FDownSum: Integer;
 
     function Order(APrice, ACount: double; ACoin: string; AType: TRequestType): TJSONObject;
     function CreateParams(ACoin: string; ABegin, AEnd: TDateTime): TJSONObject;
@@ -79,7 +94,7 @@ type
     destructor Destroy; override;
 
     procedure Tick;
-    procedure ChartData;
+    procedure ChartData(ADay: Integer);
 
     function Balance: Integer;
 
@@ -89,8 +104,9 @@ type
     function LimitAsk(APrice, ACount: double): Boolean;
     function LimitBid(APrice, ACount: double): Boolean;
 
-    procedure LimitOrder;
+    procedure LimitOrders;
     procedure CancelOrder;
+    procedure CompleteOrders;
 
     property InstanceOwner: Boolean read FInstanceOwner write FInstanceOwner;
     property smDataProviderClient: TsmDataProviderClient read GetsmDataProviderClient
@@ -135,7 +151,7 @@ begin
   result := res.GetString('result') = 'success';
 
   if result then
-    LimitOrder
+    LimitOrders
   else
     TGlobal.Obj.ApplicationMessage(msError, 'MarketAsk', res.GetString('result'));
 end;
@@ -157,6 +173,8 @@ begin
 
   Tick;
   JSONObject := smDataProviderClient.AccountInfo(Integer(rtBalance));
+  TGlobal.Obj.ApplicationMessage(msDebug, 'Balance', JSONObject.ToString);
+
   BookMark := mtBalance.BookMark;
   mtBalance.DisableControls;
   try
@@ -227,7 +245,7 @@ begin
   result := res.GetString('result') = 'success';
 
   if result then
-    LimitOrder
+    LimitOrders
   else
     TGlobal.Obj.ApplicationMessage(msError, 'MarketBid', res.GetString('result'));
 end;
@@ -236,35 +254,47 @@ procedure TdmDataProvider.CancelOrder;
 var
   res, Params: TJSONObject;
 begin
-  Params := TJSONObject.Create;
-  Params.AddPair('order_id', mtMyLimitOrder.FieldByName('order_id').AsString);
-  Params.AddPair('price', mtMyLimitOrder.FieldByName('price').AsString);
-  Params.AddPair('qty', mtMyLimitOrder.FieldByName('amount').AsString);
+  if mtLimitOrders.IsEmpty then
+    Exit;
 
-  if mtMyLimitOrder.FieldByName('order_type').AsString = 'ask' then
+  Params := TJSONObject.Create;
+  Params.AddPair('order_id', mtLimitOrders.FieldByName('order_id').AsString);
+  Params.AddPair('price', mtLimitOrders.FieldByName('price').AsString);
+  Params.AddPair('qty', mtLimitOrders.FieldByName('amount').AsString);
+
+  if mtLimitOrders.FieldByName('order_type').AsString = 'ask' then
     Params.AddPair('is_ask', '1')
   else
     Params.AddPair('is_ask', '0');
 
-  Params.AddPair('currency', mtMyLimitOrder.FieldByName('coin').AsString);
+  Params.AddPair('currency', mtLimitOrders.FieldByName('coin').AsString);
 
   res := smDataProviderClient.Order(Integer(rtCancelOrder), Params);
   if res.GetString('result') = 'success' then
-    LimitOrder
+  begin
+    LimitOrders;
+  end
   else
     TGlobal.Obj.ApplicationMessage(msError, 'CancelOrder', res.GetString('result'));
 end;
 
-procedure TdmDataProvider.ChartData;
+procedure TdmDataProvider.ChartData(ADay: Integer);
 var
   Params: TJSONObject;
   Coin: String;
 begin
-  Coin := mtTick.FieldByName('coin').AsString;
-  Params := CreateParams(Coin, IncDay(Now, -14), Now);
-  mtHighLow.LoadFromDSStream(smDataProviderClient.HighLow(Params));
+  FUpSum := 0;
+  FDownSum := 0;
+  FOldPrice := 0;
 
-  Params := CreateParams(Coin, IncDay(Now, -2), Now);
+  Coin := mtTick.FieldByName('coin').AsString;
+  // Params := CreateParams(Coin, IncDay(Now, -14), Now);
+  // mtHighLow.LoadFromDSStream(smDataProviderClient.HighLow(Params));
+
+  mtStoch.Close;
+  mtStoch.Open;
+
+  Params := CreateParams(Coin, IncDay(Now, -ADay), Now);
   mtTickPeriod.LoadFromDSStream(smDataProviderClient.Tick(Params));
 end;
 
@@ -285,6 +315,48 @@ begin
   Params.AddPair('qty', Format('%.2f', [ACount]));
   Params.AddPair('currency', ACoin);
   result := smDataProviderClient.Order(Integer(AType), Params);
+end;
+
+procedure TdmDataProvider.CompleteOrders;
+var
+  Params, JSONObject, _Order: TJSONObject;
+  Orders: TJSONArray;
+  MyOrder: TJSONValue;
+  CoinCode: string;
+  DateTime: TDateTime;
+begin
+  CoinCode := mtBalance.FieldByName('coin').AsString;
+
+  if CoinCode = 'krw' then
+    Exit;
+
+  Params := TJSONObject.Create;
+  Params.AddPair('currency', CoinCode);
+  JSONObject := smDataProviderClient.Order(Integer(rtMyCompleteOrders), Params);
+
+  Orders := JSONObject.GetValue('completeOrders') as TJSONArray;
+
+  mtCompleteOrders.Close;
+  mtCompleteOrders.Open;
+
+  for MyOrder in Orders do
+  begin
+    _Order := MyOrder as TJSONObject;
+
+    mtCompleteOrders.Append;
+    DateTime := UnixToDateTime(_Order.GetString('timestamp').ToInteger);
+    DateTime := IncHour(DateTime, 9);
+    mtCompleteOrders.FieldByName('order_stamp').AsSQLTimeStamp :=
+      DateTimeToSQLTimeStamp(DateTime);
+    mtCompleteOrders.FieldByName('price').AsFloat := _Order.GetString('price').ToDouble;
+    mtCompleteOrders.FieldByName('amount').AsFloat := _Order.GetString('qty').ToDouble;
+    mtCompleteOrders.FieldByName('order_type').AsString := _Order.GetString('type');
+    mtCompleteOrders.FieldByName('order_id').AsString := _Order.GetString('orderId');
+    mtCompleteOrders.FieldByName('fee').AsString := _Order.GetString('fee');
+    mtCompleteOrders.FieldByName('coin').AsString := CoinCode;
+    mtCompleteOrders.CommitUpdates;
+  end;
+  mtCompleteOrders.First;
 end;
 
 function TdmDataProvider.CreateParams(ACoin: string; ABegin, AEnd: TDateTime): TJSONObject;
@@ -338,7 +410,7 @@ begin
   result := res.GetString('result') = 'success';
 
   if result then
-    LimitOrder
+    LimitOrders
   else
     TGlobal.Obj.ApplicationMessage(msError, 'LimitAsk', res.GetString('result'));
 end;
@@ -366,20 +438,19 @@ begin
     Exit;
   end;
 
-  res := Order(APrice, ACount, CoinCode, rtLimitSell);
+  res := Order(APrice, ACount, CoinCode, rtLimitBuy);
   result := res.GetString('result') = 'success';
 
-  result := res.GetString('result') = 'success';
   if result then
-    LimitOrder
+    LimitOrders
   else
     TGlobal.Obj.ApplicationMessage(msError, 'LimitBid', res.GetString('result'));
 end;
 
-procedure TdmDataProvider.LimitOrder;
+procedure TdmDataProvider.LimitOrders;
 var
   Params, JSONObject, _Order: TJSONObject;
-  LimitOrders: TJSONArray;
+  _LimitOrders: TJSONArray;
   MyOrder: TJSONValue;
   CoinCode: string;
   DateTime: TDateTime;
@@ -393,30 +464,30 @@ begin
   Params.AddPair('currency', CoinCode);
   JSONObject := smDataProviderClient.Order(Integer(rtMyLimitOrders), Params);
 
-  LimitOrders := JSONObject.GetValue('limitOrders') as TJSONArray;
+  _LimitOrders := JSONObject.GetValue('limitOrders') as TJSONArray;
 
-  mtMyLimitOrder.Close;
-  mtMyLimitOrder.Open;
+  mtLimitOrders.Close;
+  mtLimitOrders.Open;
 
-  for MyOrder in LimitOrders do
+  for MyOrder in _LimitOrders do
   begin
     _Order := MyOrder as TJSONObject;
 
-    mtMyLimitOrder.Insert;
+    mtLimitOrders.Insert;
     DateTime := UnixToDateTime(_Order.GetString('timestamp').ToInteger);
     DateTime := IncHour(DateTime, 9);
-    mtMyLimitOrder.FieldByName('order_stamp').AsSQLTimeStamp :=
+    mtLimitOrders.FieldByName('order_stamp').AsSQLTimeStamp :=
       DateTimeToSQLTimeStamp(DateTime);
-    mtMyLimitOrder.FieldByName('price').AsFloat := _Order.GetString('price').ToDouble;
-    mtMyLimitOrder.FieldByName('amount').AsFloat := _Order.GetString('qty').ToDouble;
-    mtMyLimitOrder.FieldByName('order_type').AsString := _Order.GetString('type');
-    mtMyLimitOrder.FieldByName('order_id').AsString := _Order.GetString('orderId');
-    mtMyLimitOrder.FieldByName('coin').AsString := CoinCode;
-    mtMyLimitOrder.CommitUpdates;
+    mtLimitOrders.FieldByName('price').AsFloat := _Order.GetString('price').ToDouble;
+    mtLimitOrders.FieldByName('amount').AsFloat := _Order.GetString('qty').ToDouble;
+    mtLimitOrders.FieldByName('order_type').AsString := _Order.GetString('type');
+    mtLimitOrders.FieldByName('order_id').AsString := _Order.GetString('orderId');
+    mtLimitOrders.FieldByName('coin').AsString := CoinCode;
+    mtLimitOrders.CommitUpdates;
   end;
 end;
 
-procedure TdmDataProvider.mtMyLimitOrderorder_typeGetText(Sender: TField; var Text: string;
+procedure TdmDataProvider.mtLimitOrdersorder_typeGetText(Sender: TField; var Text: string;
   DisplayText: Boolean);
 begin
   if Sender.AsString = 'ask' then
@@ -448,38 +519,27 @@ end;
 
 procedure TdmDataProvider.mtTickPeriodCalcFields(DataSet: TDataSet);
 var
-  Price, volume: double;
+  Price: double;
   Max, Min: double;
-  TodayMax, TodayMin: double;
+  Stoch: double;
 begin
-  if DataSet.FieldByName('yesterday_volume').AsFloat <> 0 then
-  begin
-    DataSet.FieldByName('volume_rate').AsFloat :=
-      (DataSet.FieldByName('volume').AsFloat - DataSet.FieldByName('yesterday_volume').AsFloat)
-      / DataSet.FieldByName('yesterday_volume').AsFloat * 100;
-  end;
 
-  volume := DataSet.FieldByName('volume').AsFloat;
-  Max := mtHighLow.FieldByName('high_volume').AsFloat;
-  Min := mtHighLow.FieldByName('low_volume').AsFloat;
-  if volume > Max then
-    Min := 0;
-  DataSet.FieldByName('volume_avg').AsFloat := (volume - Min) / (Max - Min) * 100;
+  if DataSet.FieldByName('tick_stamp').AsSQLTimeStamp.Minute mod 30 <> 0 then
+    Exit;
 
   Price := DataSet.FieldByName('price').AsFloat;
-  Max := mtHighLow.FieldByName('high_price').AsFloat;
-  Min := mtHighLow.FieldByName('low_price').AsFloat;
-  TodayMax := mtTick.FieldByName('high_price').AsFloat;
-  TodayMin := mtTick.FieldByName('low_price').AsFloat;
+  Max := DataSet.FieldByName('high_price').AsFloat;
+  Min := DataSet.FieldByName('low_price').AsFloat;
+  if Max = Min then
+    Stoch := 0
+  else
+    Stoch := (Price - Min) / (Max - Min) * 100;
 
-  Max := MaxValue([Max, TodayMax]);
-  Min := MinValue([Min, TodayMin]);
-  DataSet.FieldByName('stoch').AsFloat := (Price - Min) / (Max - Min) * 100;
-
-  if DataSet.FieldByName('yesterday_last').AsFloat <> 0 then
-    DataSet.FieldByName('price_rate').AsFloat :=
-      (DataSet.FieldByName('price').AsFloat - DataSet.FieldByName('yesterday_last').AsFloat) /
-      DataSet.FieldByName('yesterday_last').AsFloat * 100;
+  mtStoch.Insert;
+  mtStoch.FieldByName('tick_stamp').AsSQLTimeStamp := DataSet.FieldByName('tick_stamp')
+    .AsSQLTimeStamp;
+  mtStoch.FieldByName('price_stoch').AsFloat := Stoch;
+  mtStoch.CommitUpdates;
 end;
 
 procedure TdmDataProvider.Tick;

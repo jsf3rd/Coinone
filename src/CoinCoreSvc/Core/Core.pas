@@ -3,7 +3,7 @@ unit Core;
 interface
 
 uses Classes, SysUtils, System.IOUtils, Generics.Collections, Generics.Defaults,
-  System.Threading, System.DateUtils, cbGlobal, _dmDataLoader;
+  System.Threading, System.DateUtils, cbGlobal, _dmDataLoader, _dmTrader;
 
 type
   TCore = class
@@ -68,18 +68,28 @@ begin
   // Create Threads...
   FTickerTask := TThread.CreateAnonymousThread(
     procedure
+    var
+      Immediate: boolean;
     begin
+
+      dmTrader.Init;
+      Immediate := false;
       while not TThread.CurrentThread.CheckTerminated do
       begin
         Sleep(100);
 
-        if Secondof(Now) = 0 then
+        if Immediate or (Secondof(Now) = 0) then
         begin
           try
+            Immediate := false;
             dmDataLoader.Tick;
           except
             on E: Exception do
+            begin
+              Immediate := true;
+              Sleep(2000);
               TGlobal.Obj.ApplicationMessage(msError, 'Tick', E.Message);
+            end;
           end;
           Sleep(1000);
         end;

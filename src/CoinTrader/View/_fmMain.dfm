@@ -2,7 +2,7 @@ object fmMain: TfmMain
   Left = 0
   Top = 0
   Caption = 'Templete Form'
-  ClientHeight = 655
+  ClientHeight = 773
   ClientWidth = 864
   Color = clBtnFace
   Font.Charset = HANGEUL_CHARSET
@@ -23,8 +23,8 @@ object fmMain: TfmMain
     Left = 0
     Top = 0
     Width = 864
-    Height = 636
-    ActivePage = tsTrad
+    Height = 754
+    ActivePage = tsMain
     Align = alClient
     TabOrder = 0
     OnChange = PageControlChange
@@ -70,13 +70,62 @@ object fmMain: TfmMain
             Action = actTick
             TabOrder = 0
           end
+          object GroupBox3: TGroupBox
+            Left = 104
+            Top = 7
+            Width = 377
+            Height = 67
+            Caption = #52264#53944#49444#51221
+            TabOrder = 1
+            object edtChartPeriod: TLabeledEdit
+              Left = 73
+              Top = 30
+              Width = 48
+              Height = 25
+              EditLabel.Width = 57
+              EditLabel.Height = 17
+              EditLabel.Caption = #52264#53944' '#44592#44036
+              LabelPosition = lpLeft
+              NumbersOnly = True
+              TabOrder = 0
+              Text = '2'
+            end
+            object edtStochHour: TLabeledEdit
+              Left = 195
+              Top = 30
+              Width = 48
+              Height = 25
+              EditLabel.Width = 59
+              EditLabel.Height = 17
+              EditLabel.Caption = 'Stoch'#49884#44036
+              LabelPosition = lpLeft
+              NumbersOnly = True
+              TabOrder = 1
+              Text = '8'
+              Visible = False
+            end
+            object edtMaHour: TLabeledEdit
+              Left = 318
+              Top = 30
+              Width = 48
+              Height = 25
+              EditLabel.Width = 47
+              EditLabel.Height = 17
+              EditLabel.Caption = 'MA'#49884#44036
+              LabelPosition = lpLeft
+              NumbersOnly = True
+              TabOrder = 2
+              Text = '12'
+              Visible = False
+            end
+          end
         end
       end
       object Panel3: TPanel
         Left = 0
         Top = 312
         Width = 856
-        Height = 292
+        Height = 410
         Align = alClient
         Caption = 'Panel3'
         TabOrder = 1
@@ -84,13 +133,13 @@ object fmMain: TfmMain
           Left = 1
           Top = 1
           Width = 854
-          Height = 290
+          Height = 207
           Title.Font.Color = clBlack
           Title.Font.Height = -16
           Title.Font.Style = [fsBold]
           Title.Text.Strings = (
             'BTC')
-          BottomAxis.DateTimeFormat = 'hh:nn'
+          BottomAxis.DateTimeFormat = 'DD hh:nn'
           RightAxis.Grid.Visible = False
           View3D = False
           Align = alClient
@@ -101,7 +150,7 @@ object fmMain: TfmMain
           object Series1: TLineSeries
             Marks.DrawEvery = 2
             DataSource = dmDataProvider.mtTickPeriod
-            Title = 'price'
+            Title = 'Price'
             Brush.BackColor = clDefault
             Pointer.InflateMargins = True
             Pointer.Style = psRectangle
@@ -116,7 +165,7 @@ object fmMain: TfmMain
           object Series2: TLineSeries
             Marks.DrawEvery = 7
             DataSource = dmDataProvider.mtTickPeriod
-            Title = 'volume'
+            Title = 'Volume'
             VertAxis = aRightAxis
             Brush.BackColor = clDefault
             Pointer.InflateMargins = True
@@ -127,12 +176,13 @@ object fmMain: TfmMain
             XValues.ValueSource = 'tick_stamp'
             YValues.Name = 'Y'
             YValues.Order = loNone
-            YValues.ValueSource = 'volume_avg'
+            YValues.ValueSource = 'volume'
           end
           object Series5: TLineSeries
+            Active = False
             Marks.DrawEvery = 3
             DataSource = dmDataProvider.mtTickPeriod
-            Title = 'stoch'
+            Title = 'Stoch'
             VertAxis = aRightAxis
             Brush.BackColor = clDefault
             Pointer.InflateMargins = True
@@ -143,7 +193,66 @@ object fmMain: TfmMain
             XValues.ValueSource = 'tick_stamp'
             YValues.Name = 'Y'
             YValues.Order = loNone
-            YValues.ValueSource = 'stoch'
+            YValues.ValueSource = 'price_stoch'
+          end
+          object Series3: TLineSeries
+            Active = False
+            DataSource = dmDataProvider.mtTickPeriod
+            Title = 'MA5'
+            Brush.BackColor = clDefault
+            Pointer.InflateMargins = True
+            Pointer.Style = psRectangle
+            XValues.DateTime = True
+            XValues.Name = 'X'
+            XValues.Order = loAscending
+            XValues.ValueSource = 'tick_stamp'
+            YValues.Name = 'Y'
+            YValues.Order = loNone
+            YValues.ValueSource = 'ma'
+          end
+        end
+        object chtStoch: TDBChart
+          Left = 1
+          Top = 208
+          Width = 854
+          Height = 201
+          Title.Font.Color = clBlack
+          Title.Font.Height = -16
+          Title.Font.Style = [fsBold]
+          Title.Text.Strings = (
+            'BTC')
+          Title.Visible = False
+          BottomAxis.DateTimeFormat = 'DD hh:nn'
+          RightAxis.Grid.Visible = False
+          View3D = False
+          Align = alBottom
+          TabOrder = 1
+          Constraints.MinHeight = 150
+          DefaultCanvas = 'TGDIPlusCanvas'
+          ColorPaletteIndex = 13
+          object Series4: TLineSeries
+            DataSource = dmDataProvider.mtStoch
+            Title = 'Stoch'
+            Brush.BackColor = clDefault
+            Pointer.InflateMargins = True
+            Pointer.Style = psRectangle
+            XValues.DateTime = True
+            XValues.Name = 'X'
+            XValues.Order = loAscending
+            XValues.ValueSource = 'tick_stamp'
+            YValues.Name = 'Y'
+            YValues.Order = loNone
+            YValues.ValueSource = 'price_stoch'
+          end
+          object Series6: TLineSeries
+            Title = 'tmp'
+            Brush.BackColor = clDefault
+            Pointer.InflateMargins = True
+            Pointer.Style = psRectangle
+            XValues.Name = 'X'
+            XValues.Order = loAscending
+            YValues.Name = 'Y'
+            YValues.Order = loNone
           end
         end
       end
@@ -153,9 +262,9 @@ object fmMain: TfmMain
       ImageIndex = 1
       object dbgBalance: TDBGrid
         Left = 0
-        Top = 105
+        Top = 137
         Width = 856
-        Height = 263
+        Height = 397
         Align = alClient
         DataSource = dmDataProvider.dsBalance
         Options = [dgTitles, dgIndicator, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgRowSelect, dgAlwaysShowSelection, dgConfirmDelete, dgCancelOnExit, dgTitleClick, dgTitleHotTrack]
@@ -171,7 +280,7 @@ object fmMain: TfmMain
         Left = 0
         Top = 0
         Width = 856
-        Height = 105
+        Height = 137
         Align = alTop
         TabOrder = 1
         object Button4: TButton
@@ -186,7 +295,7 @@ object fmMain: TfmMain
           Left = 104
           Top = 8
           Width = 241
-          Height = 87
+          Height = 123
           Caption = #49884#51109#44032' '#44144#47000
           TabOrder = 1
           object Button2: TButton
@@ -223,12 +332,12 @@ object fmMain: TfmMain
           Left = 351
           Top = 8
           Width = 258
-          Height = 87
+          Height = 123
           Caption = #51648#51221#44032' '#44144#47000
           TabOrder = 2
           object Button6: TButton
             Left = 169
-            Top = 22
+            Top = 51
             Width = 75
             Height = 25
             Action = actLimitBID
@@ -236,7 +345,7 @@ object fmMain: TfmMain
           end
           object Button7: TButton
             Left = 169
-            Top = 53
+            Top = 82
             Width = 75
             Height = 25
             Action = actLimitASK
@@ -244,7 +353,7 @@ object fmMain: TfmMain
           end
           object edtLimitCount: TLabeledEdit
             Left = 72
-            Top = 24
+            Top = 53
             Width = 73
             Height = 25
             EditLabel.Width = 52
@@ -254,10 +363,11 @@ object fmMain: TfmMain
             NumbersOnly = True
             TabOrder = 0
             Text = '0'
+            OnChange = edtLimitCountChange
           end
           object edtLimitPrice: TLabeledEdit
             Left = 72
-            Top = 55
+            Top = 84
             Width = 73
             Height = 25
             EditLabel.Width = 52
@@ -267,14 +377,30 @@ object fmMain: TfmMain
             NumbersOnly = True
             TabOrder = 1
             Text = '10000'
+            OnChange = edtLimitCountChange
+          end
+          object edtKrwView: TLabeledEdit
+            Left = 72
+            Top = 22
+            Width = 73
+            Height = 25
+            Color = clSilver
+            EditLabel.Width = 52
+            EditLabel.Height = 17
+            EditLabel.Caption = #51452#47928#44552#50529
+            LabelPosition = lpLeft
+            NumbersOnly = True
+            ReadOnly = True
+            TabOrder = 4
+            Text = '0'
           end
         end
       end
       object Panel5: TPanel
         Left = 0
-        Top = 368
+        Top = 534
         Width = 856
-        Height = 236
+        Height = 188
         Align = alBottom
         TabOrder = 2
         object Splitter1: TSplitter
@@ -284,7 +410,17 @@ object fmMain: TfmMain
           Height = 3
           Cursor = crVSplit
           Align = alTop
-          ExplicitWidth = 234
+          ExplicitTop = 2
+        end
+        object Splitter: TSplitter
+          Left = 397
+          Top = 45
+          Height = 142
+          Align = alRight
+          OnMoved = SplitterMoved
+          ExplicitLeft = 535
+          ExplicitTop = 44
+          ExplicitHeight = 190
         end
         object pnlLimitOrderTitle: TPanel
           Left = 1
@@ -296,9 +432,16 @@ object fmMain: TfmMain
           BevelOuter = bvNone
           Caption = #48120#52404#44208' '#45236#50669
           TabOrder = 0
+          object lblRecentOrder: TLabel
+            Left = 396
+            Top = 15
+            Width = 88
+            Height = 17
+            Caption = #52572#44540' '#44144#47000' '#45236#50669
+          end
           object Button5: TButton
-            Left = 89
-            Top = 10
+            Left = 84
+            Top = 7
             Width = 75
             Height = 25
             Action = actCancelOrder
@@ -308,12 +451,28 @@ object fmMain: TfmMain
         object dbgLimitOrder: TDBGrid
           Left = 1
           Top = 45
-          Width = 854
-          Height = 190
+          Width = 396
+          Height = 142
           Align = alClient
-          DataSource = dmDataProvider.msMylimitOrder
+          DataSource = dmDataProvider.dsLimitOrders
           Options = [dgTitles, dgIndicator, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgRowSelect, dgAlwaysShowSelection, dgConfirmDelete, dgCancelOnExit, dgTitleClick, dgTitleHotTrack]
           TabOrder = 1
+          TitleFont.Charset = HANGEUL_CHARSET
+          TitleFont.Color = clWindowText
+          TitleFont.Height = -13
+          TitleFont.Name = #47569#51008' '#44256#46357
+          TitleFont.Style = []
+        end
+        object dbgRecentOrders: TDBGrid
+          Left = 400
+          Top = 45
+          Width = 455
+          Height = 142
+          Align = alRight
+          Constraints.MinWidth = 200
+          DataSource = dmDataProvider.dsCompleteOrders
+          Options = [dgTitles, dgIndicator, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgRowSelect, dgAlwaysShowSelection, dgConfirmDelete, dgCancelOnExit, dgTitleClick, dgTitleHotTrack]
+          TabOrder = 2
           TitleFont.Charset = HANGEUL_CHARSET
           TitleFont.Color = clWindowText
           TitleFont.Height = -13
@@ -325,7 +484,7 @@ object fmMain: TfmMain
   end
   object StatusBar: TStatusBar
     Left = 0
-    Top = 636
+    Top = 754
     Width = 864
     Height = 19
     Panels = <

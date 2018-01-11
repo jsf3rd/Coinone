@@ -8,8 +8,10 @@ uses
   Core in 'Core\Core.pas',
   Coinone in '..\common\Coinone.pas',
   Common in '..\common\Common.pas',
+  _dmDataLoader in 'Core\_dmDataLoader.pas' {dmDataLoader: TDataModule},
   ServerMethodsClient in 'Core\ServerMethodsClient.pas',
-  _dmDataLoader in 'Core\_dmDataLoader.pas' {dmDataLoader: TDataModule};
+  _dmTrader in 'Core\_dmTrader.pas' {dmTrader: TDataModule},
+  CoinState in 'Core\CoinState.pas';
 
 {$R *.RES}
 
@@ -32,6 +34,7 @@ begin
     Application.Initialize;
   Application.CreateForm(TServiceMain, ServiceMain);
   Application.CreateForm(TdmDataLoader, dmDataLoader);
+  Application.CreateForm(TdmTrader, dmTrader);
   Application.Run;
 
 end.

@@ -66,6 +66,18 @@ type
     dbgLimitOrder: TDBGrid;
     Button5: TButton;
     actCancelOrder: TAction;
+    dbgRecentOrders: TDBGrid;
+    Splitter: TSplitter;
+    lblRecentOrder: TLabel;
+    GroupBox3: TGroupBox;
+    edtChartPeriod: TLabeledEdit;
+    Series3: TLineSeries;
+    edtKrwView: TLabeledEdit;
+    chtStoch: TDBChart;
+    Series4: TLineSeries;
+    Series6: TLineSeries;
+    edtStochHour: TLabeledEdit;
+    edtMaHour: TLabeledEdit;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure actAboutExecute(Sender: TObject);
@@ -88,6 +100,8 @@ type
     procedure dbgBalanceDblClick(Sender: TObject);
     procedure actCancelOrderExecute(Sender: TObject);
     procedure PageControlChange(Sender: TObject);
+    procedure SplitterMoved(Sender: TObject);
+    procedure edtLimitCountChange(Sender: TObject);
   published
     procedure rp_Terminate(APacket: TValueList);
     procedure rp_Init(APacket: TValueList);
@@ -225,13 +239,19 @@ end;
 
 procedure TfmMain.ApplicationEventsException(Sender: TObject; E: Exception);
 begin
-  TGlobal.Obj.ApplicationMessage(msError, 'System Error', '[%s] %s',
-    [Sender.ClassName, E.Message]);
+  TGlobal.Obj.ApplicationMessage(msError, 'System Error', '%s', [E.Message]);
 end;
 
 procedure TfmMain.dbgBalanceDblClick(Sender: TObject);
 begin
-  dmDataProvider.LimitOrder;
+  dmDataProvider.LimitOrders;
+  dmDataProvider.CompleteOrders;
+end;
+
+procedure TfmMain.edtLimitCountChange(Sender: TObject);
+begin
+  edtKrwView.Text := FormatFloat('#,##0', StrToFloatDef(edtLimitCount.Text, 0) *
+    StrToFloatDef(edtLimitPrice.Text, 0));
 end;
 
 procedure TfmMain.btnAddKrwClick(Sender: TObject);
@@ -276,19 +296,19 @@ procedure TfmMain.grdMainDblClick(Sender: TObject);
     Min := Axis.Minimum;
     Diff := Max - Min;
     Axis.Automatic := false;
-    Axis.Maximum := Max + Diff * 0.2;
-    Axis.Minimum := Min - Diff * 0.2;
+    Axis.Maximum := Max + Diff * 0.15;
+    Axis.Minimum := Min - Diff * 0.15;
   end;
 
 begin
   chtMain.Title.Caption := dmDataProvider.mtTick.FieldByName('coin').Text;
-  dmDataProvider.ChartData;
+  dmDataProvider.ChartData(StrToIntDef(edtChartPeriod.Text, 2));
   chtMain.RefreshData;
   ResizeAxis(chtMain, chtMain.LeftAxis);
   ResizeAxis(chtMain, chtMain.RightAxis);
 
-  // chtStoch.RefreshData;
-  // ResizeAxis(chtStoch, chtStoch.LeftAxis);
+  chtStoch.RefreshData;
+  ResizeAxis(chtStoch, chtStoch.LeftAxis);
 end;
 
 procedure TfmMain.PageControlChange(Sender: TObject);
@@ -337,6 +357,11 @@ end;
 procedure TfmMain.rp_TickStamp(APacket: TValueList);
 begin
   StatusBar.Panels[0].Text := '°»½Å : ' + APacket.Values['msg'];
+end;
+
+procedure TfmMain.SplitterMoved(Sender: TObject);
+begin
+  lblRecentOrder.Left := Splitter.Left;
 end;
 
 end.
