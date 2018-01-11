@@ -1,7 +1,7 @@
 //
 // Created by the DataSnap proxy generator.
-// 2017-12-28 오후 8:12:15
-//
+// 2018-01-11 오후 6:39:44
+// 
 
 unit ServerMethodsClient;
 
@@ -24,6 +24,9 @@ type
     FDayCommand_Cache: TDSRestCommand;
     FTickCommand: TDSRestCommand;
     FTickCommand_Cache: TDSRestCommand;
+    FHighLowCommand: TDSRestCommand;
+    FHighLowCommand_Cache: TDSRestCommand;
+    FTotalValueCommand: TDSRestCommand;
   public
     constructor Create(ARestConnection: TDSRestConnection); overload;
     constructor Create(ARestConnection: TDSRestConnection; AInstanceOwner: Boolean); overload;
@@ -40,6 +43,9 @@ type
     function Day_Cache(AParams: TJSONObject; const ARequestFilter: string = ''): IDSRestCachedStream;
     function Tick(AParams: TJSONObject; const ARequestFilter: string = ''): TStream;
     function Tick_Cache(AParams: TJSONObject; const ARequestFilter: string = ''): IDSRestCachedStream;
+    function HighLow(AParams: TJSONObject; const ARequestFilter: string = ''): TStream;
+    function HighLow_Cache(AParams: TJSONObject; const ARequestFilter: string = ''): IDSRestCachedStream;
+    function TotalValue(DateTime: Double; const ARequestFilter: string = ''): Double;
   end;
 
   TsmDataLoaderClient = class(TDSAdminRestClient)
@@ -127,6 +133,24 @@ const
   (
     (Name: 'AParams'; Direction: 1; DBXType: 37; TypeName: 'TJSONObject'),
     (Name: ''; Direction: 4; DBXType: 26; TypeName: 'String')
+  );
+
+  TsmDataProvider_HighLow: array [0..1] of TDSRestParameterMetaData =
+  (
+    (Name: 'AParams'; Direction: 1; DBXType: 37; TypeName: 'TJSONObject'),
+    (Name: ''; Direction: 4; DBXType: 33; TypeName: 'TStream')
+  );
+
+  TsmDataProvider_HighLow_Cache: array [0..1] of TDSRestParameterMetaData =
+  (
+    (Name: 'AParams'; Direction: 1; DBXType: 37; TypeName: 'TJSONObject'),
+    (Name: ''; Direction: 4; DBXType: 26; TypeName: 'String')
+  );
+
+  TsmDataProvider_TotalValue: array [0..1] of TDSRestParameterMetaData =
+  (
+    (Name: 'DateTime'; Direction: 1; DBXType: 7; TypeName: 'Double'),
+    (Name: ''; Direction: 4; DBXType: 7; TypeName: 'Double')
   );
 
   TsmDataLoader_UploadTicker: array [0..1] of TDSRestParameterMetaData =
@@ -337,6 +361,48 @@ begin
   Result := TDSRestCachedStream.Create(FTickCommand_Cache.Parameters[1].Value.GetString);
 end;
 
+function TsmDataProviderClient.HighLow(AParams: TJSONObject; const ARequestFilter: string): TStream;
+begin
+  if FHighLowCommand = nil then
+  begin
+    FHighLowCommand := FConnection.CreateCommand;
+    FHighLowCommand.RequestType := 'POST';
+    FHighLowCommand.Text := 'TsmDataProvider."HighLow"';
+    FHighLowCommand.Prepare(TsmDataProvider_HighLow);
+  end;
+  FHighLowCommand.Parameters[0].Value.SetJSONValue(AParams, FInstanceOwner);
+  FHighLowCommand.Execute(ARequestFilter);
+  Result := FHighLowCommand.Parameters[1].Value.GetStream(FInstanceOwner);
+end;
+
+function TsmDataProviderClient.HighLow_Cache(AParams: TJSONObject; const ARequestFilter: string): IDSRestCachedStream;
+begin
+  if FHighLowCommand_Cache = nil then
+  begin
+    FHighLowCommand_Cache := FConnection.CreateCommand;
+    FHighLowCommand_Cache.RequestType := 'POST';
+    FHighLowCommand_Cache.Text := 'TsmDataProvider."HighLow"';
+    FHighLowCommand_Cache.Prepare(TsmDataProvider_HighLow_Cache);
+  end;
+  FHighLowCommand_Cache.Parameters[0].Value.SetJSONValue(AParams, FInstanceOwner);
+  FHighLowCommand_Cache.ExecuteCache(ARequestFilter);
+  Result := TDSRestCachedStream.Create(FHighLowCommand_Cache.Parameters[1].Value.GetString);
+end;
+
+function TsmDataProviderClient.TotalValue(DateTime: Double; const ARequestFilter: string): Double;
+begin
+  if FTotalValueCommand = nil then
+  begin
+    FTotalValueCommand := FConnection.CreateCommand;
+    FTotalValueCommand.RequestType := 'GET';
+    FTotalValueCommand.Text := 'TsmDataProvider.TotalValue';
+    FTotalValueCommand.Prepare(TsmDataProvider_TotalValue);
+  end;
+  FTotalValueCommand.Parameters[0].Value.SetDouble(DateTime);
+  FTotalValueCommand.Execute(ARequestFilter);
+  Result := FTotalValueCommand.Parameters[1].Value.GetDouble;
+end;
+
 constructor TsmDataProviderClient.Create(ARestConnection: TDSRestConnection);
 begin
   inherited Create(ARestConnection);
@@ -361,6 +427,9 @@ begin
   FDayCommand_Cache.DisposeOf;
   FTickCommand.DisposeOf;
   FTickCommand_Cache.DisposeOf;
+  FHighLowCommand.DisposeOf;
+  FHighLowCommand_Cache.DisposeOf;
+  FTotalValueCommand.DisposeOf;
   inherited;
 end;
 
@@ -410,4 +479,3 @@ begin
 end;
 
 end.
-

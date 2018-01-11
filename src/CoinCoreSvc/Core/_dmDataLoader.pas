@@ -6,7 +6,7 @@ uses
   System.SysUtils, System.Classes, Data.DBXDataSnap, IPPeerClient,
   Data.DBXCommon, Data.DbxHTTPLayer, Data.DB, Data.SqlExpr, ServerMethodsClient, Coinone,
   System.JSON, REST.JSON, System.DateUtils, System.Generics.Collections, JdcGlobal.ClassHelper,
-  cbGlobal, JdcGlobal, Common, Datasnap.DSClientRest;
+  cbGlobal, JdcGlobal, Common, Datasnap.DSClientRest, _dmTrader, System.Threading;
 
 type
   TDay = record
@@ -203,6 +203,18 @@ begin
       Params := CreateDayParams(JSONObject);
       smDataLoaderClient.UploadDay(Params);
     end;
+
+    TTask.Run(
+      procedure
+      begin
+        try
+          dmTrader.OnTick(JSONObject.Clone as TJSONObject);
+        except
+          on E: Exception do
+            TGlobal.Obj.ApplicationMessage(msError, 'dmTrader.OnTick', E.Message);
+        end;
+      end);
+
   finally
     JSONObject.Free;
   end;

@@ -86,6 +86,7 @@ begin
       end;
     end);
   FTickerTask.FreeOnTerminate := false;
+
 end;
 
 class function TCore.Obj: TCore;
