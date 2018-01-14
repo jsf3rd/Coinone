@@ -19,8 +19,6 @@ type
     function GetHttpPort: Integer;
     function GetUseCloudLog: boolean;
     procedure SetUseCloudLog(const Value: boolean);
-    function GetTraderOption: string;
-    procedure SetTraderOption(const Value: string);
     function GetAccessToken: string;
     function GetSecretKey: string;
   public
@@ -32,7 +30,6 @@ type
     property HttpPort: Integer read GetHttpPort write SetHttpPort;
     property DBInfo: String read GetDBInfo write SetDBInfo;
     property UseCloudLog: boolean read GetUseCloudLog write SetUseCloudLog;
-    property TraderOption: string read GetTraderOption write SetTraderOption;
 
     property AccessToken: string read GetAccessToken;
     property SecretKey: string read GetSecretKey;
@@ -85,11 +82,6 @@ begin
   result := FIniFile.ReadInteger('DSServer', 'TCPPort', 211);
 end;
 
-function TOption.GetTraderOption: string;
-begin
-  result := FIniFile.ReadString('Config', 'TraderOption', '');
-end;
-
 function TOption.GetUseCloudLog: boolean;
 begin
   result := FIniFile.ReadBool('Config', 'UseCloudLog', True);
@@ -113,11 +105,6 @@ end;
 procedure TOption.SetTcpPort(const Value: Integer);
 begin
   FIniFile.WriteInteger('DSServer', 'TCPPort', Value);
-end;
-
-procedure TOption.SetTraderOption(const Value: string);
-begin
-  FIniFile.WriteString('Config', 'TraderOption', Value);
 end;
 
 procedure TOption.SetUseCloudLog(const Value: boolean);

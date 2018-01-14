@@ -66,7 +66,6 @@ type
     mtCompleteOrderslast: TFloatField;
     mtTickPeriodhigh_price: TFloatField;
     mtTickPeriodlow_price: TFloatField;
-    mtTickPeriodma12: TFloatField;
     mtStoch: TFDMemTable;
     SQLTimeStampField2: TSQLTimeStampField;
     FloatField17: TFloatField;
@@ -85,7 +84,7 @@ type
     FOldPrice, FUpSum, FDownSum: Integer;
 
     function Order(APrice, ACount: double; ACoin: string; AType: TRequestType): TJSONObject;
-    function CreateParams(ACoin: string; ABegin, AEnd: TDateTime): TJSONObject;
+    function CreateParams(ACoin: string; AChartDay, AStochHour: Integer): TJSONObject;
     function GetsmDataProviderClient: TsmDataProviderClient;
     function GetsmDataLoaderClient: TsmDataLoaderClient;
 
@@ -94,7 +93,7 @@ type
     destructor Destroy; override;
 
     procedure Tick;
-    procedure ChartData(ADay: Integer);
+    procedure ChartData(AChartDay, AStochHour: Integer);
 
     function Balance: Integer;
 
@@ -278,7 +277,7 @@ begin
     TGlobal.Obj.ApplicationMessage(msError, 'CancelOrder', res.GetString('result'));
 end;
 
-procedure TdmDataProvider.ChartData(ADay: Integer);
+procedure TdmDataProvider.ChartData(AChartDay, AStochHour: Integer);
 var
   Params: TJSONObject;
   Coin: String;
@@ -287,14 +286,11 @@ begin
   FDownSum := 0;
   FOldPrice := 0;
 
-  Coin := mtTick.FieldByName('coin').AsString;
-  // Params := CreateParams(Coin, IncDay(Now, -14), Now);
-  // mtHighLow.LoadFromDSStream(smDataProviderClient.HighLow(Params));
-
   mtStoch.Close;
   mtStoch.Open;
 
-  Params := CreateParams(Coin, IncDay(Now, -ADay), Now);
+  Coin := mtTick.FieldByName('coin').AsString;
+  Params := CreateParams(Coin, AChartDay, AStochHour);
   mtTickPeriod.LoadFromDSStream(smDataProviderClient.Tick(Params));
 end;
 
@@ -359,12 +355,18 @@ begin
   mtCompleteOrders.First;
 end;
 
-function TdmDataProvider.CreateParams(ACoin: string; ABegin, AEnd: TDateTime): TJSONObject;
+function TdmDataProvider.CreateParams(ACoin: string; AChartDay, AStochHour: Integer)
+  : TJSONObject;
+var
+  ATime: TTime;
 begin
   result := TJSONObject.Create;
   result.AddPair('coin_code', UpperCase(ACoin));
-  result.AddPair('begin_time', ABegin.ToISO8601);
-  result.AddPair('end_time', AEnd.ToISO8601);
+  result.AddPair('begin_time', IncDay(Now, -AChartDay).ToISO8601);
+  result.AddPair('end_time', Now.ToISO8601);
+
+  result.AddPair('high_period', Format('%0.2d:00:00', [AStochHour]));
+  result.AddPair('low_period', Format('%0.2d:00:00', [AStochHour]));
 end;
 
 procedure TdmDataProvider.DataModuleCreate(Sender: TObject);
@@ -495,7 +497,7 @@ begin
   else if Sender.AsString = 'bid' then
     Text := '매수'
   else
-    Text := '알수없음'
+    Text := ''
 end;
 
 procedure TdmDataProvider.mtTickCalcFields(DataSet: TDataSet);

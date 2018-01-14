@@ -5,7 +5,7 @@ interface
 uses
   System.SysUtils, System.Classes, IPPeerClient, Datasnap.DSClientRest, ServerMethodsClient,
   System.JSON, REST.JSON, CoinOne, CoinState, System.Generics.Collections,
-  JdcGlobal.ClassHelper, Common, JdcGlobal, cbGlobal;
+  JdcGlobal.ClassHelper, Common, JdcGlobal, cbGlobal, cbOption, System.DateUtils;
 
 type
   TdmTrader = class(TDataModule)
@@ -19,8 +19,7 @@ type
 
     function GetsmDataProviderClient: TsmDataProviderClient;
     function GetsmDataLoaderClient: TsmDataLoaderClient;
-    function GetHighLow(ACoin: string): THigLow;
-    { Private declarations }
+    function GetHighLow(ACoin: string; AHour: Integer): THighLow;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -78,50 +77,98 @@ end;
 procedure TdmTrader.Init;
 var
   Option: TTraderOption;
-  I: Integer;
+  MyCoin: TCoinInfo;
 begin
-  Option := TJson.JsonToRecord<TTraderOption>(smDataProviderClient.GetTraderOption);
+  DSRestConnection.Host := TGlobal.Obj.ConnInfo.StringValue;
+  DSRestConnection.Port := TGlobal.Obj.ConnInfo.IntegerValue;
 
-  for I := Low(Option.Coins) to High(Option.Coins) do
+  Option := TJson.JsonToRecord<TTraderOption>(TOption.Obj.TraderOption);
+
+  for MyCoin in Option.Coins do
   begin
-    FCoinTrader.Add(Coins[I], TTrader.Create(Coins[I], Option.TradePoint));
-    TGlobal.Obj.ApplicationMessage(msDebug, 'CreateTrader', Coins[I]);
+    if (MyCoin.Oper <> OPER_ENABLE) and (MyCoin.Oper <> OPER_TEST) then
+    begin
+      TGlobal.Obj.ApplicationMessage(msDebug, 'Disabled', MyCoin.ToString);
+      Continue;
+    end;
+
+    FCoinTrader.Add(MyCoin.Currency, TTrader.Create(MyCoin));
   end;
 end;
 
-function TdmTrader.GetHighLow(ACoin: string): THigLow;
+function TdmTrader.GetHighLow(ACoin: string; AHour: Integer): THighLow;
 var
   JSONObject: TJSONObject;
+  DateTime: TDateTime;
 begin
-  JSONObject := smDataProviderClient.HighLow(UpperCase(ACoin));
-  Result := TJson.JsonToRecord<THigLow>(JSONObject);
-  JSONObject.Free;
+  try
+    DateTime := IncHour(Now, -AHour);
+    JSONObject := smDataProviderClient.HighLow(UpperCase(ACoin), DateTime);
+    Result := TJson.JsonToRecord<THighLow>(JSONObject);
+  except
+    on E: Exception do
+      raise Exception.Create('GetHighLow,' + E.Message);
+  end;
 end;
 
 procedure TdmTrader.OnTick(ATicker, ABalance: TJSONObject);
 var
   MyTrader: TPair<String, TTrader>;
   Last: Integer;
-  HighLow: THigLow;
-  Balance: TJSONObject;
+  HighLow: THighLow;
   Avail: double;
 begin
+  try
+    for MyTrader in FCoinTrader do
+    begin
+      try
+        HighLow := GetHighLow(MyTrader.Key, MyTrader.Value.CoinInfo.StochHour);
+      except
+        on E: Exception do
+        begin
+          TGlobal.Obj.ApplicationMessage(msError, 'GetHighLow', 'Coin=%s,E=%s',
+            [MyTrader.Key, E.Message]);
+          Continue;
+        end;
+      end;
 
-  for MyTrader in FCoinTrader do
-  begin
-    HighLow := GetHighLow(MyTrader.Key);
-    Last := ATicker.GetJSONObject(MyTrader.Key).GetString('last').ToInteger;
-    Avail := ABalance.GetJSONObject(MyTrader.Key).GetString('avail').ToDouble;
-    try
-      MyTrader.Value.Tick(Last, HighLow, Avail);
-    except
-      on E: Exception do
-        TGlobal.Obj.ApplicationMessage(msError, 'TraderTick', 'Coin=%s,E=%s',
-          [MyTrader.Key, E.Message]);
+      try
+        Last := ATicker.GetJSONObject(MyTrader.Key).GetString('last').ToInteger;
+      except
+        on E: Exception do
+        begin
+          TGlobal.Obj.ApplicationMessage(msError, 'LastPrice', 'Coin=%s,E=%s',
+            [MyTrader.Key, E.Message]);
+          Continue;
+        end;
+      end;
+
+      try
+        Avail := ABalance.GetJSONObject(MyTrader.Key).GetString('avail').ToDouble;
+      except
+        on E: Exception do
+        begin
+          TGlobal.Obj.ApplicationMessage(msError, 'BalanceAvail', 'Coin=%s,E=%s',
+            [MyTrader.Key, E.Message]);
+          Continue;
+        end;
+      end;
+
+      try
+        MyTrader.Value.Tick(Last, HighLow, Avail);
+      except
+        on E: Exception do
+        begin
+          TGlobal.Obj.ApplicationMessage(msError, 'TraderTick', 'Coin=%s,E=%s',
+            [MyTrader.Key, E.Message]);
+          Continue;
+        end;
+      end;
     end;
+  except
+    on E: Exception do
+      raise Exception.Create('TdmTrader.OnTick - ' + E.Message);
   end;
-
-  ATicker.Free;
 end;
 
 function TdmTrader.GetsmDataLoaderClient: TsmDataLoaderClient;

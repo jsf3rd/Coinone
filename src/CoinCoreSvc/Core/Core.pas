@@ -13,6 +13,8 @@ type
 
     FTickerTask: TThread;
 
+    FStandSec: Integer;
+
     constructor Create;
   public
     class function Obj: TCore;
@@ -65,6 +67,11 @@ begin
 
   TGlobal.Obj.Initialize;
 
+  dmDataLoader.Init;
+  dmTrader.Init;
+
+  FStandSec := Random(40);
+
   // Create Threads...
   FTickerTask := TThread.CreateAnonymousThread(
     procedure
@@ -72,13 +79,12 @@ begin
       Immediate: boolean;
     begin
 
-      dmTrader.Init;
       Immediate := false;
       while not TThread.CurrentThread.CheckTerminated do
       begin
         Sleep(100);
 
-        if Immediate or (Secondof(Now) = 0) then
+        if Immediate or (SecondOf(Now) = FStandSec) then
         begin
           try
             Immediate := false;
@@ -87,8 +93,8 @@ begin
             on E: Exception do
             begin
               Immediate := true;
-              Sleep(2000);
               TGlobal.Obj.ApplicationMessage(msError, 'Tick', E.Message);
+              Sleep(2000);
             end;
           end;
           Sleep(1000);
@@ -108,7 +114,13 @@ end;
 
 procedure TCore.Start;
 begin
-  FTickerTask.Start;
+  try
+    FTickerTask.Start;
+  except
+    on E: Exception do
+      TGlobal.Obj.ApplicationMessage(msError, 'TCoreStart', E.Message);
+  end;
+
 end;
 
 initialization

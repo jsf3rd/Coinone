@@ -1,6 +1,5 @@
 object dmDataLoader: TdmDataLoader
   OldCreateOrder = False
-  OnCreate = DataModuleCreate
   Height = 354
   Width = 373
   object DSRestConnection: TDSRestConnection

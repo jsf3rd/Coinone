@@ -95,6 +95,7 @@
         <DCC_DebugInformation>0</DCC_DebugInformation>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2_Win32)'!=''">
+        <DCC_ExeOutput>..\bin\$(Config)\CoinCoreSvc</DCC_ExeOutput>
         <Icon_MainIcon>..\CoinDataSvc\default.ico</Icon_MainIcon>
         <VerInfo_Keys>CompanyName=playIoT.;FileDescription=playIoT Service Application Default.;FileVersion=1.0.0.0;InternalName=Service Templete;LegalCopyright=(c)playIoT.;LegalTrademarks=;OriginalFilename=;ProductName=ServiceTemplete;ProductVersion=1.0.0.0;Comments=playIoT Service Application.</VerInfo_Keys>
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>

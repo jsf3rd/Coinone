@@ -70,14 +70,12 @@ type
     Splitter: TSplitter;
     lblRecentOrder: TLabel;
     GroupBox3: TGroupBox;
-    edtChartPeriod: TLabeledEdit;
-    Series3: TLineSeries;
+    edtChartDay: TLabeledEdit;
     edtKrwView: TLabeledEdit;
     chtStoch: TDBChart;
     Series4: TLineSeries;
     Series6: TLineSeries;
     edtStochHour: TLabeledEdit;
-    edtMaHour: TLabeledEdit;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure actAboutExecute(Sender: TObject);
@@ -300,9 +298,18 @@ procedure TfmMain.grdMainDblClick(Sender: TObject);
     Axis.Minimum := Min - Diff * 0.15;
   end;
 
+var
+  StochHour: Integer;
+
 begin
   chtMain.Title.Caption := dmDataProvider.mtTick.FieldByName('coin').Text;
-  dmDataProvider.ChartData(StrToIntDef(edtChartPeriod.Text, 2));
+
+  StochHour := StrToIntDef(edtStochHour.Text, 7);
+  if StochHour > 23 then
+    StochHour := 23;
+  edtStochHour.Text := StochHour.ToString;
+
+  dmDataProvider.ChartData(StrToIntDef(edtChartDay.Text, 2), StochHour);
   chtMain.RefreshData;
   ResizeAxis(chtMain, chtMain.LeftAxis);
   ResizeAxis(chtMain, chtMain.RightAxis);

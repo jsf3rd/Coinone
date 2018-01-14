@@ -73,11 +73,11 @@ object fmMain: TfmMain
           object GroupBox3: TGroupBox
             Left = 104
             Top = 7
-            Width = 377
+            Width = 257
             Height = 67
             Caption = #52264#53944#49444#51221
             TabOrder = 1
-            object edtChartPeriod: TLabeledEdit
+            object edtChartDay: TLabeledEdit
               Left = 73
               Top = 30
               Width = 48
@@ -101,22 +101,7 @@ object fmMain: TfmMain
               LabelPosition = lpLeft
               NumbersOnly = True
               TabOrder = 1
-              Text = '8'
-              Visible = False
-            end
-            object edtMaHour: TLabeledEdit
-              Left = 318
-              Top = 30
-              Width = 48
-              Height = 25
-              EditLabel.Width = 47
-              EditLabel.Height = 17
-              EditLabel.Caption = 'MA'#49884#44036
-              LabelPosition = lpLeft
-              NumbersOnly = True
-              TabOrder = 2
-              Text = '12'
-              Visible = False
+              Text = '7'
             end
           end
         end
@@ -195,21 +180,6 @@ object fmMain: TfmMain
             YValues.Order = loNone
             YValues.ValueSource = 'price_stoch'
           end
-          object Series3: TLineSeries
-            Active = False
-            DataSource = dmDataProvider.mtTickPeriod
-            Title = 'MA5'
-            Brush.BackColor = clDefault
-            Pointer.InflateMargins = True
-            Pointer.Style = psRectangle
-            XValues.DateTime = True
-            XValues.Name = 'X'
-            XValues.Order = loAscending
-            XValues.ValueSource = 'tick_stamp'
-            YValues.Name = 'Y'
-            YValues.Order = loNone
-            YValues.ValueSource = 'ma'
-          end
         end
         object chtStoch: TDBChart
           Left = 1
@@ -260,11 +230,22 @@ object fmMain: TfmMain
     object tsTrad: TTabSheet
       Caption = #44144#47000
       ImageIndex = 1
+      object Splitter1: TSplitter
+        Left = 0
+        Top = 373
+        Width = 856
+        Height = 3
+        Cursor = crVSplit
+        Align = alBottom
+        ExplicitLeft = 1
+        ExplicitTop = 2
+        ExplicitWidth = 854
+      end
       object dbgBalance: TDBGrid
         Left = 0
         Top = 137
         Width = 856
-        Height = 397
+        Height = 236
         Align = alClient
         DataSource = dmDataProvider.dsBalance
         Options = [dgTitles, dgIndicator, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgRowSelect, dgAlwaysShowSelection, dgConfirmDelete, dgCancelOnExit, dgTitleClick, dgTitleHotTrack]
@@ -398,24 +379,15 @@ object fmMain: TfmMain
       end
       object Panel5: TPanel
         Left = 0
-        Top = 534
+        Top = 376
         Width = 856
-        Height = 188
+        Height = 346
         Align = alBottom
         TabOrder = 2
-        object Splitter1: TSplitter
-          Left = 1
-          Top = 1
-          Width = 854
-          Height = 3
-          Cursor = crVSplit
-          Align = alTop
-          ExplicitTop = 2
-        end
         object Splitter: TSplitter
           Left = 397
-          Top = 45
-          Height = 142
+          Top = 42
+          Height = 303
           Align = alRight
           OnMoved = SplitterMoved
           ExplicitLeft = 535
@@ -424,7 +396,7 @@ object fmMain: TfmMain
         end
         object pnlLimitOrderTitle: TPanel
           Left = 1
-          Top = 4
+          Top = 1
           Width = 854
           Height = 41
           Align = alTop
@@ -450,9 +422,9 @@ object fmMain: TfmMain
         end
         object dbgLimitOrder: TDBGrid
           Left = 1
-          Top = 45
+          Top = 42
           Width = 396
-          Height = 142
+          Height = 303
           Align = alClient
           DataSource = dmDataProvider.dsLimitOrders
           Options = [dgTitles, dgIndicator, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgRowSelect, dgAlwaysShowSelection, dgConfirmDelete, dgCancelOnExit, dgTitleClick, dgTitleHotTrack]
@@ -465,9 +437,9 @@ object fmMain: TfmMain
         end
         object dbgRecentOrders: TDBGrid
           Left = 400
-          Top = 45
+          Top = 42
           Width = 455
-          Height = 142
+          Height = 303
           Align = alRight
           Constraints.MinWidth = 200
           DataSource = dmDataProvider.dsCompleteOrders

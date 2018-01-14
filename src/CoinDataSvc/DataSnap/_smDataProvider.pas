@@ -28,12 +28,9 @@ type
 
     function Day(AParams: TJSONObject): TStream;
     function Tick(AParams: TJSONObject): TStream;
-    function HighLow(ACoin: string): TJSONObject;
+    function HighLow(ACoin: string; APeriod: TDateTime): TJSONObject;
 
-    function TotalValue(DateTime: Double): Double;
-
-    function GetTraderOption: TJSONObject;
-    procedure SetTraderOption(AValue: TJSONObject);
+    function TotalValue(ADateTime: TDateTime): Double;
   end;
 
 implementation
@@ -48,7 +45,7 @@ begin
     ExecTime := Now;
     result := FCoinone.AccountInfo(TRequestType(AType));
     TGlobal.Obj.ApplicationMessage(msDebug, 'AccountInfo', 'Command=%s,ExecTime=%s',
-      [RequestType[AType], FormatDateTime('NN: SS.zzz ', Now - ExecTime)]);
+      [TCoinone.RequestName(AType), FormatDateTime('NN: SS.zzz ', Now - ExecTime)]);
   except
     on E: Exception do
     begin
@@ -74,8 +71,6 @@ end;
 procedure TsmDataProvider.DSServerModuleCreate(Sender: TObject);
 begin
   FCoinone := TCoinone.Create(TOption.Obj.AccessToken, TOption.Obj.SecretKey);
-  TGlobal.Obj.ApplicationMessage(msDebug, 'Token', TOption.Obj.AccessToken);
-  TGlobal.Obj.ApplicationMessage(msDebug, 'Secret', TOption.Obj.SecretKey);
 end;
 
 procedure TsmDataProvider.DSServerModuleDestroy(Sender: TObject);
@@ -83,21 +78,24 @@ begin
   FCoinone.Free;
 end;
 
-function TsmDataProvider.GetTraderOption: TJSONObject;
-begin
-  result := TJSONObject.ParseJSONValue(TOption.Obj.TraderOption) as TJSONObject;
-end;
-
-function TsmDataProvider.HighLow(ACoin: string): TJSONObject;
+function TsmDataProvider.HighLow(ACoin: string; APeriod: TDateTime): TJSONObject;
 var
+  ExecTime: TDateTime;
   Conn: TFDConnection;
 begin
   try
     Conn := ServerContainer.GetIdleConnection;
     try
+
       qryHighLow.Connection := Conn;
       qryHighLow.ParamByName('coin_code').AsString := ACoin;
+      qryHighLow.ParamByName('begin_time').AsSQLTimeStamp := DateTimeToSQLTimeStamp(APeriod);
+      qryHighLow.ParamByName('end_time').AsSQLTimeStamp := DateTimeToSQLTimeStamp(Now);
+
+      ExecTime := Now;
       qryHighLow.Open;
+      TGlobal.Obj.ApplicationMessage(msDebug, 'HighLow', 'Period=%s,ExecTime=%s',
+        [APeriod.FormatWithoutMSec, FormatDateTime('NN: SS.zzz ', Now - ExecTime)]);
 
       result := qryHighLow.ToJSON;
     finally
@@ -106,7 +104,7 @@ begin
   except
     on E: Exception do
     begin
-      result := nil;
+      result := TJSONObject.Create;
       TGlobal.Obj.ApplicationMessage(msError, 'HighLow', E.Message);
     end;
   end;
@@ -120,7 +118,8 @@ begin
     ExecTime := Now;
     result := FCoinone.Order(TRequestType(AType), AParams);
     TGlobal.Obj.ApplicationMessage(msDebug, 'Order', 'Command=%s,Params=%s,ExecTime=%s',
-      [RequestType[AType], AParams.ToString, FormatDateTime('NN: SS.zzz ', Now - ExecTime)]);
+      [TCoinone.RequestName(AType), AParams.ToString, FormatDateTime('NN: SS.zzz ',
+      Now - ExecTime)]);
   except
     on E: Exception do
     begin
@@ -138,7 +137,7 @@ begin
     ExecTime := Now;
     result := FCoinone.PublicInfo(TRequestType(AType), AParam);
     TGlobal.Obj.ApplicationMessage(msDebug, 'PublicInfo', 'Command=%s,Param=%s,ExecTime=%s',
-      [RequestType[AType], AParam, FormatDateTime('NN: SS.zzz ', Now - ExecTime)]);
+      [TCoinone.RequestName(AType), AParam, FormatDateTime('NN: SS.zzz ', Now - ExecTime)]);
   except
     on E: Exception do
     begin
@@ -146,11 +145,6 @@ begin
       result := nil;
     end;
   end;
-end;
-
-procedure TsmDataProvider.SetTraderOption(AValue: TJSONObject);
-begin
-  TOption.Obj.TraderOption := AValue.ToString;
 end;
 
 function TsmDataProvider.Tick(AParams: TJSONObject): TStream;
@@ -166,7 +160,7 @@ begin
   end;
 end;
 
-function TsmDataProvider.TotalValue(DateTime: Double): Double;
+function TsmDataProvider.TotalValue(ADateTime: TDateTime): Double;
 var
   Conn: TFDConnection;
 begin
@@ -174,7 +168,7 @@ begin
   try
     qryTotalValue.Close;
     qryTotalValue.Connection := Conn;
-    qryTotalValue.ParamByName('day_stamp').AsSQLTimeStamp := DateTimeToSQLTimeStamp(DateTime);
+    qryTotalValue.ParamByName('day_stamp').AsSQLTimeStamp := DateTimeToSQLTimeStamp(ADateTime);
     qryTotalValue.Open;
     result := qryTotalValue.FieldByName('krw').AsFloat;
   finally

@@ -7,7 +7,7 @@ uses
   Datasnap.DSProviderDataModuleAdapter, System.JSON,
   REST.JSON, FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Param, FireDAC.Stan.Error,
   FireDAC.DatS, FireDAC.Phys.Intf, FireDAC.DApt.Intf, FireDAC.Stan.Async, FireDAC.DApt,
-  Data.DB, FireDAC.Comp.DataSet, FireDAC.Comp.Client;
+  Data.DB, FireDAC.Comp.DataSet, FireDAC.Comp.Client, JdcGlobal, cdGlobal;
 
 type
   TsmDataLoader = class(TDSServerModule)
@@ -28,12 +28,29 @@ uses _ServerContainer;
 
 function TsmDataLoader.UploadDay(AParams: TJSONValue): boolean;
 begin
-  result := ServerContainer.ExecQuery(qryUploadDay, AParams as TJSONArray, 'UploadDay');
+  try
+    result := ServerContainer.ExecQuery(qryUploadDay, AParams as TJSONArray, 'UploadDay');
+  except
+    on E: Exception do
+    begin
+      result := false;
+      TGlobal.Obj.ApplicationMessage(msError, 'UploadDay', E.Message);
+    end;
+  end;
 end;
 
 function TsmDataLoader.UploadTicker(AParams: TJSONValue): boolean;
 begin
-  result := ServerContainer.ExecQuery(qryUploadTicker, AParams as TJSONArray, 'UploadTicker');
+  try
+    result := ServerContainer.ExecQuery(qryUploadTicker, AParams as TJSONArray,
+      'UploadTicker');
+  except
+    on E: Exception do
+    begin
+      result := false;
+      TGlobal.Obj.ApplicationMessage(msError, 'UploadTicker', E.Message);
+    end;
+  end;
 end;
 
 end.

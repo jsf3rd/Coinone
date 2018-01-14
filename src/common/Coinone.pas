@@ -15,10 +15,10 @@ unit Coinone;
 
 interface
 
-uses System.SysUtils, System.Variants, System.Classes,
+uses System.SysUtils, System.Variants, System.Classes, Windows,
   EncdDecd, IdGlobal, IdBaseComponent, IdComponent, IdTCPConnection, IdTCPClient, IdHTTP,
   REST.JSON, System.JSON, IdCoder, IdCoderMIME, IdHash, IdHashSHA, IdSSLOpenSSL,
-  System.DateUtils, IdHMACSHA1, IdHMAC, System.NetEncoding, IdURI;
+  System.DateUtils, IdHMACSHA1, IdHMAC, System.NetEncoding, IdURI, JdcGlobal.ClassHelper;
 
 type
   TRequestType = ( //
@@ -32,12 +32,13 @@ type
 
   TCoinone = class
   private
-    FIdHttp: TIdHTTP;
     FToken: string;
     FHashKey: string;
     function GetURL(AType: TRequestType): string;
     function Get(AType: TRequestType; AParam: string): TJSONObject;
     function Post(AType: TRequestType; AParams: TJSONObject): TJSONObject;
+
+    function CreateHttp: TIdHTTP;
   public
     constructor Create(AToken, AKey: string);
     destructor Destroy; override;
@@ -45,6 +46,10 @@ type
     function AccountInfo(AType: TRequestType): TJSONObject;
     function Order(AType: TRequestType; AParams: TJSONObject): TJSONObject;
     function PublicInfo(AType: TRequestType; AParam: string): TJSONObject;
+
+    class function RequestName(AType: TRequestType): string; overload;
+    class function RequestName(AType: Integer): string; overload;
+    class function MinOrderCount(ACurrency: string): double;
   end;
 
   TOrder = record
@@ -56,6 +61,11 @@ type
     fee: string;
     orderId: string;
     function GetValue: Integer;
+
+    function WasSold: boolean;
+    function WasBought: boolean;
+
+    function ToString: string;
   end;
 
 const
@@ -82,22 +92,37 @@ const
   Coins: array [0 .. 9] of string = ('btc', 'bch', 'eth', 'etc', 'xrp', 'qtum', 'iota', 'ltc',
     'btg', 'krw');
 
+  MinCount: array [0 .. 9] of double = (0.0001, 0.001, 0.01, 0.01, 1, 0.01, 0.1, 0.1, 0.01, 0);
+
+implementation
+
+const
   RequestType: array [0 .. 13] of string = ('Balance', 'DailyBalance', 'DepositAddress',
     'UserInformation', 'VirtualAccount', 'CancelOrder', 'LimitBuy', 'LimitSell',
     'MyCompleteOrders', 'MyLimitOrders', 'MyOrderInformation', 'Orderbook',
     'RecentCompleteOrders', 'Ticker');
 
-implementation
-
-{ TCoinone }
+  { TCoinone }
 
 function TCoinone.AccountInfo(AType: TRequestType): TJSONObject;
 var
+  msg: string;
   AParams: TJSONObject;
 begin
+  result := nil;
+
+  msg := Format('Cmd=%s,Type=%s,', ['AccountInfo', RequestName(AType)]);
   AParams := TJSONObject.Create;
   try
-    result := Post(AType, AParams);
+    try
+      result := Post(AType, AParams);
+    except
+      on E: Exception do
+        raise Exception.Create(msg + 'E=' + E.Message + ', ' + E.ClassName);
+    end;
+
+    if result.GetString('result') <> 'success' then
+      raise Exception.Create(msg + 'res=' + result.ToString);
   finally
     AParams.Free;
   end;
@@ -110,35 +135,50 @@ begin
 
   FToken := AToken;
   FHashKey := AKey;
+end;
 
-  FIdHttp := TIdHTTP.Create(nil);
+function TCoinone.CreateHttp: TIdHTTP;
+var
+  SSL: TIdSSLIOHandlerSocketOpenSSL;
+begin
+  result := TIdHTTP.Create(nil);
+  SSL := TIdSSLIOHandlerSocketOpenSSL.Create(result);
+  result.IOHandler := SSL;
+  result.HandleRedirects := True;
+  result.ConnectTimeout := 10000;
+  result.ReadTimeout := 10000;
 end;
 
 destructor TCoinone.Destroy;
 begin
-  FIdHttp.Free;
   inherited;
 end;
 
 function TCoinone.Get(AType: TRequestType; AParam: string): TJSONObject;
 var
+  _IdHttp: TIdHTTP;
   Response: TBytesStream;
   Res: string;
 begin
-  FIdHttp.Request.Clear;
-  FIdHttp.Request.Accept := 'application/json';
-  FIdHttp.Request.ContentType := 'application/json';
-
-  Response := TBytesStream.Create;
+  _IdHttp := CreateHttp;
   try
-    FIdHttp.Get(GetURL(AType) + '?' + AParam, Response);
-    Response.SetSize(Response.Size);
-    Res := TEncoding.UTF8.GetString(Response.Bytes);
-    result := TJSONObject.ParseJSONValue(Res) as TJSONObject;
-  finally
-    Response.Free;;
-  end;
+    _IdHttp.Request.Clear;
+    _IdHttp.Request.Accept := 'application/json';
+    _IdHttp.Request.ContentType := 'application/json';
 
+    Response := TBytesStream.Create;
+    try
+      _IdHttp.Get(GetURL(AType) + '?' + AParam, Response);
+      Response.SetSize(Response.Size);
+      Res := TEncoding.UTF8.GetString(Response.Bytes);
+      result := TJSONObject.ParseJSONValue(Res) as TJSONObject;
+    finally
+      Response.Free;;
+    end;
+  finally
+    _IdHttp.IOHandler.Free;
+    _IdHttp.Free;
+  end;
 end;
 
 function TCoinone.GetURL(AType: TRequestType): string;
@@ -178,9 +218,35 @@ begin
   end;
 end;
 
-function TCoinone.Order(AType: TRequestType; AParams: TJSONObject): TJSONObject;
+class function TCoinone.MinOrderCount(ACurrency: string): double;
+var
+  I: Integer;
 begin
-  result := Post(AType, AParams);
+  result := 0;
+  for I := Low(Coins) to High(Coins) do
+  begin
+    if Coins[I] = ACurrency then
+    begin
+      result := MinCount[I];
+      Exit;
+    end;
+  end;
+end;
+
+function TCoinone.Order(AType: TRequestType; AParams: TJSONObject): TJSONObject;
+var
+  msg: string;
+begin
+  msg := Format('Cmd=%s,Type=%s,', ['Order', RequestName(AType)]);
+  try
+    result := Post(AType, AParams);
+  except
+    on E: Exception do
+      raise Exception.Create(msg + 'E=' + E.Message);
+  end;
+
+  if result.GetString('result') <> 'success' then
+    raise Exception.Create(msg + 'res=' + result.ToString);
 end;
 
 function TCoinone.Post(AType: TRequestType; AParams: TJSONObject): TJSONObject;
@@ -192,7 +258,8 @@ function TCoinone.Post(AType: TRequestType; AParams: TJSONObject): TJSONObject;
     Encoded: string;
   begin
     AParams.AddPair('access_token', FToken);
-    AParams.AddPair('nonce', TJSONNumber.Create(DateTimeToUnix(Now)));
+    // AParams.AddPair('nonce', TJSONNumber.Create(DateTimeToUnix(Now)));
+    AParams.AddPair('nonce', GetTickCount().ToString);
     Bytes := ToBytes(AParams.ToString);
     Encoded := EncodeBase64(Bytes, Length(Bytes));
     result := Encoded.Replace(sLineBreak, '', [rfReplaceAll]);
@@ -220,6 +287,7 @@ var
 
   Res: string;
   PayLoad: string;
+  _IdHttp: TIdHTTP;
 begin
   PayLoad := GetPayLoad;
 
@@ -230,31 +298,58 @@ begin
       raise Exception.Create('SHA512 Error,' + E.Message);
   end;
 
-  FIdHttp.Request.Clear;
-  FIdHttp.Request.Accept := 'application/json';
-  FIdHttp.Request.ContentType := 'application/json';
-  FIdHttp.Request.CustomHeaders.AddValue('X-COINONE-PAYLOAD', PayLoad);
-  FIdHttp.Request.CustomHeaders.AddValue('X-COINONE-SIGNATURE', Signature);
-
-  FPost := TStringList.Create;
+  _IdHttp := CreateHttp;
   try
-    Response := TBytesStream.Create;
+    _IdHttp.Request.Clear;
+    _IdHttp.Request.Accept := 'application/json';
+    _IdHttp.Request.ContentType := 'application/json';
+    _IdHttp.Request.CustomHeaders.AddValue('X-COINONE-PAYLOAD', PayLoad);
+    _IdHttp.Request.CustomHeaders.AddValue('X-COINONE-SIGNATURE', Signature);
+
+    FPost := TStringList.Create;
     try
-      FIdHttp.Post(GetURL(AType), FPost, Response);
-      Response.SetSize(Response.Size);
-      Res := TEncoding.UTF8.GetString(Response.Bytes);
-      result := TJSONObject.ParseJSONValue(Res) as TJSONObject;
+      Response := TBytesStream.Create;
+      try
+        _IdHttp.Post(GetURL(AType), FPost, Response);
+        Response.SetSize(Response.Size);
+        Res := TEncoding.UTF8.GetString(Response.Bytes);
+        result := TJSONObject.ParseJSONValue(Res) as TJSONObject;
+      finally
+        Response.Free;;
+      end;
     finally
-      Response.Free;;
+      FPost.Free;
     end;
   finally
-    FPost.Free;
+    _IdHttp.IOHandler.Free;
+    _IdHttp.Free;
   end;
 end;
 
 function TCoinone.PublicInfo(AType: TRequestType; AParam: string): TJSONObject;
+var
+  msg: string;
 begin
-  result := Get(AType, AParam);
+  msg := Format('Cmd=%s,Type=%s,', ['PublicInfo', RequestName(AType)]);
+  try
+    result := Get(AType, AParam);
+  except
+    on E: Exception do
+      raise Exception.Create(msg + 'E=' + E.Message);
+  end;
+
+  if result.GetString('result') <> 'success' then
+    raise Exception.Create(msg + 'res=' + result.ToString);
+end;
+
+class function TCoinone.RequestName(AType: Integer): string;
+begin
+  result := RequestType[AType];
+end;
+
+class function TCoinone.RequestName(AType: TRequestType): string;
+begin
+  result := RequestType[Integer(AType)];
 end;
 
 { TOrder }
@@ -262,6 +357,21 @@ end;
 function TOrder.GetValue: Integer;
 begin
   result := round(Self.price.ToInteger * Self.qty.ToDouble);
+end;
+
+function TOrder.ToString: string;
+begin
+  result := 'Price=' + Self.price + ',Count=' + Self.qty + ',Type=' + Self.order_type;
+end;
+
+function TOrder.WasBought: boolean;
+begin
+  result := order_type = 'bid';
+end;
+
+function TOrder.WasSold: boolean;
+begin
+  result := order_type = 'ask';
 end;
 
 end.

@@ -12,6 +12,9 @@ const
 
 type
   TGlobal = class(TGlobalAbstract)
+  private
+    FUseTickLoader: boolean;
+    FConnInfo: TConnInfo;
   protected
     procedure SetExeName(const Value: String); override;
   public
@@ -22,9 +25,12 @@ type
 
     procedure Initialize; override;
     procedure Finalize; override;
+
+    property UseTickLoader: boolean read FUseTickLoader write FUseTickLoader;
+    property ConnInfo: TConnInfo read FConnInfo write FConnInfo;
   end;
 
-  THigLow = record
+  THighLow = record
     high_price: integer;
     low_price: integer;
   end;
@@ -75,6 +81,9 @@ begin
   FIsInitialized := true;
 
   inherited;
+
+  FUseTickLoader := TOption.Obj.UseTickLoader;
+  FConnInfo := TOption.Obj.ConnInfo;
 
   // Todo :
   // FLogServer.StringValue := 'log.iccs.co.kr';

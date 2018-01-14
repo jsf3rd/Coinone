@@ -93,6 +93,7 @@
         <DCC_DebugInformation>0</DCC_DebugInformation>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2_Win32)'!=''">
+        <DCC_ExeOutput>..\bin\$(Config)\CoinDataSvc</DCC_ExeOutput>
         <Icon_MainIcon>default.ico</Icon_MainIcon>
         <VerInfo_Locale>1033</VerInfo_Locale>
         <VerInfo_Keys>CompanyName=playIoT.;FileDescription=DataSnap for Service Basic.;FileVersion=1.0.0.0;InternalName=DataSnap Svc;LegalCopyright=(c)playIoT.;LegalTrademarks=;OriginalFilename=;ProductName=DataSnap4Service;ProductVersion=1.0.0.0;Comments=DB Service Application.</VerInfo_Keys>

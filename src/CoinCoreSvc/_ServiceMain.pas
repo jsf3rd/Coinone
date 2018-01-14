@@ -75,11 +75,13 @@ begin
     Reg.Free;
   end;
 
+  TGlobal.Obj.ExeName := GetExeName;
   TGlobal.Obj.ApplicationMessage(msWarning, 'Installed', SERVICE_NAME);
 end;
 
 procedure TServiceMain.ServiceAfterUninstall(Sender: TService);
 begin
+  TGlobal.Obj.ExeName := GetExeName;
   TGlobal.Obj.ApplicationMessage(msWarning, 'Uninstalled', SERVICE_NAME);
 end;
 

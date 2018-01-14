@@ -35,16 +35,12 @@ object smDataProvider: TsmDataProvider
       'select t1.*,'
       
         '(select Max(t2.price) from ticker_tab t2 where t2.coin_code = t1' +
-        '.coin_code and t2.tick_stamp > (t1.tick_stamp - interval '#39'7 hour' +
-        #39') and t2.tick_stamp <= t1.tick_stamp ) high_price,'
+        '.coin_code and t2.tick_stamp > (t1.tick_stamp - :high_period) an' +
+        'd t2.tick_stamp <= t1.tick_stamp ) high_price,'
       
         '(select Min(t2.price) from ticker_tab t2 where t2.coin_code = t1' +
-        '.coin_code and t2.tick_stamp > (t1.tick_stamp - interval '#39'7 hour' +
-        #39') and t2.tick_stamp <= t1.tick_stamp ) low_price,'
-      
-        '(select Avg(t2.price) from ticker_tab t2 where t2.coin_code = t1' +
-        '.coin_code and t2.tick_stamp > (t1.tick_stamp - interval '#39'12 hou' +
-        'r'#39') and t2.tick_stamp <= t1.tick_stamp ) ma'
+        '.coin_code and t2.tick_stamp > (t1.tick_stamp - :low_period) and' +
+        ' t2.tick_stamp <= t1.tick_stamp ) low_price'
       'from ticker_tab t1'
       'where t1.coin_code = :coin_code and'
       ':begin_time <= t1.tick_stamp and :end_time >= t1.tick_stamp'
@@ -52,6 +48,16 @@ object smDataProvider: TsmDataProvider
     Left = 112
     Top = 16
     ParamData = <
+      item
+        Name = 'HIGH_PERIOD'
+        DataType = ftTime
+        ParamType = ptInput
+      end
+      item
+        Name = 'LOW_PERIOD'
+        DataType = ftTime
+        ParamType = ptInput
+      end
       item
         Name = 'COIN_CODE'
         DataType = ftWideString
@@ -77,14 +83,24 @@ object smDataProvider: TsmDataProvider
       'select Max(price) high_price, Min(price) low_price'
       'from ticker_tab'
       'where coin_code = :coin_code '
-      'and tick_stamp > (now() - interval '#39'7 hour'#39') '
-      'and tick_stamp <= now()')
+      'and tick_stamp > :begin_time'
+      'and tick_stamp <= :end_time')
     Left = 184
     Top = 16
     ParamData = <
       item
         Name = 'COIN_CODE'
         DataType = ftWideString
+        ParamType = ptInput
+      end
+      item
+        Name = 'BEGIN_TIME'
+        DataType = ftTimeStamp
+        ParamType = ptInput
+      end
+      item
+        Name = 'END_TIME'
+        DataType = ftTimeStamp
         ParamType = ptInput
       end>
   end

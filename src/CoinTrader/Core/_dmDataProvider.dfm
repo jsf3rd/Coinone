@@ -140,11 +140,6 @@ object dmDataProvider: TdmDataProvider
     object mtTickPeriodlow_price: TFloatField
       FieldName = 'low_price'
     end
-    object mtTickPeriodma12: TFloatField
-      DisplayLabel = 'MA'
-      FieldName = 'ma'
-      DisplayFormat = '#,##0'
-    end
   end
   object DSRestConnection: TDSRestConnection
     Port = 80
@@ -261,20 +256,20 @@ object dmDataProvider: TdmDataProvider
     end
     object FloatField11: TFloatField
       DisplayLabel = #52404#44208#44032
-      DisplayWidth = 6
+      DisplayWidth = 9
       FieldName = 'price'
       DisplayFormat = '#,##0'
     end
     object FloatField10: TFloatField
       DisplayLabel = #49688#47049
-      DisplayWidth = 6
+      DisplayWidth = 7
       FieldName = 'amount'
       DisplayFormat = '#,##0.00'
     end
     object mtLimitOrdersorder_type: TWideStringField
       Alignment = taCenter
       DisplayLabel = #44396#48516
-      DisplayWidth = 6
+      DisplayWidth = 7
       FieldName = 'order_type'
       OnGetText = mtLimitOrdersorder_typeGetText
       Size = 16
@@ -320,13 +315,13 @@ object dmDataProvider: TdmDataProvider
     end
     object FloatField12: TFloatField
       DisplayLabel = #52404#44208#44032
-      DisplayWidth = 6
+      DisplayWidth = 9
       FieldName = 'price'
       DisplayFormat = '#,##0'
     end
     object FloatField13: TFloatField
       DisplayLabel = #49688#47049
-      DisplayWidth = 6
+      DisplayWidth = 7
       FieldName = 'amount'
       DisplayFormat = '#,##0.00'
     end
@@ -340,7 +335,7 @@ object dmDataProvider: TdmDataProvider
     end
     object mtCompleteOrderslast: TFloatField
       DisplayLabel = #49688#49688#47308
-      DisplayWidth = 6
+      DisplayWidth = 7
       FieldName = 'fee'
       DisplayFormat = '#,##0.00'
     end
