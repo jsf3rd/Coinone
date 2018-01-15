@@ -15,6 +15,7 @@ type
   private
     FUseTickLoader: boolean;
     FConnInfo: TConnInfo;
+    FUserID: string;
   protected
     procedure SetExeName(const Value: String); override;
   public
@@ -28,6 +29,7 @@ type
 
     property UseTickLoader: boolean read FUseTickLoader write FUseTickLoader;
     property ConnInfo: TConnInfo read FConnInfo write FConnInfo;
+    property UserID: string read FUserID write FUserID;
   end;
 
   THighLow = record
@@ -84,6 +86,7 @@ begin
 
   FUseTickLoader := TOption.Obj.UseTickLoader;
   FConnInfo := TOption.Obj.ConnInfo;
+  FUserID := TOption.Obj.UserID;
 
   // Todo :
   // FLogServer.StringValue := 'log.iccs.co.kr';

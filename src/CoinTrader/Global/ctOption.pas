@@ -3,8 +3,7 @@ unit ctOption;
 interface
 
 uses
-  Classes, SysUtils, ctGlobal, System.IniFiles, Registry,
-  Winapi.Windows;
+  Classes, SysUtils, ctGlobal, System.IniFiles, Registry, Winapi.Windows, JclSysInfo;
 
 type
   TOption = class
@@ -13,6 +12,10 @@ type
     constructor Create;
     function GetAppName: string;
     procedure SetAppName(const Value: string);
+    function GetAccessToken: string;
+    function GetSecretKey: string;
+    function GetUserID: string;
+    procedure SetUserID(const Value: string);
   public
     class function Obj: TOption;
 
@@ -20,6 +23,11 @@ type
 
     property IniFile: TCustomIniFile read FIniFile;
     property AppName: string read GetAppName write SetAppName;
+
+    property AccessToken: string read GetAccessToken;
+    property SecretKey: string read GetSecretKey;
+
+    property UserID: string read GetUserID write SetUserID;
   end;
 
 implementation
@@ -34,7 +42,7 @@ var
   FileName: string;
 begin
   // IniFile...
-  FileName := ChangeFileExt(TGlobal.Obj.LogName, '.ini');
+  FileName := ChangeFileExt(TGlobal.Obj.ExeName, '.ini');
   FIniFile := TIniFile.Create(FileName);
 
   // FIniFile := TMemIniFile.Create(FileName);
@@ -53,9 +61,24 @@ begin
   inherited;
 end;
 
+function TOption.GetAccessToken: string;
+begin
+  result := FIniFile.ReadString('Auth', 'AccessToken', '');
+end;
+
 function TOption.GetAppName: string;
 begin
   result := FIniFile.ReadString('Config', 'AppName', APPLICATION_TITLE);
+end;
+
+function TOption.GetSecretKey: string;
+begin
+  result := FIniFile.ReadString('Auth', 'SecretKey', '');
+end;
+
+function TOption.GetUserID: string;
+begin
+  result := FIniFile.ReadString('Config', 'UserID', GetLocalUserName);
 end;
 
 class function TOption.Obj: TOption;
@@ -70,6 +93,11 @@ end;
 procedure TOption.SetAppName(const Value: string);
 begin
   FIniFile.WriteString('Config', 'AppName', Value);
+end;
+
+procedure TOption.SetUserID(const Value: string);
+begin
+  FIniFile.WriteString('Config', 'UserID', Value);
 end;
 
 end.

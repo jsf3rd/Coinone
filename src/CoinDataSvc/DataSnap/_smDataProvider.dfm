@@ -1,36 +1,8 @@
 object smDataProvider: TsmDataProvider
   OldCreateOrder = False
-  OnCreate = DSServerModuleCreate
-  OnDestroy = DSServerModuleDestroy
   Height = 259
   Width = 405
-  object qryDay: TFDQuery
-    SQL.Strings = (
-      'select * '
-      'from day_tab'
-      'where coin_code = :coin_code and'
-      ':begin_time <= day_stamp and :end_time >= day_stamp'
-      'order by day_stamp')
-    Left = 48
-    Top = 16
-    ParamData = <
-      item
-        Name = 'COIN_CODE'
-        DataType = ftWideString
-        ParamType = ptInput
-      end
-      item
-        Name = 'BEGIN_TIME'
-        DataType = ftTimeStamp
-        ParamType = ptInput
-      end
-      item
-        Name = 'END_TIME'
-        DataType = ftTimeStamp
-        ParamType = ptInput
-      end>
-  end
-  object qryTick: TFDQuery
+  object qryTicker: TFDQuery
     SQL.Strings = (
       'select t1.*,'
       
@@ -45,7 +17,7 @@ object smDataProvider: TsmDataProvider
       'where t1.coin_code = :coin_code and'
       ':begin_time <= t1.tick_stamp and :end_time >= t1.tick_stamp'
       'order by t1.tick_stamp')
-    Left = 112
+    Left = 56
     Top = 16
     ParamData = <
       item
@@ -85,7 +57,7 @@ object smDataProvider: TsmDataProvider
       'where coin_code = :coin_code '
       'and tick_stamp > :begin_time'
       'and tick_stamp <= :end_time')
-    Left = 184
+    Left = 128
     Top = 16
     ParamData = <
       item
@@ -104,17 +76,35 @@ object smDataProvider: TsmDataProvider
         ParamType = ptInput
       end>
   end
-  object qryTotalValue: TFDQuery
+  object qryOrder: TFDQuery
     SQL.Strings = (
-      'select day_stamp, sum(last_price * amount) krw'
-      'from day_tab'
-      'where day_stamp = :day_stamp'
-      'group by day_stamp')
-    Left = 184
-    Top = 88
+      'select *'
+      'from order_tab'
+      'where coin_code = :coin_code'
+      'and :begin_time <= order_stamp and :end_time >= order_stamp'
+      'and user_id = :user_id'
+      'order by order_stamp')
+    Left = 192
+    Top = 16
     ParamData = <
       item
-        Name = 'DAY_STAMP'
+        Name = 'COIN_CODE'
+        DataType = ftWideString
+        ParamType = ptInput
+      end
+      item
+        Name = 'BEGIN_TIME'
+        DataType = ftTimeStamp
+        ParamType = ptInput
+      end
+      item
+        Name = 'END_TIME'
+        DataType = ftTimeStamp
+        ParamType = ptInput
+      end
+      item
+        Name = 'USER_ID'
+        DataType = ftWideString
         ParamType = ptInput
       end>
   end

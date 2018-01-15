@@ -9,7 +9,7 @@ uses
   FireDAC.DApt.Intf, FireDAC.Comp.DataSet, FireDAC.Comp.Client, Coinone, System.JSON,
   REST.JSON, JdcGlobal.ClassHelper, System.DateUtils, JdcGlobal.DSCommon,
   Datasnap.DSClientRest, FireDAC.Stan.StorageBin, System.Math, JdcView, JdcGlobal, ctGlobal,
-  Data.SqlTimSt, IdBaseComponent, IdComponent, IdTCPConnection, IdTCPClient, IdHTTP;
+  Data.SqlTimSt, IdBaseComponent, IdComponent, IdTCPConnection, IdTCPClient, IdHTTP, ctOption;
 
 type
   TdmDataProvider = class(TDataModule)
@@ -33,11 +33,6 @@ type
     mtTickPeriodtick_stamp: TSQLTimeStampField;
     FDStanStorageBinLink: TFDStanStorageBinLink;
     mtTickPeriodvolume_avg: TFloatField;
-    mtHighLow: TFDMemTable;
-    FloatField2: TFloatField;
-    FloatField7: TFloatField;
-    mtHighLowhigh_price: TFloatField;
-    mtHighLowlow_price: TFloatField;
     mtTickPeriodstoch: TFloatField;
     mtTickhigh: TFloatField;
     mtTicklow_price: TFloatField;
@@ -69,6 +64,16 @@ type
     mtStoch: TFDMemTable;
     SQLTimeStampField2: TSQLTimeStampField;
     FloatField17: TFloatField;
+    mtOrder: TFDMemTable;
+    mtOrderprice: TFloatField;
+    mtOrderqty: TFloatField;
+    mtOrderorder_stamp: TSQLTimeStampField;
+    mtOrderorder_type: TWideStringField;
+    mtComplete: TFDMemTable;
+    SQLTimeStampField3: TSQLTimeStampField;
+    FloatField2: TFloatField;
+    FloatField3: TFloatField;
+    WideStringField7: TWideStringField;
     procedure mtTickCalcFields(DataSet: TDataSet);
     procedure DataModuleCreate(Sender: TObject);
     procedure mtTickPeriodCalcFields(DataSet: TDataSet);
@@ -76,12 +81,14 @@ type
     procedure mtLimitOrdersorder_typeGetText(Sender: TField; var Text: string;
       DisplayText: Boolean);
   private
+    FCoinone: TCoinone;
+
     FInstanceOwner: Boolean;
     FsmDataProviderClient: TsmDataProviderClient;
     FsmDataLoaderClient: TsmDataLoaderClient;
-    FYesterDayValue: double;
 
     FOldPrice, FUpSum, FDownSum: Integer;
+    FYesterDayValue: Integer;
 
     function Order(APrice, ACount: double; ACoin: string; AType: TRequestType): TJSONObject;
     function CreateParams(ACoin: string; AChartDay, AStochHour: Integer): TJSONObject;
@@ -105,7 +112,7 @@ type
 
     procedure LimitOrders;
     procedure CancelOrder;
-    procedure CompleteOrders;
+    procedure CompleteOrders(ACurrency: string);
 
     property InstanceOwner: Boolean read FInstanceOwner write FInstanceOwner;
     property smDataProviderClient: TsmDataProviderClient read GetsmDataProviderClient
@@ -113,7 +120,7 @@ type
     property smDataLoaderClient: TsmDataLoaderClient read GetsmDataLoaderClient
       write FsmDataLoaderClient;
 
-    property YesterDayValue: double read FYesterDayValue;
+    property YesterDayValue: Integer read FYesterDayValue write FYesterDayValue;
   end;
 
 var
@@ -127,7 +134,6 @@ implementation
 
 function TdmDataProvider.MarketAsk(Value: Integer): Boolean;
 var
-  res: TJSONObject;
   Price, Count: double;
   CoinCode: string;
 begin
@@ -146,16 +152,34 @@ begin
 
   Price := mtBalance.FieldByName('last').AsFloat;
   Count := Value / Price;
-  res := Order(Price, Count, CoinCode, rtLimitSell);
-  result := res.GetString('result') = 'success';
 
-  if result then
-    LimitOrders
-  else
-    TGlobal.Obj.ApplicationMessage(msError, 'MarketAsk', res.GetString('result'));
+  try
+    Order(Price, Count, CoinCode, rtLimitSell);
+    LimitOrders;
+    result := true;
+  except
+    on E: Exception do
+      TGlobal.Obj.ApplicationMessage(msError, 'MarketAsk', E.Message);
+  end;
 end;
 
 function TdmDataProvider.Balance: Integer;
+
+  function GetYesterdayBalance: Integer;
+  var
+    JSONObject, _Balance: TJSONObject;
+    DailyBalance: TJSONArray;
+  begin
+    JSONObject := FCoinone.AccountInfo(rtDailyBalance);
+    try
+      DailyBalance := JSONObject.GetJSONArray('dailyBalance');
+      _Balance := DailyBalance.Items[0] as TJSONObject;
+      result := _Balance.GetString('value').ToInteger;
+    finally
+      JSONObject.Free;
+    end;
+  end;
+
 var
   JSONObject, _Balance: TJSONObject;
 
@@ -164,15 +188,15 @@ var
   Amount, Price: double;
   KRW, Total: double;
 begin
+  mtLimitOrders.Close;
+  mtCompleteOrders.Close;
+
   result := 0;
-
-  FYesterDayValue := smDataProviderClient.TotalValue(DateOf(IncDay(Now, -1)));
-
   Total := 0;
 
+  FYesterDayValue := GetYesterdayBalance;
   Tick;
-  JSONObject := smDataProviderClient.AccountInfo(Integer(rtBalance));
-  TGlobal.Obj.ApplicationMessage(msDebug, 'Balance', JSONObject.ToString);
+  JSONObject := FCoinone.AccountInfo(rtBalance);
 
   BookMark := mtBalance.BookMark;
   mtBalance.DisableControls;
@@ -220,7 +244,6 @@ end;
 
 function TdmDataProvider.MarketBid(Value: Integer): Boolean;
 var
-  res: TJSONObject;
   Price, Count: double;
   CoinCode: string;
   KRW: Integer;
@@ -240,19 +263,22 @@ begin
 
   Price := mtBalance.FieldByName('last').AsFloat;
   Count := Value / Price;
-  res := Order(Price, Count, CoinCode, rtLimitBuy);
-  result := res.GetString('result') = 'success';
+  try
+    Order(Price, Count, CoinCode, rtLimitBuy);
+    LimitOrders;
+    result := true;
+  except
+    on E: Exception do
+      TGlobal.Obj.ApplicationMessage(msError, 'MarketBid', E.Message);
+  end;
 
-  if result then
-    LimitOrders
-  else
-    TGlobal.Obj.ApplicationMessage(msError, 'MarketBid', res.GetString('result'));
 end;
 
 procedure TdmDataProvider.CancelOrder;
 var
-  res, Params: TJSONObject;
+  Params: TJSONObject;
 begin
+
   if mtLimitOrders.IsEmpty then
     Exit;
 
@@ -268,16 +294,55 @@ begin
 
   Params.AddPair('currency', mtLimitOrders.FieldByName('coin').AsString);
 
-  res := smDataProviderClient.Order(Integer(rtCancelOrder), Params);
-  if res.GetString('result') = 'success' then
-  begin
+  try
+    FCoinone.Order(rtCancelOrder, Params);
     LimitOrders;
-  end
-  else
-    TGlobal.Obj.ApplicationMessage(msError, 'CancelOrder', res.GetString('result'));
+  except
+    on E: Exception do
+      TGlobal.Obj.ApplicationMessage(msError, 'CancelOrder', E.Message);
+  end;
+
 end;
 
 procedure TdmDataProvider.ChartData(AChartDay, AStochHour: Integer);
+
+  procedure Complete(ACurrency: string);
+  var
+    Params, JSONObject, _Order: TJSONObject;
+    Orders: TJSONArray;
+    MyOrder: TJSONValue;
+    DateTime: TDateTime;
+  begin
+    if ACurrency = 'krw' then
+      Exit;
+
+    Params := TJSONObject.Create;
+    Params.AddPair('currency', ACurrency);
+    JSONObject := FCoinone.Order(rtMyCompleteOrders, Params);
+
+    Orders := JSONObject.GetValue('completeOrders') as TJSONArray;
+
+    mtComplete.Close;
+    mtComplete.Open;
+
+    for MyOrder in Orders do
+    begin
+      _Order := MyOrder as TJSONObject;
+      DateTime := UnixToDateTime(_Order.GetString('timestamp').ToInteger);
+      DateTime := IncHour(DateTime, 9);
+
+      if DateTime < IncDay(Now, -AChartDay) then
+        Continue;
+
+      mtComplete.Append;
+      mtComplete.FieldByName('order_stamp').AsSQLTimeStamp := DateTimeToSQLTimeStamp(DateTime);
+      mtComplete.FieldByName('price').AsFloat := _Order.GetString('price').ToDouble;
+      mtComplete.FieldByName('amount').AsFloat := _Order.GetString('qty').ToDouble;
+      mtComplete.FieldByName('order_type').AsString := _Order.GetString('type');
+      mtComplete.CommitUpdates;
+    end;
+  end;
+
 var
   Params: TJSONObject;
   Coin: String;
@@ -291,14 +356,21 @@ begin
 
   Coin := mtTick.FieldByName('coin').AsString;
   Params := CreateParams(Coin, AChartDay, AStochHour);
-  mtTickPeriod.LoadFromDSStream(smDataProviderClient.Tick(Params));
+  mtTickPeriod.LoadFromDSStream(smDataProviderClient.Ticker(Params));
+
+  Params := TJSONObject.Create;
+  Params.AddPair('coin_code', Coin);
+  Params.AddPair('begin_time', IncDay(Now, -AChartDay).ToISO8601);
+  Params.AddPair('end_time', Now.ToISO8601);
+  Params.AddPair('user_id', TGlobal.Obj.UserID);
+  mtOrder.LoadFromDSStream(smDataProviderClient.Orders(Params));
+  Complete(Coin);
 end;
 
 constructor TdmDataProvider.Create(AOwner: TComponent);
 begin
   inherited;
-  FInstanceOwner := True;
-  FYesterDayValue := 0;
+  FInstanceOwner := true;
 end;
 
 function TdmDataProvider.Order(APrice, ACount: double; ACoin: string; AType: TRequestType)
@@ -310,25 +382,22 @@ begin
   Params.AddPair('price', Format('%.0f', [APrice]));
   Params.AddPair('qty', Format('%.2f', [ACount]));
   Params.AddPair('currency', ACoin);
-  result := smDataProviderClient.Order(Integer(AType), Params);
+  result := FCoinone.Order(AType, Params);
 end;
 
-procedure TdmDataProvider.CompleteOrders;
+procedure TdmDataProvider.CompleteOrders(ACurrency: string);
 var
   Params, JSONObject, _Order: TJSONObject;
   Orders: TJSONArray;
   MyOrder: TJSONValue;
-  CoinCode: string;
   DateTime: TDateTime;
 begin
-  CoinCode := mtBalance.FieldByName('coin').AsString;
-
-  if CoinCode = 'krw' then
+  if ACurrency = 'krw' then
     Exit;
 
   Params := TJSONObject.Create;
-  Params.AddPair('currency', CoinCode);
-  JSONObject := smDataProviderClient.Order(Integer(rtMyCompleteOrders), Params);
+  Params.AddPair('currency', ACurrency);
+  JSONObject := FCoinone.Order(rtMyCompleteOrders, Params);
 
   Orders := JSONObject.GetValue('completeOrders') as TJSONArray;
 
@@ -338,10 +407,10 @@ begin
   for MyOrder in Orders do
   begin
     _Order := MyOrder as TJSONObject;
-
-    mtCompleteOrders.Append;
     DateTime := UnixToDateTime(_Order.GetString('timestamp').ToInteger);
     DateTime := IncHour(DateTime, 9);
+
+    mtCompleteOrders.Append;
     mtCompleteOrders.FieldByName('order_stamp').AsSQLTimeStamp :=
       DateTimeToSQLTimeStamp(DateTime);
     mtCompleteOrders.FieldByName('price').AsFloat := _Order.GetString('price').ToDouble;
@@ -349,7 +418,7 @@ begin
     mtCompleteOrders.FieldByName('order_type').AsString := _Order.GetString('type');
     mtCompleteOrders.FieldByName('order_id').AsString := _Order.GetString('orderId');
     mtCompleteOrders.FieldByName('fee').AsString := _Order.GetString('fee');
-    mtCompleteOrders.FieldByName('coin').AsString := CoinCode;
+    mtCompleteOrders.FieldByName('coin').AsString := ACurrency;
     mtCompleteOrders.CommitUpdates;
   end;
   mtCompleteOrders.First;
@@ -357,8 +426,6 @@ end;
 
 function TdmDataProvider.CreateParams(ACoin: string; AChartDay, AStochHour: Integer)
   : TJSONObject;
-var
-  ATime: TTime;
 begin
   result := TJSONObject.Create;
   result.AddPair('coin_code', UpperCase(ACoin));
@@ -373,10 +440,14 @@ procedure TdmDataProvider.DataModuleCreate(Sender: TObject);
 begin
   mtTick.Open;
   mtBalance.Open;
+
+  FCoinone := TCoinone.Create(TOption.Obj.AccessToken, TOption.Obj.SecretKey);
 end;
 
 destructor TdmDataProvider.Destroy;
 begin
+  FCoinone.Free;
+
   FsmDataProviderClient.Free;
   FsmDataLoaderClient.Free;
   inherited;
@@ -464,10 +535,8 @@ begin
 
   Params := TJSONObject.Create;
   Params.AddPair('currency', CoinCode);
-  JSONObject := smDataProviderClient.Order(Integer(rtMyLimitOrders), Params);
-
+  JSONObject := FCoinone.Order(rtMyLimitOrders, Params);
   _LimitOrders := JSONObject.GetValue('limitOrders') as TJSONArray;
-
   mtLimitOrders.Close;
   mtLimitOrders.Open;
 
@@ -552,7 +621,7 @@ var
   I: Integer;
   BookMark: TBookmark;
 begin
-  JSONObject := smDataProviderClient.PublicInfo(Integer(rtTicker), 'currency=all');
+  JSONObject := FCoinone.PublicInfo(rtTicker, 'currency=all');
 
   DateTime := UnixToDateTime(JSONObject.GetString('timestamp').ToInteger);
   DateTime := IncHour(DateTime, 9);

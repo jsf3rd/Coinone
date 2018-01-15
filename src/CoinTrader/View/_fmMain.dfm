@@ -16,6 +16,7 @@ object fmMain: TfmMain
   OnCloseQuery = FormCloseQuery
   OnCreate = FormCreate
   OnDestroy = FormDestroy
+  OnResize = FormResize
   OnShow = FormShow
   PixelsPerInch = 96
   TextHeight = 17
@@ -114,11 +115,21 @@ object fmMain: TfmMain
         Align = alClient
         Caption = 'Panel3'
         TabOrder = 1
+        object Splitter2: TSplitter
+          Left = 1
+          Top = 205
+          Width = 854
+          Height = 3
+          Cursor = crVSplit
+          Align = alBottom
+          ExplicitTop = 1
+          ExplicitWidth = 205
+        end
         object chtMain: TDBChart
           Left = 1
           Top = 1
           Width = 854
-          Height = 207
+          Height = 204
           Title.Font.Color = clBlack
           Title.Font.Height = -16
           Title.Font.Style = [fsBold]
@@ -180,6 +191,40 @@ object fmMain: TfmMain
             YValues.Order = loNone
             YValues.ValueSource = 'price_stoch'
           end
+          object Series7: TPointSeries
+            DataSource = dmDataProvider.mtComplete
+            Title = 'Complete'
+            ClickableLine = False
+            Pointer.Brush.Color = clRed
+            Pointer.InflateMargins = True
+            Pointer.Style = psCircle
+            XValues.DateTime = True
+            XValues.Name = 'X'
+            XValues.Order = loAscending
+            XValues.ValueSource = 'order_stamp'
+            YValues.Name = 'Y'
+            YValues.Order = loNone
+            YValues.ValueSource = 'price'
+          end
+          object Series3: TPointSeries
+            DataSource = dmDataProvider.mtOrder
+            Title = 'Order'
+            ClickableLine = False
+            Pointer.Brush.Style = bsClear
+            Pointer.HorizSize = 8
+            Pointer.InflateMargins = True
+            Pointer.Pen.Color = 8421440
+            Pointer.Pen.Width = 2
+            Pointer.Style = psCircle
+            Pointer.VertSize = 8
+            XValues.DateTime = True
+            XValues.Name = 'X'
+            XValues.Order = loAscending
+            XValues.ValueSource = 'order_stamp'
+            YValues.Name = 'Y'
+            YValues.Order = loNone
+            YValues.ValueSource = 'price'
+          end
         end
         object chtStoch: TDBChart
           Left = 1
@@ -203,6 +248,7 @@ object fmMain: TfmMain
           object Series4: TLineSeries
             DataSource = dmDataProvider.mtStoch
             Title = 'Stoch'
+            VertAxis = aRightAxis
             Brush.BackColor = clDefault
             Pointer.InflateMargins = True
             Pointer.Style = psRectangle
@@ -214,15 +260,52 @@ object fmMain: TfmMain
             YValues.Order = loNone
             YValues.ValueSource = 'price_stoch'
           end
-          object Series6: TLineSeries
-            Title = 'tmp'
-            Brush.BackColor = clDefault
+          object Series8: TPointSeries
+            Marks.Transparency = 20
+            Marks.Visible = True
+            Marks.Arrow.Color = 4079359
+            Marks.Arrow.Visible = False
+            Marks.Callout.Arrow.Color = 4079359
+            Marks.Callout.Arrow.Visible = False
+            Marks.Callout.Distance = 4
+            Marks.Callout.Length = 18
+            DataSource = dmDataProvider.mtComplete
+            Title = 'Complete'
+            ClickableLine = False
+            Pointer.Brush.Color = clRed
             Pointer.InflateMargins = True
-            Pointer.Style = psRectangle
+            Pointer.Style = psCircle
+            XValues.DateTime = True
             XValues.Name = 'X'
             XValues.Order = loAscending
+            XValues.ValueSource = 'order_stamp'
             YValues.Name = 'Y'
             YValues.Order = loNone
+            YValues.ValueSource = 'price'
+          end
+          object Series6: TPointSeries
+            Marks.Transparency = 26
+            Marks.Callout.ArrowHead = ahLine
+            Marks.Callout.Distance = 4
+            Marks.Callout.Length = 4
+            Marks.Symbol.Brush.Style = bsClear
+            DataSource = dmDataProvider.mtOrder
+            Title = 'Order'
+            ClickableLine = False
+            Pointer.Brush.Style = bsClear
+            Pointer.HorizSize = 8
+            Pointer.InflateMargins = True
+            Pointer.Pen.Color = 8421440
+            Pointer.Pen.Width = 2
+            Pointer.Style = psCircle
+            Pointer.VertSize = 8
+            XValues.DateTime = True
+            XValues.Name = 'X'
+            XValues.Order = loAscending
+            XValues.ValueSource = 'order_stamp'
+            YValues.Name = 'Y'
+            YValues.Order = loNone
+            YValues.ValueSource = 'price'
           end
         end
       end
@@ -453,6 +536,18 @@ object fmMain: TfmMain
         end
       end
     end
+    object tsPreference: TTabSheet
+      Caption = #49444#51221
+      ImageIndex = 2
+      object Button8: TButton
+        Left = 48
+        Top = 48
+        Width = 75
+        Height = 25
+        Caption = 'Button8'
+        TabOrder = 0
+      end
+    end
   end
   object StatusBar: TStatusBar
     Left = 0
@@ -471,8 +566,8 @@ object fmMain: TfmMain
       end>
   end
   object MainMenu: TMainMenu
-    Left = 304
-    Top = 224
+    Left = 656
+    Top = 304
     object File1: TMenuItem
       Caption = '&File'
       object Exit1: TMenuItem
@@ -502,12 +597,12 @@ object fmMain: TfmMain
   end
   object ApplicationEvents: TApplicationEvents
     OnException = ApplicationEventsException
-    Left = 224
-    Top = 216
+    Left = 568
+    Top = 304
   end
   object ActionList: TActionList
-    Left = 144
-    Top = 216
+    Left = 464
+    Top = 304
     object actAbout: TAction
       Caption = '&About'
       OnExecute = actAboutExecute

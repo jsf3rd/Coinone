@@ -88,12 +88,12 @@ begin
         begin
           try
             Immediate := false;
-            dmDataLoader.Tick;
+            dmDataLoader.OnTicker;
           except
             on E: Exception do
             begin
               Immediate := true;
-              TGlobal.Obj.ApplicationMessage(msError, 'Tick', E.Message);
+              TGlobal.Obj.ApplicationMessage(msError, 'OnTicker', E.Message);
               Sleep(2000);
             end;
           end;

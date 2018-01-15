@@ -94,6 +94,8 @@ const
 
   MinCount: array [0 .. 9] of double = (0.0001, 0.001, 0.01, 0.01, 1, 0.01, 0.1, 0.1, 0.01, 0);
 
+  RES_SUCCESS = 'success';
+
 implementation
 
 const
@@ -118,10 +120,10 @@ begin
       result := Post(AType, AParams);
     except
       on E: Exception do
-        raise Exception.Create(msg + 'E=' + E.Message + ', ' + E.ClassName);
+        raise Exception.Create(msg + 'E=' + E.Message);
     end;
 
-    if result.GetString('result') <> 'success' then
+    if result.GetString('result') <> RES_SUCCESS then
       raise Exception.Create(msg + 'res=' + result.ToString);
   finally
     AParams.Free;
@@ -237,7 +239,7 @@ function TCoinone.Order(AType: TRequestType; AParams: TJSONObject): TJSONObject;
 var
   msg: string;
 begin
-  msg := Format('Cmd=%s,Type=%s,', ['Order', RequestName(AType)]);
+  msg := Format('Cmd=%s,Type=%s,Params=%s,', ['Order', RequestName(AType), AParams.ToString]);
   try
     result := Post(AType, AParams);
   except
@@ -245,7 +247,7 @@ begin
       raise Exception.Create(msg + 'E=' + E.Message);
   end;
 
-  if result.GetString('result') <> 'success' then
+  if result.GetString('result') <> RES_SUCCESS then
     raise Exception.Create(msg + 'res=' + result.ToString);
 end;
 
@@ -330,7 +332,7 @@ function TCoinone.PublicInfo(AType: TRequestType; AParam: string): TJSONObject;
 var
   msg: string;
 begin
-  msg := Format('Cmd=%s,Type=%s,', ['PublicInfo', RequestName(AType)]);
+  msg := Format('Cmd=%s,Type=%s,Param=%s,', ['PublicInfo', RequestName(AType), AParam]);
   try
     result := Get(AType, AParam);
   except
@@ -338,7 +340,7 @@ begin
       raise Exception.Create(msg + 'E=' + E.Message);
   end;
 
-  if result.GetString('result') <> 'success' then
+  if result.GetString('result') <> RES_SUCCESS then
     raise Exception.Create(msg + 'res=' + result.ToString);
 end;
 

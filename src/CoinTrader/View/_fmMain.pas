@@ -74,8 +74,14 @@ type
     edtKrwView: TLabeledEdit;
     chtStoch: TDBChart;
     Series4: TLineSeries;
-    Series6: TLineSeries;
     edtStochHour: TLabeledEdit;
+    tsPreference: TTabSheet;
+    Series7: TPointSeries;
+    Series3: TPointSeries;
+    Series6: TPointSeries;
+    Series8: TPointSeries;
+    Splitter2: TSplitter;
+    Button8: TButton;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure actAboutExecute(Sender: TObject);
@@ -100,6 +106,7 @@ type
     procedure PageControlChange(Sender: TObject);
     procedure SplitterMoved(Sender: TObject);
     procedure edtLimitCountChange(Sender: TObject);
+    procedure FormResize(Sender: TObject);
   published
     procedure rp_Terminate(APacket: TValueList);
     procedure rp_Init(APacket: TValueList);
@@ -243,7 +250,7 @@ end;
 procedure TfmMain.dbgBalanceDblClick(Sender: TObject);
 begin
   dmDataProvider.LimitOrders;
-  dmDataProvider.CompleteOrders;
+  dmDataProvider.CompleteOrders(dmDataProvider.mtBalance.FieldByName('coin').AsString);
 end;
 
 procedure TfmMain.edtLimitCountChange(Sender: TObject);
@@ -275,6 +282,11 @@ end;
 procedure TfmMain.FormDestroy(Sender: TObject);
 begin
   TView.Obj.Remove(Self);
+end;
+
+procedure TfmMain.FormResize(Sender: TObject);
+begin
+  lblRecentOrder.Left := Splitter.Left;
 end;
 
 procedure TfmMain.FormShow(Sender: TObject);

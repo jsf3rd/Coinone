@@ -56,61 +56,34 @@ object smDataLoader: TsmDataLoader
         ParamType = ptInput
       end>
   end
-  object qryUploadDay: TFDQuery
+  object qryUploadOrder: TFDQuery
     SQL.Strings = (
       'INSERT INTO '
-      '  public.day_tab'
+      '  public.order_tab'
       '('
-      '  volume,'
-      '  last_price,'
-      '  first_price,'
-      '  high_price,'
-      '  low_price,'
-      '  day_stamp,'
+      '  order_id,'
       '  coin_code,'
-      '  amount'
+      '  price,'
+      '  qty,'
+      '  order_stamp,'
+      '  user_id,'
+      '  order_type'
       ')'
       'VALUES ('
-      '  :volume,'
-      '  :last_price,'
-      '  :first_price,'
-      '  :high_price,'
-      '  :low_price,'
-      '  :day_stamp,'
+      '  :order_id,'
       '  :coin_code,'
-      '  :amount'
+      '  :price,'
+      '  :qty,'
+      '  :order_stamp,'
+      '  :user_id,'
+      '  :order_type'
       ');')
     Left = 168
     Top = 24
     ParamData = <
       item
-        Name = 'VOLUME'
-        DataType = ftFloat
-        ParamType = ptInput
-      end
-      item
-        Name = 'LAST_PRICE'
-        DataType = ftFloat
-        ParamType = ptInput
-      end
-      item
-        Name = 'FIRST_PRICE'
-        DataType = ftFloat
-        ParamType = ptInput
-      end
-      item
-        Name = 'HIGH_PRICE'
-        DataType = ftFloat
-        ParamType = ptInput
-      end
-      item
-        Name = 'LOW_PRICE'
-        DataType = ftFloat
-        ParamType = ptInput
-      end
-      item
-        Name = 'DAY_STAMP'
-        DataType = ftTimeStamp
+        Name = 'ORDER_ID'
+        DataType = ftGuid
         ParamType = ptInput
       end
       item
@@ -119,8 +92,41 @@ object smDataLoader: TsmDataLoader
         ParamType = ptInput
       end
       item
-        Name = 'AMOUNT'
+        Name = 'PRICE'
         DataType = ftFloat
+        ParamType = ptInput
+      end
+      item
+        Name = 'QTY'
+        DataType = ftFloat
+        ParamType = ptInput
+      end
+      item
+        Name = 'ORDER_STAMP'
+        DataType = ftTimeStamp
+        ParamType = ptInput
+      end
+      item
+        Name = 'USER_ID'
+        DataType = ftWideString
+        ParamType = ptInput
+      end
+      item
+        Name = 'ORDER_TYPE'
+        DataType = ftWideString
+        ParamType = ptInput
+      end>
+  end
+  object qryDeleteOrder: TFDQuery
+    SQL.Strings = (
+      'delete from order_tab'
+      'where order_id = :order_id')
+    Left = 64
+    Top = 96
+    ParamData = <
+      item
+        Name = 'ORDER_ID'
+        DataType = ftGuid
         ParamType = ptInput
       end>
   end

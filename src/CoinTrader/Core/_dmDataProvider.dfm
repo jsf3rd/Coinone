@@ -151,40 +151,7 @@ object dmDataProvider: TdmDataProvider
   end
   object FDStanStorageBinLink: TFDStanStorageBinLink
     Left = 48
-    Top = 256
-  end
-  object mtHighLow: TFDMemTable
-    FetchOptions.AssignedValues = [evMode]
-    FetchOptions.Mode = fmAll
-    ResourceOptions.AssignedValues = [rvSilentMode]
-    ResourceOptions.SilentMode = True
-    UpdateOptions.AssignedValues = [uvCheckRequired, uvAutoCommitUpdates]
-    UpdateOptions.CheckRequired = False
-    UpdateOptions.AutoCommitUpdates = True
-    Left = 160
-    Top = 192
-    object mtHighLowhigh_price: TFloatField
-      DisplayLabel = #52572#44256#44032
-      DisplayWidth = 15
-      FieldName = 'high_price'
-      DisplayFormat = '#,##0'
-    end
-    object mtHighLowlow_price: TFloatField
-      DisplayLabel = #52572#51200#44032
-      FieldName = 'low_price'
-      Visible = False
-    end
-    object FloatField2: TFloatField
-      DisplayLabel = #52572#44256#44032
-      DisplayWidth = 15
-      FieldName = 'high_volume'
-      DisplayFormat = '#,##0'
-    end
-    object FloatField7: TFloatField
-      DisplayLabel = #52572#51200#44032
-      FieldName = 'low_volume'
-      Visible = False
-    end
+    Top = 352
   end
   object mtBalance: TFDMemTable
     OnCalcFields = mtTickCalcFields
@@ -226,7 +193,7 @@ object dmDataProvider: TdmDataProvider
   end
   object dsBalance: TDataSource
     DataSet = mtBalance
-    Left = 360
+    Left = 384
     Top = 112
   end
   object mtLimitOrders: TFDMemTable
@@ -370,13 +337,79 @@ object dmDataProvider: TdmDataProvider
     UpdateOptions.CheckRequired = False
     UpdateOptions.AutoCommitUpdates = True
     StoreDefs = True
-    Left = 56
-    Top = 328
+    Left = 128
+    Top = 192
     object SQLTimeStampField2: TSQLTimeStampField
       FieldName = 'tick_stamp'
     end
     object FloatField17: TFloatField
       FieldName = 'price_stoch'
+    end
+  end
+  object mtOrder: TFDMemTable
+    FetchOptions.AssignedValues = [evMode]
+    FetchOptions.Mode = fmAll
+    ResourceOptions.AssignedValues = [rvSilentMode]
+    ResourceOptions.SilentMode = True
+    UpdateOptions.AssignedValues = [uvCheckRequired, uvAutoCommitUpdates]
+    UpdateOptions.CheckRequired = False
+    UpdateOptions.AutoCommitUpdates = True
+    Left = 48
+    Top = 280
+    object mtOrderprice: TFloatField
+      FieldName = 'price'
+    end
+    object mtOrderqty: TFloatField
+      FieldName = 'qty'
+    end
+    object mtOrderorder_stamp: TSQLTimeStampField
+      FieldName = 'order_stamp'
+    end
+    object mtOrderorder_type: TWideStringField
+      FieldName = 'order_type'
+      Size = 16
+    end
+  end
+  object mtComplete: TFDMemTable
+    OnCalcFields = mtTickCalcFields
+    FieldDefs = <>
+    IndexDefs = <>
+    FetchOptions.AssignedValues = [evMode]
+    FetchOptions.Mode = fmAll
+    ResourceOptions.AssignedValues = [rvSilentMode]
+    ResourceOptions.SilentMode = True
+    UpdateOptions.AssignedValues = [uvCheckRequired, uvAutoCommitUpdates]
+    UpdateOptions.CheckRequired = False
+    UpdateOptions.AutoCommitUpdates = True
+    StoreDefs = True
+    Left = 128
+    Top = 280
+    object SQLTimeStampField3: TSQLTimeStampField
+      Alignment = taCenter
+      DisplayLabel = #49884#44036
+      DisplayWidth = 18
+      FieldName = 'order_stamp'
+      DisplayFormat = 'YYYY-MM-DD hh:nn:ss'
+    end
+    object FloatField2: TFloatField
+      DisplayLabel = #52404#44208#44032
+      DisplayWidth = 9
+      FieldName = 'price'
+      DisplayFormat = '#,##0'
+    end
+    object FloatField3: TFloatField
+      DisplayLabel = #49688#47049
+      DisplayWidth = 7
+      FieldName = 'amount'
+      DisplayFormat = '#,##0.00'
+    end
+    object WideStringField7: TWideStringField
+      Alignment = taCenter
+      DisplayLabel = #44396#48516
+      DisplayWidth = 6
+      FieldName = 'order_type'
+      OnGetText = mtLimitOrdersorder_typeGetText
+      Size = 16
     end
   end
 end

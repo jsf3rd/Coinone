@@ -6,6 +6,9 @@ uses System.Classes, System.SysUtils, Coinone, cbOption, System.JSON, REST.JSON,
   JdcGlobal.ClassHelper, JdcGlobal, cbGlobal, System.Math, System.DateUtils, Common;
 
 type
+  TOnStrEvent = procedure(AParams: String) of object;
+  TOnJsonEvent = procedure(AParams: TJSONObject) of object;
+
   TPriceInfo = record
     Last: Integer;
     Rate: double;
@@ -67,12 +70,16 @@ type
 
     FTestOrder: TOrder;
     function GetLastOrder: TOrder;
+  private
+    FOnNewOrder: TOnJsonEvent;
+    FOnCancelOrder: TOnStrEvent;
   public
     constructor Create(ACoin: TCoinInfo);
     destructor Destroy; override;
 
-    procedure Tick(APrice: Integer; AHighLow: THighLow; Avail: double);
+    procedure Execute(APrice: Integer; AHighLow: THighLow; Avail: double);
 
+    function ExistLimitOrder: boolean;
     procedure Order(AType: TRequestType; ALast: Integer; ACount: double);
 
     property StateNormal: TState read FStateNormal write FStateNormal;
@@ -81,7 +88,8 @@ type
     property State: TState write SetState;
 
     property CoinInfo: TCoinInfo read FCoinInfo;
-
+    property OnNewOrder: TOnJsonEvent read FOnNewOrder write FOnNewOrder;
+    property OnCancelOrder: TOnStrEvent read FOnCancelOrder write FOnCancelOrder;
   end;
 
 implementation
@@ -92,6 +100,12 @@ procedure TState.MarketSell(AInfo: TPriceInfo; LastOrder: TOrder);
 var
   SellCount: double;
 begin
+  if FTrader.ExistLimitOrder then
+  begin
+    TGlobal.Obj.ApplicationMessage(msDebug, 'ExistLimitOrder');
+    Exit;
+  end;
+
   SellCount := AInfo.CalcSellCount(LastOrder);
 
   if (AInfo.Avail - SellCount) < FTrader.CoinInfo.MinCount then
@@ -102,6 +116,12 @@ end;
 
 procedure TState.MarketBuy(AInfo: TPriceInfo; LastOrder: TOrder);
 begin
+  if FTrader.ExistLimitOrder then
+  begin
+    TGlobal.Obj.ApplicationMessage(msDebug, 'ExistLimitOrder');
+    Exit;
+  end;
+
   FTrader.Order(rtLimitBuy, AInfo.Last, AInfo.CalcBuyCount(LastOrder))
 end;
 
@@ -130,6 +150,7 @@ end;
 constructor TTrader.Create(ACoin: TCoinInfo);
 var
   InitOrder: Integer;
+  JSONObject: TJSONObject;
 begin
   FCoinInfo := ACoin;
   FStateNormal := TStateNormal.Create(Self);
@@ -146,8 +167,13 @@ begin
   end
   else if FCoinInfo.Oper = OPER_TEST then
   begin
-    InitOrder := round(FCoinone.PublicInfo(rtTicker, 'currency=' + ACoin.Currency)
-      .GetString('last').ToInteger * 0.95);
+    JSONObject := FCoinone.PublicInfo(rtTicker, 'currency=' + ACoin.Currency);
+    try
+      InitOrder := round(JSONObject.GetString('last').ToInteger * 0.97);
+    finally
+      JSONObject.Free;
+    end;
+
     FTestOrder.price := InitOrder.ToString;
     FTestOrder.qty := '100';
     FTestOrder.order_type := 'bid';
@@ -197,7 +223,7 @@ begin
     end;
 
     try
-      Orders := JSONObject.GetValue('completeOrders') as TJSONArray;
+      Orders := JSONObject.GetJSONArray('completeOrders');
       LastOrder := Orders.Items[0] as TJSONObject;
       OrderLog := LastOrder.ToString;
 
@@ -214,14 +240,14 @@ begin
   except
     on E: Exception do
     begin
-      raise Exception.Create(Format('GetLastOrder - MyOrder=%s,E=%s', [OrderLog, E.Message]));
+      raise Exception.Create('GetLastOrder,' + E.Message);
     end;
   end;
 end;
 
 procedure TTrader.Order(AType: TRequestType; ALast: Integer; ACount: double);
 var
-  Params: TJSONObject;
+  Params, res: TJSONObject;
   MinOrderCount: double;
 begin
   MinOrderCount := TCoinone.MinOrderCount(FCoinInfo.Currency);
@@ -238,7 +264,26 @@ begin
       [TCoinone.RequestName(AType), Params.ToString]);
 
     if FCoinInfo.Oper = OPER_ENABLE then
-      FCoinone.Order(AType, Params);
+    begin
+      res := FCoinone.Order(AType, Params);
+      try
+        if res.GetString('result') = RES_SUCCESS then
+        begin
+          Params.AddPair('order_id', '{' + res.GetString('orderId') + '}');
+          Params.AddPair('coin_code', FCoinInfo.Currency);
+          Params.AddPair('order_stamp', Now.ToISO8601);
+          Params.AddPair('user_id', TGlobal.Obj.UserID);
+          if AType = rtLimitBuy then
+            Params.AddPair('order_type', 'bid')
+          else
+            Params.AddPair('order_type', 'ask');
+
+          OnNewOrder(Params);
+        end;
+      finally
+        res.Free;
+      end;
+    end;
   finally
     Params.Free;
   end;
@@ -256,7 +301,7 @@ begin
   end;
 end;
 
-procedure TTrader.Tick(APrice: Integer; AHighLow: THighLow; Avail: double);
+procedure TTrader.Execute(APrice: Integer; AHighLow: THighLow; Avail: double);
 var
   LastOrder: TOrder;
   PriceInfo: TPriceInfo;
@@ -269,7 +314,7 @@ begin
   PriceInfo.SetStoch(AHighLow);
   PriceInfo.State := FCoinInfo.LongState(PriceInfo.Rate);
 
-  TGlobal.Obj.ApplicationMessage(msDebug, 'Tick', 'Coin=%s,%s,LastOrder={%s}',
+  TGlobal.Obj.ApplicationMessage(msDebug, 'Ticker', 'Coin=%s,%s,LastOrder={%s}',
     [FCoinInfo.Currency, PriceInfo.ToString, LastOrder.ToString]);
 
   if PriceInfo.Stoch > 0.8 then
@@ -278,6 +323,72 @@ begin
     FState.OverSold(PriceInfo, LastOrder)
   else
     FState.Normal(PriceInfo, LastOrder);
+end;
+
+function TTrader.ExistLimitOrder: boolean;
+var
+  JSONObject, Params: TJSONObject;
+  _MyOrder, res: TJSONObject;
+  Orders: TJSONArray;
+  I: Integer;
+  DateTime: TDateTime;
+begin
+  Params := TJSONObject.Create;
+  try
+    Params.AddPair('currency', FCoinInfo.Currency);
+    JSONObject := FCoinone.Order(rtMyLimitOrders, Params);
+  finally
+    Params.Free;
+  end;
+
+  try
+    Orders := JSONObject.GetJSONArray('limitOrders');
+    Result := Orders.Count > 0;
+
+    for I := 0 to Orders.Count - 1 do
+    begin
+      _MyOrder := Orders.Items[I] as TJSONObject;
+      DateTime := UnixToDateTime(_MyOrder.GetString('timestamp').ToInteger);
+      DateTime := IncHour(DateTime, 9);
+
+      if MinuteSpan(Now, DateTime) > 10 then
+      begin
+        Params := TJSONObject.Create;
+        try
+          Params.AddPair('order_id', _MyOrder.GetString('orderId'));
+          Params.AddPair('price', _MyOrder.GetString('price'));
+          Params.AddPair('qty', _MyOrder.GetString('qty'));
+          if _MyOrder.GetString('type') = 'ask' then
+            Params.AddPair('is_ask', '1')
+          else
+            Params.AddPair('is_ask', '0');
+          Params.AddPair('currency', FCoinInfo.Currency);
+
+          try
+            res := FCoinone.Order(rtCancelOrder, Params);
+            try
+              // DB 이력 삭제
+              // if res.GetString('result') = RES_SUCCESS then
+              // OnCancelOrder('{' + _MyOrder.GetString('orderId') + '}');
+            finally
+              res.Free;
+            end;
+
+            TGlobal.Obj.ApplicationMessage(msDebug, 'CancelOrder', 'RegTime=%s,Type=%s',
+              [DateTime.FormatWithoutMSec, _MyOrder.GetString('type')]);
+          except
+            on E: Exception do
+              TGlobal.Obj.ApplicationMessage(msError, 'CancelOrder', E.Message);
+          end;
+        finally
+          Params.Free;
+        end;
+      end;
+    end;
+  finally
+    JSONObject.Free;
+  end;
+
 end;
 
 { TStateNormal }
@@ -293,7 +404,7 @@ begin
 
   ShortState := FTrader.CoinInfo.ShortState(AInfo.Rate);
   NewInfo := AInfo;
-  NewInfo.Rate := FTrader.CoinInfo.ShortDeal;
+  NewInfo.Rate := FTrader.CoinInfo.ShortDeal + abs(AInfo.Rate);
   case ShortState of
     psStable:
       //
@@ -303,8 +414,8 @@ begin
         if LastOrder.WasSold then
           Exit;
 
-        if AInfo.Stoch > 0.5 then
-          MarketSell(AInfo, LastOrder);
+        if NewInfo.Stoch > 0.5 then
+          MarketSell(NewInfo, LastOrder);
       end;
 
     psDecrease:
@@ -312,11 +423,10 @@ begin
         if LastOrder.WasBought then
           Exit;
 
-        if AInfo.Stoch < 0.5 then
-          MarketBuy(AInfo, LastOrder);
+        if NewInfo.Stoch < 0.5 then
+          MarketBuy(NewInfo, LastOrder);
       end;
   end;
-
 end;
 
 procedure TStateNormal.OverBought(AInfo: TPriceInfo; LastOrder: TOrder);

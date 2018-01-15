@@ -19,8 +19,6 @@ type
     function GetHttpPort: Integer;
     function GetUseCloudLog: boolean;
     procedure SetUseCloudLog(const Value: boolean);
-    function GetAccessToken: string;
-    function GetSecretKey: string;
   public
     class function Obj: TOption;
 
@@ -30,9 +28,6 @@ type
     property HttpPort: Integer read GetHttpPort write SetHttpPort;
     property DBInfo: String read GetDBInfo write SetDBInfo;
     property UseCloudLog: boolean read GetUseCloudLog write SetUseCloudLog;
-
-    property AccessToken: string read GetAccessToken;
-    property SecretKey: string read GetSecretKey;
   end;
 
 implementation
@@ -66,11 +61,6 @@ begin
   inherited;
 end;
 
-function TOption.GetAccessToken: string;
-begin
-  result := FIniFile.ReadString('Auth', 'AccessToken', '');
-end;
-
 function TOption.GetDBInfo: String;
 begin
   // Server=db.playiot.biz,DataBase=mydb,User_Name=playiot,Password=playiot,Port=5432
@@ -90,11 +80,6 @@ end;
 function TOption.GetHttpPort: Integer;
 begin
   result := FIniFile.ReadInteger('DSServer', 'HTTPPort', 80);
-end;
-
-function TOption.GetSecretKey: string;
-begin
-  result := FIniFile.ReadString('Auth', 'SecretKey', '');
 end;
 
 procedure TOption.SetDBInfo(ADBInfo: String);

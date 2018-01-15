@@ -160,7 +160,7 @@ begin
   try
     AQuery.Connection := Conn;
     try
-      AQuery.ParamByJSONObject(AParams);
+      AQuery.ParamByJSONObject(AParams, TGlobal.Obj.ApplicationMessage);
 
       ExecTime := Now;
       AQuery.ExecSQL;

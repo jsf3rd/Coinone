@@ -14,7 +14,9 @@ const
 
 type
   TGlobal = class(TGlobalAbstract)
-  strict protected
+  strict private
+    FUserID: string;
+  protected
     procedure SetExeName(const Value: String); override;
   public
     constructor Create; override;
@@ -27,6 +29,8 @@ type
 
     procedure Initialize; override;
     procedure Finalize; override;
+
+    property UserID: string read FUserID write FUserID;
   end;
 
 implementation
@@ -92,6 +96,8 @@ begin
 
   FStartTime := now;
   // FLogServer.StringValue := 'log.iccs.co.kr';
+
+  FUserID := TOption.Obj.UserID;
 
 {$IFDEF WIN32}
   ApplicationMessage(msDebug, 'Start', '(x86)' + FExeName);

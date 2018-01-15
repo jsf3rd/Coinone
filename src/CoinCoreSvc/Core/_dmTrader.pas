@@ -20,12 +20,17 @@ type
     function GetsmDataProviderClient: TsmDataProviderClient;
     function GetsmDataLoaderClient: TsmDataLoaderClient;
     function GetHighLow(ACoin: string; AHour: Integer): THighLow;
+
+    procedure OnNewOrder(AParams: TJSONObject);
+    procedure OnCancelOrder(AID: string);
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
 
     procedure Init;
-    procedure OnTick(ATicker, ABalance: TJSONObject);
+    procedure Execute(ATicker, ABalance: TJSONObject);
+
+    function Count: Integer;
 
     property InstanceOwner: Boolean read FInstanceOwner write FInstanceOwner;
     property smDataProviderClient: TsmDataProviderClient read GetsmDataProviderClient
@@ -43,6 +48,11 @@ implementation
 { %CLASSGROUP 'Vcl.Controls.TControl' }
 
 {$R *.dfm}
+
+function TdmTrader.Count: Integer;
+begin
+  result := FCoinTrader.Count;
+end;
 
 constructor TdmTrader.Create(AOwner: TComponent);
 begin
@@ -71,28 +81,58 @@ function TdmTrader.GetsmDataProviderClient: TsmDataProviderClient;
 begin
   if FsmDataProviderClient = nil then
     FsmDataProviderClient := TsmDataProviderClient.Create(DSRestConnection, FInstanceOwner);
-  Result := FsmDataProviderClient;
+  result := FsmDataProviderClient;
 end;
 
 procedure TdmTrader.Init;
 var
-  Option: TTraderOption;
+  Options: TStrings;
+  MyOption: string;
   MyCoin: TCoinInfo;
+  MyTrader: TTrader;
 begin
   DSRestConnection.Host := TGlobal.Obj.ConnInfo.StringValue;
   DSRestConnection.Port := TGlobal.Obj.ConnInfo.IntegerValue;
 
-  Option := TJson.JsonToRecord<TTraderOption>(TOption.Obj.TraderOption);
-
-  for MyCoin in Option.Coins do
-  begin
-    if (MyCoin.Oper <> OPER_ENABLE) and (MyCoin.Oper <> OPER_TEST) then
+  Options := TStringList.Create;
+  try
+    TOption.Obj.IniFile.ReadSection('TraderOption', Options);
+    for MyOption in Options do
     begin
-      TGlobal.Obj.ApplicationMessage(msDebug, 'Disabled', MyCoin.ToString);
-      Continue;
-    end;
+      MyCoin := TOption.Obj.CoinInfo[MyOption];
+      if (MyCoin.Oper <> OPER_ENABLE) and (MyCoin.Oper <> OPER_TEST) then
+      begin
+        TGlobal.Obj.ApplicationMessage(msDebug, 'Disabled', MyCoin.ToString);
+        Continue;
+      end;
 
-    FCoinTrader.Add(MyCoin.Currency, TTrader.Create(MyCoin));
+      MyTrader := TTrader.Create(MyCoin);
+      MyTrader.OnNewOrder := OnNewOrder;
+      MyTrader.OnCancelOrder := OnCancelOrder;
+      FCoinTrader.Add(MyCoin.Currency, MyTrader);
+    end;
+  finally
+    Options.Free;
+  end;
+end;
+
+procedure TdmTrader.OnCancelOrder(AID: string);
+begin
+  try
+    smDataLoaderClient.DeleteOrder(AID)
+  except
+    on E: Exception do
+      TGlobal.Obj.ApplicationMessage(msError, 'OnCancelOrder', E.Message);
+  end;
+end;
+
+procedure TdmTrader.OnNewOrder(AParams: TJSONObject);
+begin
+  try
+    smDataLoaderClient.UploadOrder(AParams.Clone as TJSONValue)
+  except
+    on E: Exception do
+      TGlobal.Obj.ApplicationMessage(msError, 'UploadOrder', E.Message);
   end;
 end;
 
@@ -104,70 +144,31 @@ begin
   try
     DateTime := IncHour(Now, -AHour);
     JSONObject := smDataProviderClient.HighLow(UpperCase(ACoin), DateTime);
-    Result := TJson.JsonToRecord<THighLow>(JSONObject);
+    result := TJson.JsonToRecord<THighLow>(JSONObject);
   except
     on E: Exception do
       raise Exception.Create('GetHighLow,' + E.Message);
   end;
 end;
 
-procedure TdmTrader.OnTick(ATicker, ABalance: TJSONObject);
+procedure TdmTrader.Execute(ATicker, ABalance: TJSONObject);
 var
   MyTrader: TPair<String, TTrader>;
   Last: Integer;
   HighLow: THighLow;
   Avail: double;
 begin
-  try
-    for MyTrader in FCoinTrader do
-    begin
-      try
-        HighLow := GetHighLow(MyTrader.Key, MyTrader.Value.CoinInfo.StochHour);
-      except
-        on E: Exception do
-        begin
-          TGlobal.Obj.ApplicationMessage(msError, 'GetHighLow', 'Coin=%s,E=%s',
-            [MyTrader.Key, E.Message]);
-          Continue;
-        end;
-      end;
-
-      try
-        Last := ATicker.GetJSONObject(MyTrader.Key).GetString('last').ToInteger;
-      except
-        on E: Exception do
-        begin
-          TGlobal.Obj.ApplicationMessage(msError, 'LastPrice', 'Coin=%s,E=%s',
-            [MyTrader.Key, E.Message]);
-          Continue;
-        end;
-      end;
-
-      try
-        Avail := ABalance.GetJSONObject(MyTrader.Key).GetString('avail').ToDouble;
-      except
-        on E: Exception do
-        begin
-          TGlobal.Obj.ApplicationMessage(msError, 'BalanceAvail', 'Coin=%s,E=%s',
-            [MyTrader.Key, E.Message]);
-          Continue;
-        end;
-      end;
-
-      try
-        MyTrader.Value.Tick(Last, HighLow, Avail);
-      except
-        on E: Exception do
-        begin
-          TGlobal.Obj.ApplicationMessage(msError, 'TraderTick', 'Coin=%s,E=%s',
-            [MyTrader.Key, E.Message]);
-          Continue;
-        end;
-      end;
+  for MyTrader in FCoinTrader do
+  begin
+    try
+      HighLow := GetHighLow(MyTrader.Key, MyTrader.Value.CoinInfo.StochHour);
+      Last := ATicker.GetJSONObject(MyTrader.Key).GetString('last').ToInteger;
+      Avail := ABalance.GetJSONObject(MyTrader.Key).GetString('avail').ToDouble;
+      MyTrader.Value.Execute(Last, HighLow, Avail);
+    except
+      on E: Exception do
+        TGlobal.Obj.ApplicationMessage(msError, 'Execute', E.Message);
     end;
-  except
-    on E: Exception do
-      raise Exception.Create('TdmTrader.OnTick - ' + E.Message);
   end;
 end;
 
@@ -175,7 +176,7 @@ function TdmTrader.GetsmDataLoaderClient: TsmDataLoaderClient;
 begin
   if FsmDataLoaderClient = nil then
     FsmDataLoaderClient := TsmDataLoaderClient.Create(DSRestConnection, FInstanceOwner);
-  Result := FsmDataLoaderClient;
+  result := FsmDataLoaderClient;
 end;
 
 end.

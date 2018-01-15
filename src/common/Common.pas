@@ -24,10 +24,6 @@ type
     function LongState(ARate: Double): TPriceState;
   end;
 
-  TTraderOption = record
-    Coins: TArray<TCoinInfo>;
-  end;
-
 const
   OPER_ENABLE = 'enable';
   OPER_DISABLE = 'disable';

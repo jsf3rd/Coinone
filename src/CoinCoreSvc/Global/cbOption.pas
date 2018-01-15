@@ -4,7 +4,7 @@ interface
 
 uses
   Classes, SysUtils, System.IniFiles, Registry, JdcGlobal,
-  Winapi.Windows, cbGlobal;
+  Winapi.Windows, cbGlobal, JclSysInfo, Common, JdcGlobal.ClassHelper, REST.JSON, System.JSON;
 
 type
   TOption = class
@@ -15,12 +15,14 @@ type
   private
     function GetAccessToken: string;
     function GetSecretKey: string;
-    function GetTraderOption: string;
-    procedure SetTraderOption(const Value: string);
     function GetUseTickLoader: boolean;
     procedure SetUseTickLoader(const Value: boolean);
     function GetConnInfo: TConninfo;
     procedure SetConnInfo(const Value: TConninfo);
+    function GetUserID: string;
+    procedure SetUserID(const Value: string);
+    function GetCoinInfo(ACurrency: string): TCoinInfo;
+    procedure SetCoinInfo(ACurrency: string; const Value: TCoinInfo);
   public
     class function Obj: TOption;
     destructor Destroy; override;
@@ -28,9 +30,12 @@ type
     property AccessToken: string read GetAccessToken;
     property SecretKey: string read GetSecretKey;
 
-    property TraderOption: string read GetTraderOption write SetTraderOption;
+    property CoinInfo[ACurrency: string]: TCoinInfo read GetCoinInfo write SetCoinInfo;
     property UseTickLoader: boolean read GetUseTickLoader write SetUseTickLoader;
     property ConnInfo: TConninfo read GetConnInfo write SetConnInfo;
+    property UserID: string read GetUserID write SetUserID;
+
+    property IniFile: TCustomIniFile read FIniFile;
   end;
 
 implementation
@@ -70,6 +75,11 @@ begin
   result := FIniFile.ReadString('Auth', 'AccessToken', '');
 end;
 
+function TOption.GetCoinInfo(ACurrency: string): TCoinInfo;
+begin
+  result := TJson.JsonToRecord<TCoinInfo>(FIniFile.ReadString('TraderOption', ACurrency, ''));
+end;
+
 function TOption.GetConnInfo: TConninfo;
 begin
   result.StringValue := FIniFile.ReadString('DataSnap', 'Host', '127.0.0.1');
@@ -81,14 +91,14 @@ begin
   result := FIniFile.ReadString('Auth', 'SecretKey', '');
 end;
 
-function TOption.GetTraderOption: string;
+function TOption.GetUserID: string;
 begin
-  result := FIniFile.ReadString('Config', 'TraderOption', '');
+  result := FIniFile.ReadString('Config', 'UserID', GetLocalUserName);
 end;
 
 function TOption.GetUseTickLoader: boolean;
 begin
-  result := FIniFile.ReadBool('Config', 'UseTickLoader', False);
+  result := FIniFile.ReadBool('Config', 'UploaderTicker', False);
 end;
 
 class function TOption.Obj: TOption;
@@ -100,20 +110,25 @@ begin
   result := MyObj;
 end;
 
+procedure TOption.SetCoinInfo(ACurrency: string; const Value: TCoinInfo);
+begin
+  FIniFile.WriteString('TraderOption', ACurrency, TJson.RecordToJsonString(Value));
+end;
+
 procedure TOption.SetConnInfo(const Value: TConninfo);
 begin
   FIniFile.WriteString('DataSnap', 'Host', Value.StringValue);
   FIniFile.WriteInteger('DataSnap', 'Port', Value.IntegerValue);
 end;
 
-procedure TOption.SetTraderOption(const Value: string);
+procedure TOption.SetUserID(const Value: string);
 begin
-  FIniFile.WriteString('Config', 'TraderOption', Value);
+  FIniFile.WriteString('Config', 'UserID', Value);
 end;
 
 procedure TOption.SetUseTickLoader(const Value: boolean);
 begin
-  FIniFile.WriteBool('Config', 'UseTickLoader', Value);
+  FIniFile.WriteBool('Config', 'UploadTicker', Value);
 end;
 
 end.

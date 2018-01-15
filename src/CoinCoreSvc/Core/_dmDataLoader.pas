@@ -37,13 +37,13 @@ type
     FsmDataLoaderClient: TsmDataLoaderClient;
 
     FCoinone: TCoinone;
-    FDay: Byte;
 
     function GetsmDataProviderClient: TsmDataProviderClient;
     function GetsmDataLoaderClient: TsmDataLoaderClient;
 
     function CreateTickParams(ATime: TDateTime; ATicker: TJSONObject): TJSONArray;
-    function CreateDayParams(ATicker: TJSONObject): TJSONArray;
+    procedure UploadTicker(Ticker: TJSONObject);
+    procedure ExecuteTrader(Ticker: TJSONObject);
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -53,7 +53,7 @@ type
     property smDataLoaderClient: TsmDataLoaderClient read GetsmDataLoaderClient
       write FsmDataLoaderClient;
 
-    procedure Tick;
+    procedure OnTicker;
     procedure Init;
   end;
 
@@ -72,58 +72,6 @@ begin
   FInstanceOwner := True;
 end;
 
-function TdmDataLoader.CreateDayParams(ATicker: TJSONObject): TJSONArray;
-var
-  _Tick, JSONObject, _Balance: TJSONObject;
-  TickStamp: TDateTime;
-  Day: TDay;
-  I: Integer;
-  DailyBalance: TJSONArray;
-begin
-  result := TJSONArray.Create;
-
-  TickStamp := UnixToDateTime(ATicker.GetString('timestamp').ToInteger);
-  TickStamp := IncHour(TickStamp, 9);
-  TickStamp := IncDay(TickStamp, -1);
-  TickStamp := RecodeTime(TickStamp, 0, 0, 0, 0);
-
-  JSONObject := FCoinone.AccountInfo(rtDailyBalance);
-  try
-    DailyBalance := JSONObject.GetValue('dailyBalance') as TJSONArray;
-    _Balance := DailyBalance.Items[0] as TJSONObject;
-
-    for I := Low(Coins) to High(Coins) do
-    begin
-      if Coins[I] = 'krw' then
-      begin
-        Day.volume := 0;
-        Day.first_price := 1;
-        Day.last_price := 1;
-        Day.high_price := 1;
-        Day.low_price := 1;
-      end
-      else
-      begin
-        _Tick := ATicker.GetValue(Coins[I]) as TJSONObject;
-        Day.volume := _Tick.GetString('yesterday_volume').ToDouble;
-        Day.first_price := _Tick.GetString('yesterday_first').ToDouble;
-        Day.last_price := _Tick.GetString('yesterday_last').ToDouble;
-        Day.high_price := _Tick.GetString('yesterday_high').ToDouble;
-        Day.low_price := _Tick.GetString('yesterday_low').ToDouble;
-      end;
-
-      Day.day_stamp := TickStamp;
-      Day.coin_code := UpperCase(Coins[I]);
-      Day.amount := _Balance.GetString(Coins[I]).ToDouble;
-
-      result.Add(TJson.RecordToJsonObject(Day));
-    end;
-
-  finally
-    JSONObject.Free;
-  end;
-end;
-
 function TdmDataLoader.CreateTickParams(ATime: TDateTime; ATicker: TJSONObject): TJSONArray;
 var
   _Tick: TJSONObject;
@@ -137,7 +85,7 @@ begin
     if Coins[I] = 'krw' then
       Continue;
 
-    _Tick := ATicker.GetValue(Coins[I]) as TJSONObject;
+    _Tick := ATicker.GetJSONObject(Coins[I]);
     Ticker.volume := _Tick.GetString('volume').ToDouble;
     Ticker.yesterday_volume := _Tick.GetString('yesterday_volume').ToDouble;
     Ticker.price := _Tick.GetString('last').ToDouble;
@@ -166,7 +114,6 @@ end;
 
 procedure TdmDataLoader.Init;
 begin
-  FDay := 0;
   DSRestConnection.Host := TGlobal.Obj.ConnInfo.StringValue;
   DSRestConnection.Port := TGlobal.Obj.ConnInfo.IntegerValue;
 
@@ -181,69 +128,47 @@ begin
   end;
 end;
 
-procedure TdmDataLoader.Tick;
+procedure TdmDataLoader.ExecuteTrader(Ticker: TJSONObject);
 var
-  Ticker, Balance: TJSONObject;
-  Params: TJSONValue;
-  _Day, _Minute: Integer;
-  TickStamp: TDateTime;
+  Balance: TJSONObject;
 begin
+  Balance := FCoinone.AccountInfo(rtBalance);
   try
-    Ticker := FCoinone.PublicInfo(rtTicker, 'currency=all');
-  except
-    on E: Exception do
-      raise Exception.Create('PublicInfo - Ticker, ' + E.Message + ',' + E.ClassName);
+    dmTrader.Execute(Ticker, Balance);
+  finally
+    Balance.Free;
   end;
+end;
 
+procedure TdmDataLoader.UploadTicker(Ticker: TJSONObject);
+var
+  TickStamp: TDateTime;
+  Params: TJSONValue;
+  _Minute: Integer;
+begin
+  TickStamp := UnixToDateTime(Ticker.GetString('timestamp').ToInteger);
+  TickStamp := RecodeSecond(TickStamp, 0);
+  TickStamp := IncHour(TickStamp, 9);
+  Params := CreateTickParams(TickStamp, Ticker);
+  _Minute := MinuteOf(TickStamp);
+
+  if (_Minute mod 5 = 0) then
+    smDataLoaderClient.UploadTicker(Params);
+end;
+
+procedure TdmDataLoader.OnTicker;
+var
+  Ticker: TJSONObject;
+begin
+  Ticker := FCoinone.PublicInfo(rtTicker, 'currency=all');
   try
     if TGlobal.Obj.UseTickLoader then
-    begin
-      TickStamp := UnixToDateTime(Ticker.GetString('timestamp').ToInteger);
-      TickStamp := RecodeSecond(TickStamp, 0);
-      TickStamp := IncHour(TickStamp, 9);
+      UploadTicker(Ticker);
 
-      Params := CreateTickParams(TickStamp, Ticker);
-      _Minute := MinuteOf(TickStamp);
-      if (_Minute mod 5 = 0) then
-      begin
-        // 5분마다 저장
-        smDataLoaderClient.UploadTicker(Params);
-      end;
-
-      _Day := DayOf(TickStamp);
-      if FDay <> _Day then
-      begin
-        FDay := _Day;
-        Params := CreateDayParams(Ticker);
-        smDataLoaderClient.UploadDay(Params);
-      end;
-    end;
-
-    try
-      try
-        Balance := FCoinone.AccountInfo(rtBalance);
-      except
-        on E: Exception do
-          raise Exception.Create('AccountInfo - ' + E.Message);
-      end;
-
-      try
-        dmTrader.OnTick(Ticker, Balance);
-      finally
-        Balance.Free;
-      end;
-    except
-      on E: Exception do
-        raise Exception.Create('OnTick, ' + E.Message);
-    end;
+    if dmTrader.Count > 0 then
+      ExecuteTrader(Ticker);
   finally
-    try
-      Ticker.Free;
-    except
-      on E: Exception do
-        raise Exception.Create('TickerFree, ' + E.Message);
-    end;
-
+    Ticker.Free;
   end;
 end;
 
