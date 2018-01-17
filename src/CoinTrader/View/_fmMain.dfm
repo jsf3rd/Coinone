@@ -16,7 +16,6 @@ object fmMain: TfmMain
   OnCloseQuery = FormCloseQuery
   OnCreate = FormCreate
   OnDestroy = FormDestroy
-  OnResize = FormResize
   OnShow = FormShow
   PixelsPerInch = 96
   TextHeight = 17
@@ -25,7 +24,7 @@ object fmMain: TfmMain
     Top = 0
     Width = 864
     Height = 754
-    ActivePage = tsMain
+    ActivePage = tsTrad
     Align = alClient
     TabOrder = 0
     OnChange = PageControlChange
@@ -46,7 +45,7 @@ object fmMain: TfmMain
           Height = 230
           Align = alClient
           Constraints.MinHeight = 230
-          DataSource = dmDataProvider.dsTick
+          DataSource = dmDataProvider.dsTicker
           Options = [dgTitles, dgIndicator, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgRowSelect, dgAlwaysShowSelection, dgConfirmDelete, dgCancelOnExit, dgTitleClick, dgTitleHotTrack]
           TabOrder = 0
           TitleFont.Charset = HANGEUL_CHARSET
@@ -115,6 +114,7 @@ object fmMain: TfmMain
         Align = alClient
         Caption = 'Panel3'
         TabOrder = 1
+        OnResize = Panel3Resize
         object Splitter2: TSplitter
           Left = 1
           Top = 205
@@ -145,7 +145,7 @@ object fmMain: TfmMain
           ColorPaletteIndex = 13
           object Series1: TLineSeries
             Marks.DrawEvery = 2
-            DataSource = dmDataProvider.mtTickPeriod
+            DataSource = dmDataProvider.mtTickerPeriod
             Title = 'Price'
             Brush.BackColor = clDefault
             Pointer.InflateMargins = True
@@ -160,7 +160,7 @@ object fmMain: TfmMain
           end
           object Series2: TLineSeries
             Marks.DrawEvery = 7
-            DataSource = dmDataProvider.mtTickPeriod
+            DataSource = dmDataProvider.mtTickerPeriod
             Title = 'Volume'
             VertAxis = aRightAxis
             Brush.BackColor = clDefault
@@ -177,7 +177,7 @@ object fmMain: TfmMain
           object Series5: TLineSeries
             Active = False
             Marks.DrawEvery = 3
-            DataSource = dmDataProvider.mtTickPeriod
+            DataSource = dmDataProvider.mtTickerPeriod
             Title = 'Stoch'
             VertAxis = aRightAxis
             Brush.BackColor = clDefault
@@ -315,38 +315,22 @@ object fmMain: TfmMain
       ImageIndex = 1
       object Splitter1: TSplitter
         Left = 0
-        Top = 373
+        Top = 370
         Width = 856
         Height = 3
         Cursor = crVSplit
-        Align = alBottom
+        Align = alTop
         ExplicitLeft = 1
         ExplicitTop = 2
         ExplicitWidth = 854
-      end
-      object dbgBalance: TDBGrid
-        Left = 0
-        Top = 137
-        Width = 856
-        Height = 236
-        Align = alClient
-        DataSource = dmDataProvider.dsBalance
-        Options = [dgTitles, dgIndicator, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgRowSelect, dgAlwaysShowSelection, dgConfirmDelete, dgCancelOnExit, dgTitleClick, dgTitleHotTrack]
-        TabOrder = 0
-        TitleFont.Charset = HANGEUL_CHARSET
-        TitleFont.Color = clWindowText
-        TitleFont.Height = -13
-        TitleFont.Name = #47569#51008' '#44256#46357
-        TitleFont.Style = []
-        OnDblClick = dbgBalanceDblClick
       end
       object Panel4: TPanel
         Left = 0
         Top = 0
         Width = 856
-        Height = 137
+        Height = 370
         Align = alTop
-        TabOrder = 1
+        TabOrder = 0
         object Button4: TButton
           Left = 15
           Top = 10
@@ -459,18 +443,35 @@ object fmMain: TfmMain
             Text = '0'
           end
         end
+        object dbgBalance: TDBGrid
+          Left = 1
+          Top = 127
+          Width = 854
+          Height = 242
+          Align = alBottom
+          DataSource = dmDataProvider.dsBalance
+          Options = [dgTitles, dgIndicator, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgRowSelect, dgAlwaysShowSelection, dgConfirmDelete, dgCancelOnExit, dgTitleClick, dgTitleHotTrack]
+          TabOrder = 3
+          TitleFont.Charset = HANGEUL_CHARSET
+          TitleFont.Color = clWindowText
+          TitleFont.Height = -13
+          TitleFont.Name = #47569#51008' '#44256#46357
+          TitleFont.Style = []
+          OnDblClick = dbgBalanceDblClick
+        end
       end
       object Panel5: TPanel
         Left = 0
-        Top = 376
+        Top = 373
         Width = 856
-        Height = 346
-        Align = alBottom
-        TabOrder = 2
+        Height = 349
+        Align = alClient
+        TabOrder = 1
+        OnResize = Panel5Resize
         object Splitter: TSplitter
-          Left = 397
+          Left = 401
           Top = 42
-          Height = 303
+          Height = 306
           Align = alRight
           OnMoved = SplitterMoved
           ExplicitLeft = 535
@@ -506,8 +507,8 @@ object fmMain: TfmMain
         object dbgLimitOrder: TDBGrid
           Left = 1
           Top = 42
-          Width = 396
-          Height = 303
+          Width = 400
+          Height = 306
           Align = alClient
           DataSource = dmDataProvider.dsLimitOrders
           Options = [dgTitles, dgIndicator, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgRowSelect, dgAlwaysShowSelection, dgConfirmDelete, dgCancelOnExit, dgTitleClick, dgTitleHotTrack]
@@ -519,10 +520,10 @@ object fmMain: TfmMain
           TitleFont.Style = []
         end
         object dbgRecentOrders: TDBGrid
-          Left = 400
+          Left = 404
           Top = 42
-          Width = 455
-          Height = 303
+          Width = 451
+          Height = 306
           Align = alRight
           Constraints.MinWidth = 200
           DataSource = dmDataProvider.dsCompleteOrders
@@ -539,13 +540,169 @@ object fmMain: TfmMain
     object tsPreference: TTabSheet
       Caption = #49444#51221
       ImageIndex = 2
-      object Button8: TButton
-        Left = 48
-        Top = 48
-        Width = 75
-        Height = 25
-        Caption = 'Button8'
+      OnShow = tsPreferenceShow
+      object Panel6: TPanel
+        Left = 0
+        Top = 0
+        Width = 856
+        Height = 722
+        Align = alClient
         TabOrder = 0
+        object GroupBox4: TGroupBox
+          Left = 8
+          Top = 8
+          Width = 585
+          Height = 97
+          Caption = 'Config'
+          TabOrder = 0
+          DesignSize = (
+            585
+            97)
+          object edtHost: TLabeledEdit
+            Left = 48
+            Top = 33
+            Width = 110
+            Height = 25
+            EditLabel.Width = 27
+            EditLabel.Height = 17
+            EditLabel.Caption = 'Host'
+            LabelPosition = lpLeft
+            TabOrder = 0
+          end
+          object edtPort: TLabeledEdit
+            Left = 48
+            Top = 64
+            Width = 110
+            Height = 25
+            EditLabel.Width = 24
+            EditLabel.Height = 17
+            EditLabel.Caption = 'Port'
+            LabelPosition = lpLeft
+            NumbersOnly = True
+            TabOrder = 1
+          end
+          object edtUserID: TLabeledEdit
+            Left = 458
+            Top = 33
+            Width = 110
+            Height = 25
+            EditLabel.Width = 40
+            EditLabel.Height = 17
+            EditLabel.Caption = 'UserID'
+            LabelPosition = lpLeft
+            TabOrder = 2
+          end
+          object Button12: TButton
+            Left = 483
+            Top = 64
+            Width = 85
+            Height = 25
+            Action = actSaveConfig
+            Anchors = [akRight, akBottom]
+            TabOrder = 3
+          end
+          object edtAccessToken: TLabeledEdit
+            Left = 255
+            Top = 33
+            Width = 130
+            Height = 25
+            EditLabel.Width = 77
+            EditLabel.Height = 17
+            EditLabel.Caption = 'AccessToken'
+            LabelPosition = lpLeft
+            PasswordChar = '*'
+            TabOrder = 4
+          end
+          object edtSecretKey: TLabeledEdit
+            Left = 255
+            Top = 64
+            Width = 130
+            Height = 25
+            EditLabel.Width = 57
+            EditLabel.Height = 17
+            EditLabel.Caption = 'SecretKey'
+            LabelPosition = lpLeft
+            PasswordChar = '*'
+            TabOrder = 5
+          end
+        end
+        object GroupBox5: TGroupBox
+          Left = 8
+          Top = 111
+          Width = 585
+          Height = 98
+          Align = alCustom
+          Caption = 'Windows '#49436#48708#49828' '#44288#47532
+          TabOrder = 1
+          object Button8: TButton
+            Left = 392
+            Top = 25
+            Width = 85
+            Height = 25
+            Action = actStartCoinDataSvc
+            TabOrder = 1
+          end
+          object Button9: TButton
+            Left = 483
+            Top = 25
+            Width = 85
+            Height = 25
+            Action = actStopCoinDataSvc
+            TabOrder = 2
+          end
+          object edtDataStatus: TLabeledEdit
+            Left = 118
+            Top = 27
+            Width = 248
+            Height = 21
+            EditLabel.Width = 100
+            EditLabel.Height = 17
+            EditLabel.Caption = 'CoinData Service'
+            Font.Charset = DEFAULT_CHARSET
+            Font.Color = clWindowText
+            Font.Height = -11
+            Font.Name = 'Tahoma'
+            Font.Style = []
+            LabelPosition = lpLeft
+            ParentFont = False
+            TabOrder = 0
+            Text = #49345#53468#54869#51064' '#51473'...'
+          end
+          object Button10: TButton
+            Left = 392
+            Top = 57
+            Width = 85
+            Height = 25
+            Action = actStartCoinCoreSvc
+            TabOrder = 3
+          end
+          object Button11: TButton
+            Left = 483
+            Top = 56
+            Width = 85
+            Height = 25
+            Action = actStopCoinCoreSvc
+            TabOrder = 4
+          end
+          object edtCoreStatus: TLabeledEdit
+            Left = 118
+            Top = 59
+            Width = 248
+            Height = 21
+            EditLabel.Width = 101
+            EditLabel.Height = 17
+            EditLabel.Caption = 'CoinCore Service'
+            Font.Charset = DEFAULT_CHARSET
+            Font.Color = clWindowText
+            Font.Height = -11
+            Font.Name = 'Tahoma'
+            Font.Style = []
+            LabelPosition = lpLeft
+            ParentFont = False
+            TabOrder = 5
+            Text = #49345#53468#54869#51064' '#51473'...'
+          end
+        end
       end
     end
   end
@@ -566,8 +723,8 @@ object fmMain: TfmMain
       end>
   end
   object MainMenu: TMainMenu
-    Left = 656
-    Top = 304
+    Left = 776
+    Top = 232
     object File1: TMenuItem
       Caption = '&File'
       object Exit1: TMenuItem
@@ -597,12 +754,12 @@ object fmMain: TfmMain
   end
   object ApplicationEvents: TApplicationEvents
     OnException = ApplicationEventsException
-    Left = 568
-    Top = 304
+    Left = 688
+    Top = 232
   end
   object ActionList: TActionList
-    Left = 464
-    Top = 304
+    Left = 688
+    Top = 176
     object actAbout: TAction
       Caption = '&About'
       OnExecute = actAboutExecute
@@ -658,5 +815,36 @@ object fmMain: TfmMain
       Caption = #51452#47928#52712#49548
       OnExecute = actCancelOrderExecute
     end
+    object actStartCoinDataSvc: TAction
+      Caption = #49436#48708#49828' '#49884#51089
+      OnExecute = actStartCoinDataSvcExecute
+    end
+    object actStopCoinDataSvc: TAction
+      Caption = #49436#48708#49828' '#51473#51648
+      OnExecute = actStopCoinDataSvcExecute
+    end
+    object actStartCoinCoreSvc: TAction
+      Caption = #49436#48708#49828' '#49884#51089
+      OnExecute = actStartCoinCoreSvcExecute
+    end
+    object actStopCoinCoreSvc: TAction
+      Caption = #49436#48708#49828' '#51473#51648
+      OnExecute = actStopCoinCoreSvcExecute
+    end
+    object actSaveConfig: TAction
+      Caption = #51200#51109
+      OnExecute = actSaveConfigExecute
+    end
+    object actCopyTraderOption: TAction
+      Caption = #53364#47549#48372#46300' '#48373#49324
+      OnExecute = actCopyTraderOptionExecute
+    end
+  end
+  object ServiceStatusTimer: TTimer
+    Enabled = False
+    Interval = 500
+    OnTimer = ServiceStatusTimerTimer
+    Left = 776
+    Top = 176
   end
 end

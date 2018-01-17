@@ -3,8 +3,8 @@ object dmDataProvider: TdmDataProvider
   OnCreate = DataModuleCreate
   Height = 404
   Width = 484
-  object mtTick: TFDMemTable
-    OnCalcFields = mtTickCalcFields
+  object mtTicker: TFDMemTable
+    OnCalcFields = mtTickerCalcFields
     FieldDefs = <>
     IndexDefs = <>
     IndexFieldNames = 'coin'
@@ -18,20 +18,20 @@ object dmDataProvider: TdmDataProvider
     StoreDefs = True
     Left = 48
     Top = 112
-    object mtTickcoin: TWideStringField
+    object mtTickercoin: TWideStringField
       DisplayLabel = #53076#51064
       DisplayWidth = 10
       FieldName = 'coin'
-      OnGetText = mtTickcoinGetText
+      OnGetText = mtTickercoinGetText
       Size = 64
     end
-    object mtTicklast: TFloatField
+    object mtTickerlast: TFloatField
       DisplayLabel = #54788#51116#44032
       DisplayWidth = 15
       FieldName = 'last'
       DisplayFormat = '#,##0'
     end
-    object mtTickprice_rate: TFloatField
+    object mtTickerprice_rate: TFloatField
       DisplayLabel = #51204#51068#45824#48708' '#44032#44201
       DisplayWidth = 15
       FieldKind = fkCalculated
@@ -39,7 +39,7 @@ object dmDataProvider: TdmDataProvider
       DisplayFormat = '#0.00'
       Calculated = True
     end
-    object mtTickvolume_rate: TFloatField
+    object mtTickervolume_rate: TFloatField
       DisplayLabel = #51204#51068#45824#48708' '#44144#47000#47049
       DisplayWidth = 15
       FieldKind = fkCalculated
@@ -47,47 +47,47 @@ object dmDataProvider: TdmDataProvider
       DisplayFormat = '#0.00'
       Calculated = True
     end
-    object mtTickvolume: TFloatField
+    object mtTickervolume: TFloatField
       DisplayLabel = #44144#47000#47049
       DisplayWidth = 13
       FieldName = 'volume'
       DisplayFormat = '#,##0'
     end
-    object mtTickhigh: TFloatField
+    object mtTickerhigh: TFloatField
       DisplayLabel = #51204#51068' '#52572#44256#44032
       DisplayWidth = 13
       FieldName = 'high_price'
       DisplayFormat = '#,##0'
     end
-    object mtTicklow_price: TFloatField
+    object mtTickerlow_price: TFloatField
       DisplayLabel = #51204#51068' '#52572#51200#44032
       DisplayWidth = 13
       FieldName = 'low_price'
       DisplayFormat = '#,##0'
     end
-    object mtTickyesterday_volume: TFloatField
+    object mtTickeryesterday_volume: TFloatField
       DisplayLabel = #51204#51068#44144#47000#47049
       DisplayWidth = 13
       FieldName = 'yesterday_volume'
       Visible = False
       DisplayFormat = '#,##0'
     end
-    object mtTickfirst: TFloatField
+    object mtTickerfirst: TFloatField
       FieldName = 'first'
       Visible = False
     end
-    object mtTickyesterday_last: TFloatField
+    object mtTickeryesterday_last: TFloatField
       FieldName = 'yesterday_last'
       Visible = False
     end
   end
-  object dsTick: TDataSource
-    DataSet = mtTick
+  object dsTicker: TDataSource
+    DataSet = mtTicker
     Left = 104
     Top = 112
   end
-  object mtTickPeriod: TFDMemTable
-    OnCalcFields = mtTickPeriodCalcFields
+  object mtTickerPeriod: TFDMemTable
+    OnCalcFields = mtTickerPeriodCalcFields
     FetchOptions.AssignedValues = [evMode]
     FetchOptions.Mode = fmAll
     ResourceOptions.AssignedValues = [rvSilentMode]
@@ -117,27 +117,27 @@ object dmDataProvider: TdmDataProvider
       FieldName = 'yesterday_volume'
       Visible = False
     end
-    object mtTickPeriodyesterday_last: TFloatField
+    object mtTickerPeriodyesterday_last: TFloatField
       FieldName = 'yesterday_last'
     end
-    object mtTickPeriodtick_stamp: TSQLTimeStampField
+    object mtTickerPeriodtick_stamp: TSQLTimeStampField
       FieldName = 'tick_stamp'
     end
-    object mtTickPeriodstoch: TFloatField
+    object mtTickerPeriodstoch: TFloatField
       FieldKind = fkCalculated
       FieldName = 'price_stoch'
       Calculated = True
     end
-    object mtTickPeriodvolume_avg: TFloatField
+    object mtTickerPeriodvolume_avg: TFloatField
       FieldKind = fkCalculated
       FieldName = 'volume_stoch'
-      LookupDataSet = mtTick
+      LookupDataSet = mtTicker
       Calculated = True
     end
-    object mtTickPeriodhigh_price: TFloatField
+    object mtTickerPeriodhigh_price: TFloatField
       FieldName = 'high_price'
     end
-    object mtTickPeriodlow_price: TFloatField
+    object mtTickerPeriodlow_price: TFloatField
       FieldName = 'low_price'
     end
   end
@@ -154,7 +154,7 @@ object dmDataProvider: TdmDataProvider
     Top = 352
   end
   object mtBalance: TFDMemTable
-    OnCalcFields = mtTickCalcFields
+    OnCalcFields = mtTickerCalcFields
     IndexFieldNames = 'coin'
     FetchOptions.AssignedValues = [evMode]
     FetchOptions.Mode = fmAll
@@ -169,7 +169,7 @@ object dmDataProvider: TdmDataProvider
       DisplayLabel = #53076#51064
       DisplayWidth = 10
       FieldName = 'coin'
-      OnGetText = mtTickcoinGetText
+      OnGetText = mtTickercoinGetText
       Size = 64
     end
     object FloatField8: TFloatField
@@ -197,7 +197,7 @@ object dmDataProvider: TdmDataProvider
     Top = 112
   end
   object mtLimitOrders: TFDMemTable
-    OnCalcFields = mtTickCalcFields
+    OnCalcFields = mtTickerCalcFields
     FetchOptions.AssignedValues = [evMode]
     FetchOptions.Mode = fmAll
     ResourceOptions.AssignedValues = [rvSilentMode]
@@ -209,9 +209,9 @@ object dmDataProvider: TdmDataProvider
     Top = 192
     object mtLimitOrderscoin: TWideStringField
       DisplayLabel = #53076#51064
-      DisplayWidth = 6
+      DisplayWidth = 5
       FieldName = 'coin'
-      OnGetText = mtTickcoinGetText
+      OnGetText = mtTickercoinGetText
       Size = 16
     end
     object mtLimitOrdersorder_stamp: TSQLTimeStampField
@@ -223,15 +223,15 @@ object dmDataProvider: TdmDataProvider
     end
     object FloatField11: TFloatField
       DisplayLabel = #52404#44208#44032
-      DisplayWidth = 9
+      DisplayWidth = 10
       FieldName = 'price'
       DisplayFormat = '#,##0'
     end
     object FloatField10: TFloatField
       DisplayLabel = #49688#47049
-      DisplayWidth = 7
+      DisplayWidth = 10
       FieldName = 'amount'
-      DisplayFormat = '#,##0.00'
+      DisplayFormat = '#,##0.0000'
     end
     object mtLimitOrdersorder_type: TWideStringField
       Alignment = taCenter
@@ -253,7 +253,7 @@ object dmDataProvider: TdmDataProvider
     Top = 192
   end
   object mtCompleteOrders: TFDMemTable
-    OnCalcFields = mtTickCalcFields
+    OnCalcFields = mtTickerCalcFields
     FieldDefs = <>
     IndexDefs = <>
     FetchOptions.AssignedValues = [evMode]
@@ -268,9 +268,9 @@ object dmDataProvider: TdmDataProvider
     Top = 264
     object WideStringField3: TWideStringField
       DisplayLabel = #53076#51064
-      DisplayWidth = 6
+      DisplayWidth = 5
       FieldName = 'coin'
-      OnGetText = mtTickcoinGetText
+      OnGetText = mtTickercoinGetText
       Size = 10
     end
     object SQLTimeStampField1: TSQLTimeStampField
@@ -282,15 +282,15 @@ object dmDataProvider: TdmDataProvider
     end
     object FloatField12: TFloatField
       DisplayLabel = #52404#44208#44032
-      DisplayWidth = 9
+      DisplayWidth = 10
       FieldName = 'price'
       DisplayFormat = '#,##0'
     end
     object FloatField13: TFloatField
       DisplayLabel = #49688#47049
-      DisplayWidth = 7
+      DisplayWidth = 10
       FieldName = 'amount'
-      DisplayFormat = '#,##0.00'
+      DisplayFormat = '#,##0.0000'
     end
     object WideStringField4: TWideStringField
       Alignment = taCenter
@@ -371,7 +371,7 @@ object dmDataProvider: TdmDataProvider
     end
   end
   object mtComplete: TFDMemTable
-    OnCalcFields = mtTickCalcFields
+    OnCalcFields = mtTickerCalcFields
     FieldDefs = <>
     IndexDefs = <>
     FetchOptions.AssignedValues = [evMode]

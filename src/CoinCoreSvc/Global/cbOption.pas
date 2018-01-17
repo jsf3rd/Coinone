@@ -15,14 +15,16 @@ type
   private
     function GetAccessToken: string;
     function GetSecretKey: string;
-    function GetUseTickLoader: boolean;
-    procedure SetUseTickLoader(const Value: boolean);
+    function GetUseUploadTicker: boolean;
+    procedure SetUseUploadTicker(const Value: boolean);
     function GetConnInfo: TConninfo;
     procedure SetConnInfo(const Value: TConninfo);
     function GetUserID: string;
     procedure SetUserID(const Value: string);
     function GetCoinInfo(ACurrency: string): TCoinInfo;
     procedure SetCoinInfo(ACurrency: string; const Value: TCoinInfo);
+    function GetUseCloudLog: boolean;
+    procedure SetUseCloudLog(const Value: boolean);
   public
     class function Obj: TOption;
     destructor Destroy; override;
@@ -31,11 +33,13 @@ type
     property SecretKey: string read GetSecretKey;
 
     property CoinInfo[ACurrency: string]: TCoinInfo read GetCoinInfo write SetCoinInfo;
-    property UseTickLoader: boolean read GetUseTickLoader write SetUseTickLoader;
+    property UseUploadTicker: boolean read GetUseUploadTicker write SetUseUploadTicker;
     property ConnInfo: TConninfo read GetConnInfo write SetConnInfo;
     property UserID: string read GetUserID write SetUserID;
+    property UseCloudLog: boolean read GetUseCloudLog write SetUseCloudLog;
 
     property IniFile: TCustomIniFile read FIniFile;
+
   end;
 
 implementation
@@ -72,7 +76,7 @@ end;
 
 function TOption.GetAccessToken: string;
 begin
-  result := FIniFile.ReadString('Auth', 'AccessToken', '');
+  result := DecodeKey(FIniFile.ReadString('Auth', 'AccessToken', ''));
 end;
 
 function TOption.GetCoinInfo(ACurrency: string): TCoinInfo;
@@ -88,7 +92,12 @@ end;
 
 function TOption.GetSecretKey: string;
 begin
-  result := FIniFile.ReadString('Auth', 'SecretKey', '');
+  result := DecodeKey(FIniFile.ReadString('Auth', 'SecretKey', ''));
+end;
+
+function TOption.GetUseCloudLog: boolean;
+begin
+  result := FIniFile.ReadBool('Config', 'UseCloudLog', false);
 end;
 
 function TOption.GetUserID: string;
@@ -96,9 +105,9 @@ begin
   result := FIniFile.ReadString('Config', 'UserID', GetLocalUserName);
 end;
 
-function TOption.GetUseTickLoader: boolean;
+function TOption.GetUseUploadTicker: boolean;
 begin
-  result := FIniFile.ReadBool('Config', 'UploaderTicker', False);
+  result := FIniFile.ReadBool('Config', 'UseUploadTicker', false);
 end;
 
 class function TOption.Obj: TOption;
@@ -121,14 +130,19 @@ begin
   FIniFile.WriteInteger('DataSnap', 'Port', Value.IntegerValue);
 end;
 
+procedure TOption.SetUseCloudLog(const Value: boolean);
+begin
+  FIniFile.WriteBool('Config', 'UseCloudLog', Value);
+end;
+
 procedure TOption.SetUserID(const Value: string);
 begin
   FIniFile.WriteString('Config', 'UserID', Value);
 end;
 
-procedure TOption.SetUseTickLoader(const Value: boolean);
+procedure TOption.SetUseUploadTicker(const Value: boolean);
 begin
-  FIniFile.WriteBool('Config', 'UploadTicker', Value);
+  FIniFile.WriteBool('Config', 'UseUploadTicker', Value);
 end;
 
 end.

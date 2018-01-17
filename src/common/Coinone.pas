@@ -260,10 +260,9 @@ function TCoinone.Post(AType: TRequestType; AParams: TJSONObject): TJSONObject;
     Encoded: string;
   begin
     AParams.AddPair('access_token', FToken);
-    // AParams.AddPair('nonce', TJSONNumber.Create(DateTimeToUnix(Now)));
     AParams.AddPair('nonce', GetTickCount().ToString);
     Bytes := ToBytes(AParams.ToString);
-    Encoded := EncodeBase64(Bytes, Length(Bytes));
+    Encoded := WideString(EncodeBase64(Bytes, Length(Bytes)));
     result := Encoded.Replace(sLineBreak, '', [rfReplaceAll]);
   end;
 

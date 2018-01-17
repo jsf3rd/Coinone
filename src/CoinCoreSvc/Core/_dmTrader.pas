@@ -129,6 +129,7 @@ end;
 procedure TdmTrader.OnNewOrder(AParams: TJSONObject);
 begin
   try
+    TGlobal.Obj.ApplicationMessage(msDebug, 'NewOrder', AParams.ToString);
     smDataLoaderClient.UploadOrder(AParams.Clone as TJSONValue)
   except
     on E: Exception do

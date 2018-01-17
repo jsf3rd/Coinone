@@ -6,14 +6,13 @@ uses
   Classes, SysUtils, IOUtils, JdcGlobal, Common;
 
 const
-  SERVICE_CODE = 'CoinCoreSvc';
   SERVICE_NAME = 'Coin Currency Data Uploader Service Application';
-  SERVICE_DESCRIPTION = '분석을 위한 초기 데이터를 수집 합니다.';
+  SERVICE_DESCRIPTION = '분석을 위한 가격정보를 수집하고 자동 거래 작업을 수행한다.';
 
 type
   TGlobal = class(TGlobalAbstract)
   private
-    FUseTickLoader: boolean;
+    FUseUploadTicker: boolean;
     FConnInfo: TConnInfo;
     FUserID: string;
   protected
@@ -27,7 +26,7 @@ type
     procedure Initialize; override;
     procedure Finalize; override;
 
-    property UseTickLoader: boolean read FUseTickLoader write FUseTickLoader;
+    property UseUploadTicker: boolean read FUseUploadTicker write FUseUploadTicker;
     property ConnInfo: TConnInfo read FConnInfo write FConnInfo;
     property UserID: string read FUserID write FUserID;
   end;
@@ -51,7 +50,7 @@ begin
   inherited;
 
   FProjectCode := PROJECT_CODE;
-  FAppCode := SERVICE_CODE;
+  FAppCode := CORE_SERVICE_CODE;
 
   // TODO : after create
 end;
@@ -84,7 +83,8 @@ begin
 
   inherited;
 
-  FUseTickLoader := TOption.Obj.UseTickLoader;
+  FUseCloudLog := TOption.Obj.UseCloudLog;
+  FUseUploadTicker := TOption.Obj.UseUploadTicker;
   FConnInfo := TOption.Obj.ConnInfo;
   FUserID := TOption.Obj.UserID;
 

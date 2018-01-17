@@ -6,8 +6,6 @@ uses
   Classes, SysUtils, IOUtils, JdcGlobal, common;
 
 const
-
-  SERVICE_CODE = 'CoinDataSvc';
   SERVICE_NAME = 'Coin Data Service Application';
   SERVICE_DESCRIPTION = '코인 데이터를 기록하는 작업을 수행합니다.';
 
@@ -39,7 +37,7 @@ begin
   inherited;
 
   FProjectCode := PROJECT_CODE;
-  FAppCode := SERVICE_CODE;
+  FAppCode := DATA_SERVICE_CODE;
 
   // TODO : after Create
 end;

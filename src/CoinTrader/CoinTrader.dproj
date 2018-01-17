@@ -5,7 +5,7 @@
         <FrameworkType>VCL</FrameworkType>
         <MainSource>CoinTrader.dpr</MainSource>
         <Base>True</Base>
-        <Config Condition="'$(Config)'==''">Debug</Config>
+        <Config Condition="'$(Config)'==''">Release</Config>
         <Platform Condition="'$(Platform)'==''">Win32</Platform>
         <TargetedPlatforms>1</TargetedPlatforms>
         <AppType>Application</AppType>
@@ -96,11 +96,13 @@
         <DCC_DebugInformation>0</DCC_DebugInformation>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2_Win32)'!=''">
+        <AppEnableAdministrator>true</AppEnableAdministrator>
+        <Icon_MainIcon>CoinTrader_Icon.ico</Icon_MainIcon>
         <AppEnableRuntimeThemes>true</AppEnableRuntimeThemes>
         <DCC_ExeOutput>..\bin\$(Config)</DCC_ExeOutput>
         <VerInfo_Locale>1033</VerInfo_Locale>
         <DCC_DcuOutput>.\DCUs</DCC_DcuOutput>
-        <VerInfo_Keys>CompanyName=playIoT.;FileDescription=playIoT Form Application Default.;FileVersion=1.0.0.0;InternalName=Form Templete;LegalCopyright=(c)playIoT.;LegalTrademarks=;OriginalFilename=;ProductName=FormTemplete;ProductVersion=1.0.0.0;Comments=playIoT Application.</VerInfo_Keys>
+        <VerInfo_Keys>CompanyName=playIoT.;FileDescription=Coin Trader;FileVersion=1.0.0.0;InternalName=Coin Trader;LegalCopyright=(c)2018 playIoT.;LegalTrademarks=;OriginalFilename=;ProductName=Coin Trader;ProductVersion=1.0.0.0;Comments=Coinone Coin Trading Application.</VerInfo_Keys>
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
     </PropertyGroup>
     <ItemGroup>
@@ -172,6 +174,8 @@
                     <Excluded_Packages Name="$(BDSBIN)\dcloffice2k230.bpl">Microsoft Office 2000 Sample Automation Server Wrapper Components</Excluded_Packages>
                     <Excluded_Packages Name="$(BDSBIN)\dclofficexp230.bpl">Microsoft Office XP Sample Automation Server Wrapper Components</Excluded_Packages>
                     <Excluded_Packages Name="C:\Users\Public\Documents\Embarcadero\Studio\17.0\Bpl\JvPluginSystemDesign230.bpl">JVCL Plugin Components</Excluded_Packages>
+                    <Excluded_Packages Name="C:\WINDOWS\SysWOW64\MtxTee523.bpl">Dew MtxVec v5 TeeChart</Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\MtxVisualizer523.bpl">Dew MtxVec v5 Debugger Visualizer</Excluded_Packages>
                 </Excluded_Packages>
             </Delphi.Personality>
             <Deployment Version="2">

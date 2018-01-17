@@ -98,7 +98,9 @@ end;
 
 destructor TdmDataLoader.Destroy;
 begin
-  FCoinone.Free;
+  if Assigned(FCoinone) then
+    FreeAndNil(FCoinone);
+
   FsmDataProviderClient.Free;
   FsmDataLoaderClient.Free;
   inherited;
@@ -118,6 +120,9 @@ begin
   DSRestConnection.Port := TGlobal.Obj.ConnInfo.IntegerValue;
 
   try
+    if TGlobal.Obj.UseUploadTicker then
+      TGlobal.Obj.ApplicationMessage(msDebug, 'Init UploadTicker.');
+
     FCoinone := TCoinone.Create(TOption.Obj.AccessToken, TOption.Obj.SecretKey);
   except
     on E: Exception do
@@ -162,7 +167,7 @@ var
 begin
   Ticker := FCoinone.PublicInfo(rtTicker, 'currency=all');
   try
-    if TGlobal.Obj.UseTickLoader then
+    if TGlobal.Obj.UseUploadTicker then
       UploadTicker(Ticker);
 
     if dmTrader.Count > 0 then

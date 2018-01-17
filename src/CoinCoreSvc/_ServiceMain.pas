@@ -5,7 +5,7 @@ interface
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Classes,
   Vcl.Graphics, Vcl.Controls, Vcl.SvcMgr, Vcl.Dialogs, Registry, Vcl.ExtCtrls,
-  Vcl.AppEvnts;
+  Vcl.AppEvnts, Common;
 
 type
   TServiceMain = class(TService)
@@ -87,7 +87,7 @@ end;
 
 procedure TServiceMain.ServiceCreate(Sender: TObject);
 begin
-  Self.Name := SERVICE_CODE;
+  Self.Name := CORE_SERVICE_CODE;
   Self.DisplayName := SERVICE_NAME;
 end;
 

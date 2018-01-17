@@ -13,29 +13,29 @@ uses
 
 type
   TdmDataProvider = class(TDataModule)
-    mtTick: TFDMemTable;
-    mtTickvolume: TFloatField;
-    mtTicklast: TFloatField;
-    mtTickfirst: TFloatField;
-    mtTickyesterday_volume: TFloatField;
-    mtTickvolume_rate: TFloatField;
-    mtTickprice_rate: TFloatField;
-    mtTickcoin: TWideStringField;
-    dsTick: TDataSource;
-    mtTickyesterday_last: TFloatField;
-    mtTickPeriod: TFDMemTable;
+    mtTicker: TFDMemTable;
+    mtTickervolume: TFloatField;
+    mtTickerlast: TFloatField;
+    mtTickerfirst: TFloatField;
+    mtTickeryesterday_volume: TFloatField;
+    mtTickervolume_rate: TFloatField;
+    mtTickerprice_rate: TFloatField;
+    mtTickercoin: TWideStringField;
+    dsTicker: TDataSource;
+    mtTickeryesterday_last: TFloatField;
+    mtTickerPeriod: TFDMemTable;
     WideStringField1: TWideStringField;
     FloatField1: TFloatField;
     FloatField4: TFloatField;
     FloatField6: TFloatField;
     DSRestConnection: TDSRestConnection;
-    mtTickPeriodyesterday_last: TFloatField;
-    mtTickPeriodtick_stamp: TSQLTimeStampField;
+    mtTickerPeriodyesterday_last: TFloatField;
+    mtTickerPeriodtick_stamp: TSQLTimeStampField;
     FDStanStorageBinLink: TFDStanStorageBinLink;
-    mtTickPeriodvolume_avg: TFloatField;
-    mtTickPeriodstoch: TFloatField;
-    mtTickhigh: TFloatField;
-    mtTicklow_price: TFloatField;
+    mtTickerPeriodvolume_avg: TFloatField;
+    mtTickerPeriodstoch: TFloatField;
+    mtTickerhigh: TFloatField;
+    mtTickerlow_price: TFloatField;
     mtBalance: TFDMemTable;
     WideStringField2: TWideStringField;
     FloatField5: TFloatField;
@@ -59,8 +59,8 @@ type
     WideStringField5: TWideStringField;
     dsCompleteOrders: TDataSource;
     mtCompleteOrderslast: TFloatField;
-    mtTickPeriodhigh_price: TFloatField;
-    mtTickPeriodlow_price: TFloatField;
+    mtTickerPeriodhigh_price: TFloatField;
+    mtTickerPeriodlow_price: TFloatField;
     mtStoch: TFDMemTable;
     SQLTimeStampField2: TSQLTimeStampField;
     FloatField17: TFloatField;
@@ -74,12 +74,12 @@ type
     FloatField2: TFloatField;
     FloatField3: TFloatField;
     WideStringField7: TWideStringField;
-    procedure mtTickCalcFields(DataSet: TDataSet);
+    procedure mtTickerCalcFields(DataSet: TDataSet);
     procedure DataModuleCreate(Sender: TObject);
-    procedure mtTickPeriodCalcFields(DataSet: TDataSet);
-    procedure mtTickcoinGetText(Sender: TField; var Text: string; DisplayText: Boolean);
+    procedure mtTickerPeriodCalcFields(DataSet: TDataSet);
     procedure mtLimitOrdersorder_typeGetText(Sender: TField; var Text: string;
       DisplayText: Boolean);
+    procedure mtTickercoinGetText(Sender: TField; var Text: string; DisplayText: Boolean);
   private
     FCoinone: TCoinone;
 
@@ -91,7 +91,6 @@ type
     FYesterDayValue: Integer;
 
     function Order(APrice, ACount: double; ACoin: string; AType: TRequestType): TJSONObject;
-    function CreateParams(ACoin: string; AChartDay, AStochHour: Integer): TJSONObject;
     function GetsmDataProviderClient: TsmDataProviderClient;
     function GetsmDataLoaderClient: TsmDataLoaderClient;
 
@@ -188,56 +187,57 @@ var
   Amount, Price: double;
   KRW, Total: double;
 begin
-  mtLimitOrders.Close;
-  mtCompleteOrders.Close;
-
   result := 0;
   Total := 0;
 
   FYesterDayValue := GetYesterdayBalance;
   Tick;
   JSONObject := FCoinone.AccountInfo(rtBalance);
-
-  BookMark := mtBalance.BookMark;
-  mtBalance.DisableControls;
   try
-    for I := Low(Coins) to High(Coins) do
-    begin
-      if mtTick.Locate('coin', Coins[I]) then
+    BookMark := mtBalance.BookMark;
+    mtBalance.DisableControls;
+    try
+      for I := Low(Coins) to High(Coins) do
       begin
-        Price := mtTick.FieldByName('last').AsFloat;
-      end
-      else
-        Price := 1;
+        if mtTicker.Locate('coin', Coins[I]) then
+        begin
+          Price := mtTicker.FieldByName('last').AsFloat;
+        end
+        else
+          Price := 1;
 
-      if mtBalance.Locate('coin', Coins[I]) then
-        mtBalance.Edit
-      else
-        mtBalance.Insert;
+        if mtBalance.Locate('coin', Coins[I]) then
+          mtBalance.Edit
+        else
+          mtBalance.Insert;
 
-      _Balance := JSONObject.GetJSONObject(Coins[I]);
+        _Balance := JSONObject.GetJSONObject(Coins[I]);
 
-      Amount := _Balance.GetString('balance').ToDouble;
-      KRW := Price * Amount;
-      Total := Total + KRW;
+        Amount := _Balance.GetString('balance').ToDouble;
+        KRW := Price * Amount;
+        Total := Total + KRW;
 
-      // KRW °¡¿ë ÀÜ¾×
-      if Coins[I] = 'krw' then
-        result := _Balance.GetString('avail').ToInteger;
+        // KRW °¡¿ë ÀÜ¾×
+        if Coins[I] = 'krw' then
+          result := _Balance.GetString('avail').ToInteger;
 
-      mtBalance.FieldByName('coin').AsString := Coins[I];
-      mtBalance.FieldByName('amount').AsFloat := Amount;
+        mtBalance.FieldByName('coin').AsString := Coins[I];
+        mtBalance.FieldByName('amount').AsFloat := Amount;
 
-      mtBalance.FieldByName('last').AsFloat := Price;
-      mtBalance.FieldByName('krw').AsFloat := KRW;
-      mtBalance.CommitUpdates;
+        mtBalance.FieldByName('last').AsFloat := Price;
+        mtBalance.FieldByName('krw').AsFloat := KRW;
+        mtBalance.CommitUpdates;
+      end;
+    finally
+      mtBalance.EnableControls;
     end;
-  finally
-    mtBalance.EnableControls;
-  end;
 
-  if mtBalance.BookmarkValid(BookMark) then
-    mtBalance.BookMark := BookMark;
+    if mtBalance.BookmarkValid(BookMark) then
+      mtBalance.BookMark := BookMark;
+
+  finally
+    JSONObject.Free;
+  end;
 
   TView.Obj.sp_AsyncMessage('KrwValue', Total.ToString);
 end;
@@ -306,6 +306,17 @@ end;
 
 procedure TdmDataProvider.ChartData(AChartDay, AStochHour: Integer);
 
+  function CreateTickerParams(ACoin: string; AChartDay, AStochHour: Integer): TJSONObject;
+  begin
+    result := TJSONObject.Create;
+    result.AddPair('coin_code', UpperCase(ACoin));
+    result.AddPair('begin_time', IncDay(Now, -AChartDay).ToISO8601);
+    result.AddPair('end_time', Now.ToISO8601);
+
+    result.AddPair('high_period', Format('%0.2d:00:00', [AStochHour]));
+    result.AddPair('low_period', Format('%0.2d:00:00', [AStochHour]));
+  end;
+
   procedure Complete(ACurrency: string);
   var
     Params, JSONObject, _Order: TJSONObject;
@@ -354,12 +365,12 @@ begin
   mtStoch.Close;
   mtStoch.Open;
 
-  Coin := mtTick.FieldByName('coin').AsString;
-  Params := CreateParams(Coin, AChartDay, AStochHour);
-  mtTickPeriod.LoadFromDSStream(smDataProviderClient.Ticker(Params));
+  Coin := mtTicker.FieldByName('coin').AsString;
+  Params := CreateTickerParams(Coin, AChartDay, AStochHour);
+  mtTickerPeriod.LoadFromDSStream(smDataProviderClient.Ticker(Params));
 
   Params := TJSONObject.Create;
-  Params.AddPair('coin_code', Coin);
+  Params.AddPair('coin_code', UpperCase(Coin));
   Params.AddPair('begin_time', IncDay(Now, -AChartDay).ToISO8601);
   Params.AddPair('end_time', Now.ToISO8601);
   Params.AddPair('user_id', TGlobal.Obj.UserID);
@@ -371,6 +382,9 @@ constructor TdmDataProvider.Create(AOwner: TComponent);
 begin
   inherited;
   FInstanceOwner := true;
+
+  DSRestConnection.Host := TOption.Obj.ConnInfo.StringValue;
+  DSRestConnection.Port := TOption.Obj.ConnInfo.IntegerValue;
 end;
 
 function TdmDataProvider.Order(APrice, ACount: double; ACoin: string; AType: TRequestType)
@@ -424,21 +438,9 @@ begin
   mtCompleteOrders.First;
 end;
 
-function TdmDataProvider.CreateParams(ACoin: string; AChartDay, AStochHour: Integer)
-  : TJSONObject;
-begin
-  result := TJSONObject.Create;
-  result.AddPair('coin_code', UpperCase(ACoin));
-  result.AddPair('begin_time', IncDay(Now, -AChartDay).ToISO8601);
-  result.AddPair('end_time', Now.ToISO8601);
-
-  result.AddPair('high_period', Format('%0.2d:00:00', [AStochHour]));
-  result.AddPair('low_period', Format('%0.2d:00:00', [AStochHour]));
-end;
-
 procedure TdmDataProvider.DataModuleCreate(Sender: TObject);
 begin
-  mtTick.Open;
+  mtTicker.Open;
   mtBalance.Open;
 
   FCoinone := TCoinone.Create(TOption.Obj.AccessToken, TOption.Obj.SecretKey);
@@ -569,7 +571,7 @@ begin
     Text := ''
 end;
 
-procedure TdmDataProvider.mtTickCalcFields(DataSet: TDataSet);
+procedure TdmDataProvider.mtTickerCalcFields(DataSet: TDataSet);
 begin
   if DataSet.FieldByName('yesterday_volume').AsFloat <> 0 then
     DataSet.FieldByName('volume_rate').AsFloat :=
@@ -582,13 +584,13 @@ begin
       DataSet.FieldByName('yesterday_last').AsFloat * 100;
 end;
 
-procedure TdmDataProvider.mtTickcoinGetText(Sender: TField; var Text: string;
+procedure TdmDataProvider.mtTickercoinGetText(Sender: TField; var Text: string;
   DisplayText: Boolean);
 begin
   Text := UpperCase(Sender.AsString);
 end;
 
-procedure TdmDataProvider.mtTickPeriodCalcFields(DataSet: TDataSet);
+procedure TdmDataProvider.mtTickerPeriodCalcFields(DataSet: TDataSet);
 var
   Price: double;
   Max, Min: double;
@@ -615,50 +617,53 @@ end;
 
 procedure TdmDataProvider.Tick;
 var
-  JSONObject, _Tick: TJSONObject;
+  JSONObject, _Ticker: TJSONObject;
 
   DateTime: TDateTime;
   I: Integer;
   BookMark: TBookmark;
 begin
   JSONObject := FCoinone.PublicInfo(rtTicker, 'currency=all');
-
-  DateTime := UnixToDateTime(JSONObject.GetString('timestamp').ToInteger);
-  DateTime := IncHour(DateTime, 9);
-  TView.Obj.sp_AsyncMessage('TickStamp', DateTime.FormatWithoutMSec);
-
-  BookMark := mtTick.BookMark;
-  mtTick.DisableControls;
   try
-    for I := Low(Coins) to High(Coins) do
-    begin
-      if Coins[I] = 'krw' then
-        Continue;
+    DateTime := UnixToDateTime(JSONObject.GetString('timestamp').ToInteger);
+    DateTime := IncHour(DateTime, 9);
+    TView.Obj.sp_AsyncMessage('TickStamp', DateTime.FormatWithoutMSec);
 
-      if mtTick.Locate('coin', Coins[I]) then
-        mtTick.Edit
-      else
-        mtTick.Insert;
+    BookMark := mtTicker.BookMark;
+    mtTicker.DisableControls;
+    try
+      for I := Low(Coins) to High(Coins) do
+      begin
+        if Coins[I] = 'krw' then
+          Continue;
 
-      _Tick := JSONObject.GetJSONObject(Coins[I]);
-      mtTick.FieldByName('coin').AsString := Coins[I];
-      mtTick.FieldByName('last').AsFloat := _Tick.GetString('last').ToDouble;
-      mtTick.FieldByName('volume').AsFloat := _Tick.GetString('volume').ToDouble;
-      mtTick.FieldByName('first').AsFloat := _Tick.GetString('first').ToDouble;
-      mtTick.FieldByName('yesterday_volume').AsFloat :=
-        _Tick.GetString('yesterday_volume').ToDouble;
-      mtTick.FieldByName('yesterday_last').AsFloat :=
-        _Tick.GetString('yesterday_last').ToDouble;
-      mtTick.FieldByName('high_price').AsFloat := _Tick.GetString('high').ToDouble;
-      mtTick.FieldByName('low_price').AsFloat := _Tick.GetString('low').ToDouble;
-      mtTick.CommitUpdates;
+        if mtTicker.Locate('coin', Coins[I]) then
+          mtTicker.Edit
+        else
+          mtTicker.Insert;
+
+        _Ticker := JSONObject.GetJSONObject(Coins[I]);
+        mtTicker.FieldByName('coin').AsString := Coins[I];
+        mtTicker.FieldByName('last').AsFloat := _Ticker.GetString('last').ToDouble;
+        mtTicker.FieldByName('volume').AsFloat := _Ticker.GetString('volume').ToDouble;
+        mtTicker.FieldByName('first').AsFloat := _Ticker.GetString('first').ToDouble;
+        mtTicker.FieldByName('yesterday_volume').AsFloat :=
+          _Ticker.GetString('yesterday_volume').ToDouble;
+        mtTicker.FieldByName('yesterday_last').AsFloat :=
+          _Ticker.GetString('yesterday_last').ToDouble;
+        mtTicker.FieldByName('high_price').AsFloat := _Ticker.GetString('high').ToDouble;
+        mtTicker.FieldByName('low_price').AsFloat := _Ticker.GetString('low').ToDouble;
+        mtTicker.CommitUpdates;
+      end;
+    finally
+      mtTicker.EnableControls;
     end;
-  finally
-    mtTick.EnableControls;
-  end;
 
-  if mtTick.BookmarkValid(BookMark) then
-    mtTick.BookMark := BookMark;
+    if mtTicker.BookmarkValid(BookMark) then
+      mtTicker.BookMark := BookMark;
+  finally
+    JSONObject.Free;
+  end;
 end;
 
 function TdmDataProvider.GetsmDataLoaderClient: TsmDataLoaderClient;

@@ -12,7 +12,7 @@ uses System.SysUtils, System.Classes,
   FireDAC.UI.Intf, FireDAC.Phys.Intf, FireDAC.Stan.Def, FireDAC.Stan.Pool,
   FireDAC.Stan.Async, FireDAC.Phys, FireDAC.VCLUI.Wait, Data.DB,
   FireDAC.Comp.Client, System.JSON, FireDAC.Stan.Param, System.StrUtils, _smDataLoader,
-  FireDAC.Phys.PGDef, FireDAC.Phys.PG;
+  FireDAC.Phys.PGDef, FireDAC.Phys.PG, Common;
 
 type
   TServerContainer = class(TService)
@@ -388,7 +388,7 @@ end;
 
 procedure TServerContainer.ServiceCreate(Sender: TObject);
 begin
-  Self.Name := SERVICE_CODE;
+  Self.Name := DATA_SERVICE_CODE;
   Self.DisplayName := SERVICE_NAME;
 end;
 

@@ -18,8 +18,8 @@ type
     function ToString: string;
     procedure SetRate(AOldPrice: Integer);
     procedure SetStoch(AHighLow: THighLow);
-    function CalcSellCount(ALastOrder: TOrder): double;
-    function CalcBuyCount(ALastOrder: TOrder): double;
+    function CalcSellCount(ALastOrder: TOrder; ShortDeal: double = 0): double;
+    function CalcBuyCount(ALastOrder: TOrder; ShortDeal: double = 0): double;
   end;
 
   TTrader = class;
@@ -27,8 +27,8 @@ type
   TState = class abstract
   strict protected
     FTrader: TTrader;
-    procedure MarketSell(AInfo: TPriceInfo; LastOrder: TOrder);
-    procedure MarketBuy(AInfo: TPriceInfo; LastOrder: TOrder);
+    procedure MarketSell(AInfo: TPriceInfo; LastOrder: TOrder; ShortDeal: double = 0);
+    procedure MarketBuy(AInfo: TPriceInfo; LastOrder: TOrder; ShortDeal: double = 0);
 
   public
     procedure OverBought(AInfo: TPriceInfo; LastOrder: TOrder); virtual;
@@ -96,7 +96,7 @@ implementation
 
 { TState }
 
-procedure TState.MarketSell(AInfo: TPriceInfo; LastOrder: TOrder);
+procedure TState.MarketSell(AInfo: TPriceInfo; LastOrder: TOrder; ShortDeal: double = 0);
 var
   SellCount: double;
 begin
@@ -106,7 +106,7 @@ begin
     Exit;
   end;
 
-  SellCount := AInfo.CalcSellCount(LastOrder);
+  SellCount := AInfo.CalcSellCount(LastOrder, ShortDeal);
 
   if (AInfo.Avail - SellCount) < FTrader.CoinInfo.MinCount then
     raise Exception.Create('MinCount Over ' + FTrader.CoinInfo.MinCount.ToString);
@@ -114,7 +114,7 @@ begin
   FTrader.Order(rtLimitSell, AInfo.Last, SellCount)
 end;
 
-procedure TState.MarketBuy(AInfo: TPriceInfo; LastOrder: TOrder);
+procedure TState.MarketBuy(AInfo: TPriceInfo; LastOrder: TOrder; ShortDeal: double = 0);
 begin
   if FTrader.ExistLimitOrder then
   begin
@@ -122,7 +122,7 @@ begin
     Exit;
   end;
 
-  FTrader.Order(rtLimitBuy, AInfo.Last, AInfo.CalcBuyCount(LastOrder))
+  FTrader.Order(rtLimitBuy, AInfo.Last, AInfo.CalcBuyCount(LastOrder, ShortDeal))
 end;
 
 constructor TState.Create(ATrader: TTrader);
@@ -246,8 +246,25 @@ begin
 end;
 
 procedure TTrader.Order(AType: TRequestType; ALast: Integer; ACount: double);
+  function CreateNewOrderParams(AID: String): TJSONObject;
+  begin
+    Result := TJSONObject.Create;
+    Result.AddPair('order_id', '{' + AID + '}');
+    Result.AddPair('coin_code', UpperCase(FCoinInfo.Currency));
+    Result.AddPair('order_stamp', Now.ToISO8601);
+    Result.AddPair('user_id', TGlobal.Obj.UserID);
+    Result.AddPair('price', ALast);
+    Result.AddPair('qty', ACount);
+
+    if AType = rtLimitBuy then
+      Result.AddPair('order_type', 'bid')
+    else
+      Result.AddPair('order_type', 'ask');
+
+  end;
+
 var
-  Params, res: TJSONObject;
+  Params, res, DSParams: TJSONObject;
   MinOrderCount: double;
 begin
   MinOrderCount := TCoinone.MinOrderCount(FCoinInfo.Currency);
@@ -269,16 +286,8 @@ begin
       try
         if res.GetString('result') = RES_SUCCESS then
         begin
-          Params.AddPair('order_id', '{' + res.GetString('orderId') + '}');
-          Params.AddPair('coin_code', FCoinInfo.Currency);
-          Params.AddPair('order_stamp', Now.ToISO8601);
-          Params.AddPair('user_id', TGlobal.Obj.UserID);
-          if AType = rtLimitBuy then
-            Params.AddPair('order_type', 'bid')
-          else
-            Params.AddPair('order_type', 'ask');
-
-          OnNewOrder(Params);
+          DSParams := CreateNewOrderParams(res.GetString('orderId'));
+          OnNewOrder(DSParams);
         end;
       finally
         res.Free;
@@ -396,15 +405,12 @@ end;
 procedure TStateNormal.Normal(AInfo: TPriceInfo; LastOrder: TOrder);
 var
   ShortState: TPriceState;
-  NewInfo: TPriceInfo;
 begin
   // LongPoint 초과 시 ShortTime 동작 안 함
   if AInfo.State <> psStable then
     Exit;
 
   ShortState := FTrader.CoinInfo.ShortState(AInfo.Rate);
-  NewInfo := AInfo;
-  NewInfo.Rate := FTrader.CoinInfo.ShortDeal + abs(AInfo.Rate);
   case ShortState of
     psStable:
       //
@@ -414,8 +420,8 @@ begin
         if LastOrder.WasSold then
           Exit;
 
-        if NewInfo.Stoch > 0.5 then
-          MarketSell(NewInfo, LastOrder);
+        if AInfo.Stoch > 0.5 then
+          MarketSell(AInfo, LastOrder, FTrader.CoinInfo.ShortDeal);
       end;
 
     psDecrease:
@@ -423,8 +429,8 @@ begin
         if LastOrder.WasBought then
           Exit;
 
-        if NewInfo.Stoch < 0.5 then
-          MarketBuy(NewInfo, LastOrder);
+        if AInfo.Stoch < 0.5 then
+          MarketBuy(AInfo, LastOrder, FTrader.CoinInfo.ShortDeal);
       end;
   end;
 end;
@@ -485,36 +491,81 @@ begin
   Self.Rate := (Self.Last - AOldPrice) / AOldPrice;
 end;
 
-function TPriceInfo.CalcBuyCount(ALastOrder: TOrder): double;
+function TPriceInfo.CalcBuyCount(ALastOrder: TOrder; ShortDeal: double = 0): double;
 var
-  Count: double;
+  LastValueCount: double;
+  MinCount, MaxCount: double;
 begin
   Result := Self.Avail * abs(Self.Rate);
 
   if ALastOrder.WasSold then
   begin
-    Count := ALastOrder.GetValue / Self.Last;
-    // 최종거래 매도금액으로 구매 할 수있는 코인수와 (가용코인수 * 하락분) 중 작은 수 매수
-    TGlobal.Obj.ApplicationMessage(msDebug, 'CalcBuyCount', 'LastOrder=%0.4f,Calc=%0.4f',
-      [Count, Result]);
-    Result := Min(Count, Result);
+    LastValueCount := ALastOrder.GetValue / Self.Last;
+    if ShortDeal = 0 then
+    begin
+      TGlobal.Obj.ApplicationMessage(msDebug, 'CalcBuyCount',
+        'LastValueCount=%0.4f,Calc=%0.4f', [LastValueCount, Result]);
+
+      // 최종거래 매도금액으로 구매 할 수있는 코인수와 (가용코인수 * 하락분) 중 작은 수 매수
+      Result := Min(LastValueCount, Result);
+    end
+    else
+    begin
+      // MaxCount 가용코인수 * ( ShortDeal + 하락분 * 2)
+      MaxCount := Self.Avail * (ShortDeal + abs(Self.Rate) * 2);
+      MinCount := Self.Avail * ShortDeal;
+      TGlobal.Obj.ApplicationMessage(msDebug, 'CalcBuyCount',
+        'LastValueCount=%0.4f,MaxCalc=%0.4f,MinCalc=%0.4f',
+        [LastValueCount, MaxCount, MinCount]);
+
+      // 최종거래 매도금액으로 구매 할 수있는 코인수가 ShortDeal MaxCount, MinCount 넘지않는경우  선택
+      // 최종거래 매도금액으로 구매 할 수있는 코인수가 ShortDeal MaxCount, MinCount 넘는 경우 MinCount
+      if (LastValueCount < MaxCount) and (LastValueCount > MinCount) then
+        Result := LastValueCount
+      else
+        Result := MinCount;
+    end;
   end;
+
+  if Self.Last * Result > 1000000 then
+    raise Exception.Create('Value Exception - Over 1,000,000KRW');
+
 end;
 
-function TPriceInfo.CalcSellCount(ALastOrder: TOrder): double;
+function TPriceInfo.CalcSellCount(ALastOrder: TOrder; ShortDeal: double = 0): double;
 var
   LastCount: double;
+  MinCount, MaxCount: double;
 begin
   Result := Self.Avail * abs(Self.Rate);
 
   if ALastOrder.WasBought then
   begin
     LastCount := ALastOrder.qty.ToDouble;
-    // 최종거래에서 매수한 코인 개수와 (가용코인수 * 상승분) 중 작은 수 매도
-    TGlobal.Obj.ApplicationMessage(msDebug, 'CalcSellCount', 'LastOrder=%0.4f,Calc=%0.4f',
-      [LastCount, Result]);
-    Result := Min(LastCount, Result);
+    if ShortDeal = 0 then
+    begin
+      // 최종거래에서 매수한 코인 개수와 (가용코인수 * 상승분) 중 작은 수 매도
+      TGlobal.Obj.ApplicationMessage(msDebug, 'CalcSellCount', 'LastOrder=%0.4f,Calc=%0.4f',
+        [LastCount, Result]);
+      Result := Min(LastCount, Result);
+    end
+    else
+    begin
+      MaxCount := Self.Avail * (ShortDeal + abs(Self.Rate));
+      MinCount := Self.Avail * ShortDeal;
+      TGlobal.Obj.ApplicationMessage(msDebug, 'CalcSellCount',
+        'LastOrder=%0.4f,MaxCalc=%0.4f,MinCalc=%0.4f', [LastCount, MaxCount, MinCount]);
+
+      if (LastCount < MaxCount) and (LastCount > MinCount) then
+        Result := LastCount
+      else
+        Result := MinCount;
+    end;
   end;
+
+  if Self.Last * Result > 1000000 then
+    raise Exception.Create('Value Exception - Over 1,000,000KRW');
+
 end;
 
 procedure TPriceInfo.SetStoch(AHighLow: THighLow);

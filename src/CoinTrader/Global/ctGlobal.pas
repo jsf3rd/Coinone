@@ -7,10 +7,12 @@ uses
 
 const
   APPLICATION_CODE = 'CoinTrader';
-  APPLICATION_TITLE = 'Coin Trader Application';
+  APPLICATION_TITLE = 'Coin Trader';
   APPLICATION_VERSION = 'v1.0';
   COPY_RIGHT_SIGN = '¨Ï 2017 playIoT';
   HOME_PAGE_URL = 'http://www.playIoT.biz';
+
+  LOCAL_SERVER = '\\localhost';
 
 type
   TGlobal = class(TGlobalAbstract)
@@ -94,6 +96,7 @@ begin
     Exit;
   FIsInitialized := true;
 
+  FUseCloudLog := TOption.Obj.UseCloudLog;
   FStartTime := now;
   // FLogServer.StringValue := 'log.iccs.co.kr';
 
