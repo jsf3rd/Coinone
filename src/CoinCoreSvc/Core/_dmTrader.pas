@@ -102,7 +102,7 @@ begin
       MyCoin := TOption.Obj.CoinInfo[MyOption];
       if (MyCoin.Oper <> OPER_ENABLE) and (MyCoin.Oper <> OPER_TEST) then
       begin
-        TGlobal.Obj.ApplicationMessage(msDebug, 'Disabled', MyCoin.ToString);
+        TGlobal.Obj.ApplicationMessage(msInfo, 'Disabled', MyCoin.ToString);
         Continue;
       end;
 
@@ -129,7 +129,6 @@ end;
 procedure TdmTrader.OnNewOrder(AParams: TJSONObject);
 begin
   try
-    TGlobal.Obj.ApplicationMessage(msDebug, 'NewOrder', AParams.ToString);
     smDataLoaderClient.UploadOrder(AParams.Clone as TJSONValue)
   except
     on E: Exception do
