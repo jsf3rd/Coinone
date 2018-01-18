@@ -24,7 +24,7 @@ type
 
   TTrader = class;
 
-  TState = class abstract
+  TState = class
   strict protected
     FTrader: TTrader;
     procedure MarketSell(AInfo: TPriceInfo; LastOrder: TOrder; ShortDeal: double = 0);
@@ -69,10 +69,11 @@ type
     FCoinInfo: TCoinInfo;
 
     FTestOrder: TOrder;
-    function GetLastOrder: TOrder;
-  private
+
     FOnNewOrder: TOnJsonEvent;
     FOnCancelOrder: TOnStrEvent;
+
+    function GetLastOrder: TOrder;
   public
     constructor Create(ACoin: TCoinInfo);
     destructor Destroy; override;
@@ -102,7 +103,7 @@ var
 begin
   if FTrader.ExistLimitOrder then
   begin
-    TGlobal.Obj.ApplicationMessage(msDebug, 'ExistLimitOrder');
+    TGlobal.Obj.ApplicationMessage(msInfo, 'ExistLimitOrder');
     Exit;
   end;
 
@@ -118,7 +119,7 @@ procedure TState.MarketBuy(AInfo: TPriceInfo; LastOrder: TOrder; ShortDeal: doub
 begin
   if FTrader.ExistLimitOrder then
   begin
-    TGlobal.Obj.ApplicationMessage(msDebug, 'ExistLimitOrder');
+    TGlobal.Obj.ApplicationMessage(msInfo, 'ExistLimitOrder');
     Exit;
   end;
 
@@ -132,17 +133,20 @@ end;
 
 procedure TState.Normal(AInfo: TPriceInfo; LastOrder: TOrder);
 begin
-  //
+  FTrader.State := FTrader.StateNormal;
+  Self.Free;
 end;
 
 procedure TState.OverBought(AInfo: TPriceInfo; LastOrder: TOrder);
 begin
-  //
+  FTrader.State := FTrader.StateOverBought;
+  Self.Free;
 end;
 
 procedure TState.OverSold(AInfo: TPriceInfo; LastOrder: TOrder);
 begin
-  //
+  FTrader.State := FTrader.StateOverSold;
+  Self.Free;
 end;
 
 { TTrader }
@@ -158,12 +162,11 @@ begin
   FStateOverSold := TStateOverSold.Create(Self);
 
   FCoinone := TCoinone.Create(TOption.Obj.AccessToken, TOption.Obj.SecretKey);
-  FState := FStateNormal;
+  FState := TState.Create(Self);
 
   if FCoinInfo.Oper = OPER_ENABLE then
   begin
-    TGlobal.Obj.ApplicationMessage(msDebug, 'InitState', 'State=%s,%s',
-      [FState.ClassName, FCoinInfo.ToString]);
+    TGlobal.Obj.ApplicationMessage(msInfo, 'InitTrader', '%s', [FCoinInfo.ToString]);
   end
   else if FCoinInfo.Oper = OPER_TEST then
   begin
@@ -183,7 +186,7 @@ begin
       [FState.ClassName, FCoinInfo.ToString]);
   end
   else
-    TGlobal.Obj.ApplicationMessage(msError, 'InitState', FCoinInfo.Oper);
+    TGlobal.Obj.ApplicationMessage(msError, 'InitTrader', FCoinInfo.Oper);
 end;
 
 destructor TTrader.Destroy;
@@ -277,7 +280,7 @@ begin
     Params.AddPair('qty', Format('%.4f', [ACount]));
     Params.AddPair('currency', FCoinInfo.Currency);
 
-    TGlobal.Obj.ApplicationMessage(msDebug, 'Order', 'Type=%s,Params=%s',
+    TGlobal.Obj.ApplicationMessage(msInfo, 'Order', 'Type=%s,Params=%s',
       [TCoinone.RequestName(AType), Params.ToString]);
 
     if FCoinInfo.Oper = OPER_ENABLE then
@@ -503,18 +506,18 @@ begin
     LastValueCount := ALastOrder.GetValue / Self.Last;
     if ShortDeal = 0 then
     begin
-      TGlobal.Obj.ApplicationMessage(msDebug, 'CalcBuyCount',
-        'LastValueCount=%0.4f,Calc=%0.4f', [LastValueCount, Result]);
+      TGlobal.Obj.ApplicationMessage(msInfo, 'CalcBuyCount', 'LastValueCount=%0.4f,Calc=%0.4f',
+        [LastValueCount, Result]);
 
       // 최종거래 매도금액으로 구매 할 수있는 코인수와 (가용코인수 * 하락분) 중 작은 수 매수
       Result := Min(LastValueCount, Result);
     end
     else
     begin
-      // MaxCount 가용코인수 * ( ShortDeal + 하락분 * 2)
-      MaxCount := Self.Avail * (ShortDeal + abs(Self.Rate) * 2);
+      // MaxCount 가용코인수 * ( ShortDeal의 1.5배)
+      MaxCount := Self.Avail * (ShortDeal * 1.5);
       MinCount := Self.Avail * ShortDeal;
-      TGlobal.Obj.ApplicationMessage(msDebug, 'CalcBuyCount',
+      TGlobal.Obj.ApplicationMessage(msInfo, 'CalcBuyCount',
         'LastValueCount=%0.4f,MaxCalc=%0.4f,MinCalc=%0.4f',
         [LastValueCount, MaxCount, MinCount]);
 
@@ -545,7 +548,7 @@ begin
     if ShortDeal = 0 then
     begin
       // 최종거래에서 매수한 코인 개수와 (가용코인수 * 상승분) 중 작은 수 매도
-      TGlobal.Obj.ApplicationMessage(msDebug, 'CalcSellCount', 'LastOrder=%0.4f,Calc=%0.4f',
+      TGlobal.Obj.ApplicationMessage(msInfo, 'CalcSellCount', 'LastOrder=%0.4f,Calc=%0.4f',
         [LastCount, Result]);
       Result := Min(LastCount, Result);
     end
@@ -553,7 +556,7 @@ begin
     begin
       MaxCount := Self.Avail * (ShortDeal + abs(Self.Rate));
       MinCount := Self.Avail * ShortDeal;
-      TGlobal.Obj.ApplicationMessage(msDebug, 'CalcSellCount',
+      TGlobal.Obj.ApplicationMessage(msInfo, 'CalcSellCount',
         'LastOrder=%0.4f,MaxCalc=%0.4f,MinCalc=%0.4f', [LastCount, MaxCount, MinCount]);
 
       if (LastCount < MaxCount) and (LastCount > MinCount) then
