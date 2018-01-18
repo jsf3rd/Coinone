@@ -19,6 +19,7 @@ type
     function GetHttpPort: Integer;
     function GetUseCloudLog: boolean;
     procedure SetUseCloudLog(const Value: boolean);
+    function GetClientInfo: TClientInfo;
   public
     class function Obj: TOption;
 
@@ -28,6 +29,7 @@ type
     property HttpPort: Integer read GetHttpPort write SetHttpPort;
     property DBInfo: String read GetDBInfo write SetDBInfo;
     property UseCloudLog: boolean read GetUseCloudLog write SetUseCloudLog;
+    property ClientInfo: TClientInfo read GetClientInfo;
   end;
 
 implementation
@@ -59,6 +61,12 @@ begin
     FIniFile.Free;
 
   inherited;
+end;
+
+function TOption.GetClientInfo: TClientInfo;
+begin
+  result.Version := FIniFile.ReadString('Client', 'Version', 'v1.0.0');
+  result.Url := FIniFile.ReadString('Client', 'Url', '');
 end;
 
 function TOption.GetDBInfo: String;
