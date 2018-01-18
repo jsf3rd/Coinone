@@ -104,7 +104,7 @@ end;
 
 function TCoinInfo.ShortState(ARate: Double): TPriceState;
 begin
-  if ARate > Self.ShortPoint then
+  if ARate > Self.ShortPoint + Sqr(Self.ShortPoint) then
     result := psIncrease
   else if ARate < -Self.ShortPoint then
     result := psDecrease
