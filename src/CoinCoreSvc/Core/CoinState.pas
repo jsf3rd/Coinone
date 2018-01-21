@@ -24,7 +24,7 @@ type
 
   TTrader = class;
 
-  TState = class
+  TState = class abstract
   strict protected
     FTrader: TTrader;
     procedure MarketSell(AInfo: TPriceInfo; LastOrder: TOrder; ShortDeal: double = 0);
@@ -35,6 +35,13 @@ type
     procedure OverSold(AInfo: TPriceInfo; LastOrder: TOrder); virtual;
     procedure Normal(AInfo: TPriceInfo; LastOrder: TOrder); virtual;
     constructor Create(ATrader: TTrader);
+  end;
+
+  TStateInit = class(TState)
+  public
+    procedure OverBought(AInfo: TPriceInfo; LastOrder: TOrder); override;
+    procedure OverSold(AInfo: TPriceInfo; LastOrder: TOrder); override;
+    procedure Normal(AInfo: TPriceInfo; LastOrder: TOrder); override;
   end;
 
   TStateNormal = class(TState)
@@ -59,6 +66,7 @@ type
   TTrader = class
   strict private
     FState: TState;
+    FStateInit: TState;
     FStateNormal: TState;
     FStateOverBought: TState;
     FStateOverSold: TState;
@@ -133,20 +141,17 @@ end;
 
 procedure TState.Normal(AInfo: TPriceInfo; LastOrder: TOrder);
 begin
-  FTrader.State := FTrader.StateNormal;
-  Self.Free;
+  //
 end;
 
 procedure TState.OverBought(AInfo: TPriceInfo; LastOrder: TOrder);
 begin
-  FTrader.State := FTrader.StateOverBought;
-  Self.Free;
+  //
 end;
 
 procedure TState.OverSold(AInfo: TPriceInfo; LastOrder: TOrder);
 begin
-  FTrader.State := FTrader.StateOverSold;
-  Self.Free;
+  //
 end;
 
 { TTrader }
@@ -157,12 +162,13 @@ var
   JSONObject: TJSONObject;
 begin
   FCoinInfo := ACoin;
+  FStateInit := TStateInit.Create(Self);
   FStateNormal := TStateNormal.Create(Self);
   FStateOverBought := TStateOverBought.Create(Self);
   FStateOverSold := TStateOverSold.Create(Self);
 
   FCoinone := TCoinone.Create(TOption.Obj.AccessToken, TOption.Obj.SecretKey);
-  FState := TState.Create(Self);
+  FState := FStateInit;
 
   if FCoinInfo.Oper = OPER_ENABLE then
   begin
@@ -193,6 +199,7 @@ destructor TTrader.Destroy;
 begin
   FCoinone.Free;
 
+  FStateInit.Free;
   FStateNormal.Free;
   FStateOverBought.Free;
   FStateOverSold.Free;
@@ -514,8 +521,8 @@ begin
     end
     else
     begin
-      // MaxCount 가용코인수 * ( ShortDeal의 1.5배)
-      MaxCount := Self.Avail * (ShortDeal * 1.5);
+      // MaxCount 가용코인수 * ( ShortDeal의 2배)
+      MaxCount := Self.Avail * (ShortDeal * 2);
       MinCount := Self.Avail * ShortDeal;
       TGlobal.Obj.ApplicationMessage(msInfo, 'CalcBuyCount',
         'LastValueCount=%0.4f,MaxCalc=%0.4f,MinCalc=%0.4f',
@@ -525,6 +532,9 @@ begin
       // 최종거래 매도금액으로 구매 할 수있는 코인수가 ShortDeal MaxCount, MinCount 넘는 경우 MinCount
       if (LastValueCount < MaxCount) and (LastValueCount > MinCount) then
         Result := LastValueCount
+      else if LastValueCount < MinCount then
+        // 연속매도 등의 이유로 매도 개수가 작은 경우 해당 매도 수를 포함해서 계산
+        Result := (Self.Avail + ALastOrder.qty.ToDouble) * ShortDeal
       else
         Result := MinCount;
     end;
@@ -583,6 +593,23 @@ function TPriceInfo.ToString: string;
 begin
   Result := Format('Last=%d,Rate=%.3f,Stoch=%.3f,Avail=%.4f',
     [Self.Last, Self.Rate, Self.Stoch, Self.Avail]);
+end;
+
+{ TStateInit }
+
+procedure TStateInit.Normal(AInfo: TPriceInfo; LastOrder: TOrder);
+begin
+  FTrader.State := FTrader.StateNormal;
+end;
+
+procedure TStateInit.OverBought(AInfo: TPriceInfo; LastOrder: TOrder);
+begin
+  FTrader.State := FTrader.StateOverBought;
+end;
+
+procedure TStateInit.OverSold(AInfo: TPriceInfo; LastOrder: TOrder);
+begin
+  FTrader.State := FTrader.StateOverSold;
 end;
 
 end.
