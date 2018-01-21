@@ -83,13 +83,9 @@ begin
 
   inherited;
 
-  FUseCloudLog := TOption.Obj.UseCloudLog;
   FUseUploadTicker := TOption.Obj.UseUploadTicker;
   FConnInfo := TOption.Obj.ConnInfo;
   FUserID := TOption.Obj.UserID;
-
-  // Todo :
-  // FLogServer.StringValue := 'log.iccs.co.kr';
 end;
 
 class function TGlobal.Obj: TGlobal;
@@ -106,6 +102,9 @@ begin
 
   if not TDirectory.Exists(ExtractFilePath(FLogName)) then
     TDirectory.CreateDirectory(ExtractFilePath(FLogName));
+
+  FUseCloudLog := TOption.Obj.UseCloudLog;
+  // FLogServer.StringValue := LOG_SERVER;
 end;
 
 initialization
