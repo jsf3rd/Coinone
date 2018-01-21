@@ -30,7 +30,12 @@ implementation
 
 function TsmDataProvider.GetClientInfo: TJSONObject;
 begin
-  result := TJSON.RecordToJsonObject<TClientInfo>(TOption.Obj.ClientInfo);
+  try
+    result := TJSON.RecordToJsonObject(TOption.Obj.ClientInfo);
+  except
+    on E: Exception do
+      TGlobal.Obj.ApplicationMessage(msError, 'GetClientInfo', E.Message);
+  end;
 end;
 
 function TsmDataProvider.HighLow(ACoin: string; APeriod: TDateTime): TJSONObject;
