@@ -88,10 +88,11 @@ begin
   // FLogName := GetEnvironmentVariable('LOCALAPPDATA') + '\playIoT\' +
   // ExtractFileName(FLogName);
 
-  // FUseCloudLog := TOption.Obj.UseCloudLog; // 선택 사항 기본값은 True
-
   if not TDirectory.Exists(ExtractFilePath(FLogName)) then
     TDirectory.CreateDirectory(ExtractFilePath(FLogName));
+
+  FUseCloudLog := TOption.Obj.UseCloudLog;
+  // FLogServer.StringValue := LOG_SERVER;
 end;
 
 initialization
