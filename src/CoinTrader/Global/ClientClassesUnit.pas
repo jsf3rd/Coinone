@@ -1,6 +1,6 @@
 //
 // Created by the DataSnap proxy generator.
-// 2018-01-15 오후 11:40:00
+// 2018-01-19 오후 2:21:35
 //
 
 unit ClientClassesUnit;
@@ -18,6 +18,8 @@ type
     FOrdersCommand_Cache: TDSRestCommand;
     FHighLowCommand: TDSRestCommand;
     FHighLowCommand_Cache: TDSRestCommand;
+    FGetClientInfoCommand: TDSRestCommand;
+    FGetClientInfoCommand_Cache: TDSRestCommand;
   public
     constructor Create(ARestConnection: TDSRestConnection); overload;
     constructor Create(ARestConnection: TDSRestConnection; AInstanceOwner: Boolean); overload;
@@ -28,6 +30,8 @@ type
     function Orders_Cache(AParams: TJSONObject; const ARequestFilter: string = ''): IDSRestCachedStream;
     function HighLow(ACoin: string; APeriod: TDateTime; const ARequestFilter: string = ''): TJSONObject;
     function HighLow_Cache(ACoin: string; APeriod: TDateTime; const ARequestFilter: string = ''): IDSRestCachedJSONObject;
+    function GetClientInfo(const ARequestFilter: string = ''): TJSONObject;
+    function GetClientInfo_Cache(const ARequestFilter: string = ''): IDSRestCachedJSONObject;
   end;
 
   TsmDataLoaderClient = class(TDSAdminRestClient)
@@ -80,6 +84,16 @@ const
   (
     (Name: 'ACoin'; Direction: 1; DBXType: 26; TypeName: 'string'),
     (Name: 'APeriod'; Direction: 1; DBXType: 11; TypeName: 'TDateTime'),
+    (Name: ''; Direction: 4; DBXType: 26; TypeName: 'String')
+  );
+
+  TsmDataProvider_GetClientInfo: array [0..0] of TDSRestParameterMetaData =
+  (
+    (Name: ''; Direction: 4; DBXType: 37; TypeName: 'TJSONObject')
+  );
+
+  TsmDataProvider_GetClientInfo_Cache: array [0..0] of TDSRestParameterMetaData =
+  (
     (Name: ''; Direction: 4; DBXType: 26; TypeName: 'String')
   );
 
@@ -189,6 +203,32 @@ begin
   Result := TDSRestCachedJSONObject.Create(FHighLowCommand_Cache.Parameters[2].Value.GetString);
 end;
 
+function TsmDataProviderClient.GetClientInfo(const ARequestFilter: string): TJSONObject;
+begin
+  if FGetClientInfoCommand = nil then
+  begin
+    FGetClientInfoCommand := FConnection.CreateCommand;
+    FGetClientInfoCommand.RequestType := 'GET';
+    FGetClientInfoCommand.Text := 'TsmDataProvider.GetClientInfo';
+    FGetClientInfoCommand.Prepare(TsmDataProvider_GetClientInfo);
+  end;
+  FGetClientInfoCommand.Execute(ARequestFilter);
+  Result := TJSONObject(FGetClientInfoCommand.Parameters[0].Value.GetJSONValue(FInstanceOwner));
+end;
+
+function TsmDataProviderClient.GetClientInfo_Cache(const ARequestFilter: string): IDSRestCachedJSONObject;
+begin
+  if FGetClientInfoCommand_Cache = nil then
+  begin
+    FGetClientInfoCommand_Cache := FConnection.CreateCommand;
+    FGetClientInfoCommand_Cache.RequestType := 'GET';
+    FGetClientInfoCommand_Cache.Text := 'TsmDataProvider.GetClientInfo';
+    FGetClientInfoCommand_Cache.Prepare(TsmDataProvider_GetClientInfo_Cache);
+  end;
+  FGetClientInfoCommand_Cache.ExecuteCache(ARequestFilter);
+  Result := TDSRestCachedJSONObject.Create(FGetClientInfoCommand_Cache.Parameters[0].Value.GetString);
+end;
+
 constructor TsmDataProviderClient.Create(ARestConnection: TDSRestConnection);
 begin
   inherited Create(ARestConnection);
@@ -207,6 +247,8 @@ begin
   FOrdersCommand_Cache.DisposeOf;
   FHighLowCommand.DisposeOf;
   FHighLowCommand_Cache.DisposeOf;
+  FGetClientInfoCommand.DisposeOf;
+  FGetClientInfoCommand_Cache.DisposeOf;
   inherited;
 end;
 

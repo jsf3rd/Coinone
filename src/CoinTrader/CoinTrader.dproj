@@ -83,7 +83,9 @@
         <DCC_RemoteDebug>true</DCC_RemoteDebug>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_1_Win32)'!=''">
-        <VerInfo_Keys>CompanyName=playIoT.;FileDescription=;FileVersion=1.0.0.0;InternalName=;LegalCopyright=(c)playIoT 2016.;LegalTrademarks=;OriginalFilename=;ProductName=Code D;ProductVersion=1.0.0.0;Comments=playIoT Application.</VerInfo_Keys>
+        <DCC_ExeOutput>..\bin\$(Config)</DCC_ExeOutput>
+        <VerInfo_Release>1</VerInfo_Release>
+        <VerInfo_Keys>CompanyName=playIoT.;FileDescription=;FileVersion=1.0.1.0;InternalName=;LegalCopyright=(c)playIoT 2016.;LegalTrademarks=;OriginalFilename=;ProductName=Code D;ProductVersion=1.0.0.0;Comments=playIoT Application.</VerInfo_Keys>
         <AppEnableRuntimeThemes>true</AppEnableRuntimeThemes>
         <VerInfo_Locale>1033</VerInfo_Locale>
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
@@ -96,13 +98,14 @@
         <DCC_DebugInformation>0</DCC_DebugInformation>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2_Win32)'!=''">
+        <VerInfo_Release>1</VerInfo_Release>
         <AppEnableAdministrator>true</AppEnableAdministrator>
         <Icon_MainIcon>CoinTrader_Icon.ico</Icon_MainIcon>
         <AppEnableRuntimeThemes>true</AppEnableRuntimeThemes>
-        <DCC_ExeOutput>..\bin\$(Config)</DCC_ExeOutput>
+        <DCC_ExeOutput>..\bin\$(Config)\CoinTrader</DCC_ExeOutput>
         <VerInfo_Locale>1033</VerInfo_Locale>
         <DCC_DcuOutput>.\DCUs</DCC_DcuOutput>
-        <VerInfo_Keys>CompanyName=playIoT.;FileDescription=Coin Trader;FileVersion=1.0.0.0;InternalName=Coin Trader;LegalCopyright=(c)2018 playIoT.;LegalTrademarks=;OriginalFilename=;ProductName=Coin Trader;ProductVersion=1.0.0.0;Comments=Coinone Coin Trading Application.</VerInfo_Keys>
+        <VerInfo_Keys>CompanyName=playIoT.;FileDescription=Coin Trader;FileVersion=1.0.1.0;InternalName=Coin Trader;LegalCopyright=(c)2018 playIoT.;LegalTrademarks=;OriginalFilename=;ProductName=Coin Trader;ProductVersion=1.0.0.0;Comments=Coinone Coin Trading Application.</VerInfo_Keys>
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
     </PropertyGroup>
     <ItemGroup>
@@ -115,7 +118,6 @@
         <DCCReference Include="Core\Core.pas"/>
         <DCCReference Include="Global\ctGlobal.pas"/>
         <DCCReference Include="Global\ctOption.pas"/>
-        <DCCReference Include="..\common\Coinone.pas"/>
         <DCCReference Include="..\common\Common.pas"/>
         <DCCReference Include="Core\_dmDataProvider.pas">
             <Form>dmDataProvider</Form>
@@ -191,12 +193,27 @@
                         <Overwrite>true</Overwrite>
                     </Platform>
                 </DeployFile>
-                <DeployClass Name="ProjectiOSDeviceResourceRules">
+                <DeployClass Name="DependencyModule">
+                    <Platform Name="Win32">
+                        <Operation>0</Operation>
+                        <Extensions>.dll;.bpl</Extensions>
+                    </Platform>
                     <Platform Name="iOSDevice64">
                         <Operation>1</Operation>
+                        <Extensions>.dylib</Extensions>
+                    </Platform>
+                    <Platform Name="OSX32">
+                        <RemoteDir>Contents\MacOS</RemoteDir>
+                        <Operation>1</Operation>
+                        <Extensions>.dylib</Extensions>
                     </Platform>
                     <Platform Name="iOSDevice32">
                         <Operation>1</Operation>
+                        <Extensions>.dylib</Extensions>
+                    </Platform>
+                    <Platform Name="iOSSimulator">
+                        <Operation>1</Operation>
+                        <Extensions>.dylib</Extensions>
                     </Platform>
                 </DeployClass>
                 <DeployClass Name="ProjectOSXResource">
@@ -550,27 +567,12 @@
                         <Operation>1</Operation>
                     </Platform>
                 </DeployClass>
-                <DeployClass Name="DependencyModule">
-                    <Platform Name="Win32">
-                        <Operation>0</Operation>
-                        <Extensions>.dll;.bpl</Extensions>
-                    </Platform>
+                <DeployClass Name="ProjectiOSDeviceResourceRules">
                     <Platform Name="iOSDevice64">
                         <Operation>1</Operation>
-                        <Extensions>.dylib</Extensions>
-                    </Platform>
-                    <Platform Name="OSX32">
-                        <RemoteDir>Contents\MacOS</RemoteDir>
-                        <Operation>1</Operation>
-                        <Extensions>.dylib</Extensions>
                     </Platform>
                     <Platform Name="iOSDevice32">
                         <Operation>1</Operation>
-                        <Extensions>.dylib</Extensions>
-                    </Platform>
-                    <Platform Name="iOSSimulator">
-                        <Operation>1</Operation>
-                        <Extensions>.dylib</Extensions>
                     </Platform>
                 </DeployClass>
                 <ProjectRoot Platform="iOSDevice64" Name="$(PROJECTNAME).app"/>

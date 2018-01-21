@@ -9,7 +9,7 @@ uses
   Vcl.Menus, Vcl.AppEvnts, Vcl.ExtCtrls, Vcl.StdCtrls, Data.DB, Vcl.Grids, Vcl.DBGrids,
   _dmDataProvider, VclTee.TeeGDIPlus, VclTee.TeEngine, VclTee.Series, VclTee.TeeProcs,
   VclTee.Chart, VclTee.DBChart, Vcl.ComCtrls, System.DateUtils, Vcl.Mask, JclSvcCtrl,
-  Vcl.CheckLst, Common, System.Generics.Collections;
+  Vcl.CheckLst, Common, JvExDBGrids, JvDBGrid;
 
 type
   TfmMain = class(TForm)
@@ -21,7 +21,6 @@ type
     ApplicationEvents: TApplicationEvents;
     ActionList: TActionList;
     actAbout: TAction;
-    actClearLog: TAction;
     actExit: TAction;
     actShowIni: TAction;
     actShowLog: TAction;
@@ -64,10 +63,8 @@ type
     Panel5: TPanel;
     Splitter1: TSplitter;
     pnlLimitOrderTitle: TPanel;
-    dbgLimitOrder: TDBGrid;
     Button5: TButton;
     actCancelOrder: TAction;
-    dbgRecentOrders: TDBGrid;
     Splitter: TSplitter;
     lblRecentOrder: TLabel;
     GroupBox3: TGroupBox;
@@ -93,23 +90,24 @@ type
     Button10: TButton;
     Button11: TButton;
     edtCoreStatus: TLabeledEdit;
-    actStartCoinDataSvc: TAction;
-    actStopCoinDataSvc: TAction;
+    actStartDataSvc: TAction;
+    actStopDataSvc: TAction;
     ServiceStatusTimer: TTimer;
-    actStartCoinCoreSvc: TAction;
-    actStopCoinCoreSvc: TAction;
+    actStartCoreSvc: TAction;
+    actStopCoreSvc: TAction;
     edtUserID: TLabeledEdit;
     Button12: TButton;
     actSaveConfig: TAction;
     edtAccessToken: TLabeledEdit;
     edtSecretKey: TLabeledEdit;
-    actCopyTraderOption: TAction;
+    Series10: TLineSeries;
+    dbgLimitOrder: TJvDBGrid;
+    dbgRecentOrders: TJvDBGrid;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure actAboutExecute(Sender: TObject);
     procedure ApplicationEventsException(Sender: TObject; E: Exception);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
-    procedure actClearLogExecute(Sender: TObject);
     procedure actExitExecute(Sender: TObject);
     procedure actShowIniExecute(Sender: TObject);
     procedure actShowLogExecute(Sender: TObject);
@@ -126,25 +124,20 @@ type
     procedure dbgBalanceDblClick(Sender: TObject);
     procedure actCancelOrderExecute(Sender: TObject);
     procedure PageControlChange(Sender: TObject);
-    procedure SplitterMoved(Sender: TObject);
     procedure edtLimitCountChange(Sender: TObject);
     procedure Panel3Resize(Sender: TObject);
     procedure ServiceStatusTimerTimer(Sender: TObject);
-    procedure actStartCoinDataSvcExecute(Sender: TObject);
-    procedure actStopCoinDataSvcExecute(Sender: TObject);
-    procedure actStartCoinCoreSvcExecute(Sender: TObject);
-    procedure actStopCoinCoreSvcExecute(Sender: TObject);
+    procedure actStartDataSvcExecute(Sender: TObject);
+    procedure actStopDataSvcExecute(Sender: TObject);
+    procedure actStartCoreSvcExecute(Sender: TObject);
+    procedure actStopCoreSvcExecute(Sender: TObject);
     procedure tsPreferenceShow(Sender: TObject);
     procedure actSaveConfigExecute(Sender: TObject);
-    procedure actCopyTraderOptionExecute(Sender: TObject);
     procedure Panel5Resize(Sender: TObject);
 
   private
     FOldDataStatus: TJclServiceState;
     FOldCoreStatus: TJclServiceState;
-
-    procedure UpdateServiceStatus(const ServiceName: String; var OldStatus: TJclServiceState;
-      StartAction, StopAction: TAction; StatusEdit: TLabeledEdit);
   published
     procedure rp_Terminate(APacket: TValueList);
     procedure rp_Init(APacket: TValueList);
@@ -167,8 +160,8 @@ uses JdcGlobal, ctGlobal, ctOption, JdcView, Core, System.UITypes;
 
 procedure TfmMain.actAboutExecute(Sender: TObject);
 begin
-  MessageDlg(APPLICATION_TITLE + ' ' + APPLICATION_VERSION + ' ' + COPY_RIGHT_SIGN +
-    #13#10#13#10 + HOME_PAGE_URL, mtInformation, [mbOK], 0);
+  MessageDlg(APPLICATION_TITLE + ' ' + FileVersion(Application.ExeName) + ' ' + COPY_RIGHT_SIGN
+    + #13#10#13#10 + HOME_PAGE_URL, mtInformation, [mbOK], 0);
 end;
 
 procedure TfmMain.actMarketASKExecute(Sender: TObject);
@@ -204,24 +197,11 @@ begin
     MessageDlg('매수 주문 성공', mtInformation, [mbOK], 0)
   else
     MessageDlg('매수 주문 실패', mtError, [mbOK], 0)
-
 end;
 
 procedure TfmMain.actCancelOrderExecute(Sender: TObject);
 begin
   dmDataProvider.CancelOrder;
-end;
-
-procedure TfmMain.actClearLogExecute(Sender: TObject);
-begin
-  // ClipBoard.AsText := mmLog.Lines.Text;
-  // mmLog.Clear;
-end;
-
-procedure TfmMain.actCopyTraderOptionExecute(Sender: TObject);
-begin
-  //
-
 end;
 
 procedure TfmMain.actExitExecute(Sender: TObject);
@@ -296,52 +276,24 @@ begin
     SW_SHOWNORMAL);
 end;
 
-procedure TfmMain.actStartCoinCoreSvcExecute(Sender: TObject);
+procedure TfmMain.actStartCoreSvcExecute(Sender: TObject);
 begin
-  FOldCoreStatus := ssUnknown;
-  actStartCoinCoreSvc.Enabled := false;
-  if StartServiceByName(LOCAL_SERVER, CORE_SERVICE_CODE) then
-    Exit;
-
-  MessageDlg('서비스를 시작하지 못했습니다.', TMsgDlgType.mtWarning, [mbOK], 0);
-  actStartCoinCoreSvc.Enabled := true;
+  StartService(CORE_SERVICE_CODE, FOldCoreStatus, actStartCoreSvc);
 end;
 
-procedure TfmMain.actStartCoinDataSvcExecute(Sender: TObject);
+procedure TfmMain.actStartDataSvcExecute(Sender: TObject);
 begin
-  FOldDataStatus := ssUnknown;
-  actStartCoinDataSvc.Enabled := false;
-  if StartServiceByName(LOCAL_SERVER, DATA_SERVICE_CODE) then
-    Exit;
-
-  MessageDlg('서비스를 시작하지 못했습니다.', TMsgDlgType.mtWarning, [mbOK], 0);
-  actStartCoinDataSvc.Enabled := true;
+  StartService(DATA_SERVICE_CODE, FOldDataStatus, actStartDataSvc);
 end;
 
-procedure TfmMain.actStopCoinCoreSvcExecute(Sender: TObject);
+procedure TfmMain.actStopCoreSvcExecute(Sender: TObject);
 begin
-  FOldCoreStatus := ssUnknown;
-  actStopCoinCoreSvc.Enabled := false;
-
-  if StopServiceByName(LOCAL_SERVER, CORE_SERVICE_CODE) then
-    Exit;
-
-  if MessageDlg('알림 : 서비스를 중지하지 못했습니다.' + #13#10 + '강제로 중지하시겠습니까?', TMsgDlgType.mtConfirmation,
-    [mbYes, mbNo], 0) = mrYes then
-    ShellExecute(handle, 'open', 'taskkill', ' -f -im CoinCoreSvc.exe', nil, SW_HIDE);
+  StopService(CORE_SERVICE_CODE, FOldCoreStatus, actStopCoreSvc, Self.handle);
 end;
 
-procedure TfmMain.actStopCoinDataSvcExecute(Sender: TObject);
+procedure TfmMain.actStopDataSvcExecute(Sender: TObject);
 begin
-  FOldDataStatus := ssUnknown;
-  actStopCoinDataSvc.Enabled := false;
-
-  if StopServiceByName(LOCAL_SERVER, DATA_SERVICE_CODE) then
-    Exit;
-
-  if MessageDlg('알림 : 서비스를 중지하지 못했습니다.' + #13#10 + '강제로 중지하시겠습니까?', TMsgDlgType.mtConfirmation,
-    [mbYes, mbNo], 0) = mrYes then
-    ShellExecute(handle, 'open', 'taskkill', ' -f -im CoinDataSvc.exe', nil, SW_HIDE);
+  StopService(DATA_SERVICE_CODE, FOldDataStatus, actStopDataSvc, Self.handle);
 end;
 
 procedure TfmMain.actTestMenuExecute(Sender: TObject);
@@ -358,6 +310,9 @@ procedure TfmMain.dbgBalanceDblClick(Sender: TObject);
 begin
   dmDataProvider.LimitOrders;
   dmDataProvider.CompleteOrders(dmDataProvider.mtBalance.FieldByName('coin').AsString);
+
+  dbgRecentOrders.ScrollBars := ssNone;
+  dbgRecentOrders.ScrollBars := ssVertical;
 end;
 
 procedure TfmMain.edtLimitCountChange(Sender: TObject);
@@ -384,6 +339,9 @@ procedure TfmMain.FormCreate(Sender: TObject);
 begin
   TGlobal.Obj.ExeName := Application.ExeName;
   TView.Obj.Add(Self);
+
+  FOldDataStatus := ssContinuePending;
+  FOldCoreStatus := ssContinuePending;
 end;
 
 procedure TfmMain.FormDestroy(Sender: TObject);
@@ -423,18 +381,25 @@ begin
     StochHour := 23;
   edtStochHour.Text := StochHour.ToString;
 
+  chtMain.SeriesList.ClearValues;
+  chtStoch.SeriesList.ClearValues;
+
   dmDataProvider.ChartData(StrToIntDef(edtChartDay.Text, 2), StochHour);
   chtMain.RefreshData;
   ResizeAxis(chtMain, chtMain.LeftAxis);
   ResizeAxis(chtMain, chtMain.RightAxis);
 
   chtStoch.RefreshData;
-  chtStoch.LeftAxis.Automatic := true;
-  chtStoch.Refresh;
+  ResizeAxis(chtStoch, chtStoch.RightAxis);
+
   chtStoch.LeftAxis.Automatic := false;
+  chtStoch.LeftAxis.Minimum := -100;
   chtStoch.LeftAxis.Maximum := chtMain.LeftAxis.Maximum;
   chtStoch.LeftAxis.Minimum := chtMain.LeftAxis.Minimum;
-  ResizeAxis(chtStoch, chtStoch.RightAxis);
+
+  chtStoch.TopAxis.Automatic := false;
+  chtStoch.TopAxis.Maximum := chtStoch.BottomAxis.Maximum;
+  chtStoch.TopAxis.Minimum := chtStoch.BottomAxis.Minimum;
 end;
 
 procedure TfmMain.PageControlChange(Sender: TObject);
@@ -456,7 +421,7 @@ end;
 
 procedure TfmMain.Panel5Resize(Sender: TObject);
 begin
-  dbgRecentOrders.Width := round(Panel5.Width / 2);
+  dbgRecentOrders.Width := round(Panel5.Width / 2) + 10;
   lblRecentOrder.Left := Splitter.Left;
 end;
 
@@ -467,9 +432,25 @@ begin
 end;
 
 procedure TfmMain.rp_Init(APacket: TValueList);
+var
+  ClientInfo: TClientInfo;
 begin
   Caption := TOption.Obj.AppName + ' ' + FileVersion(Application.ExeName);
   PageControl.ActivePageIndex := 0;
+
+  ClientInfo := dmDataProvider.GetClientInfo;
+  if (ClientInfo.Version <> FileVersion(TGlobal.Obj.ExeName)) and (ClientInfo.Url <> '') then
+  begin
+    if MessageDlg('-새버전 업데이트'#13#10 + ClientInfo.Version + ' 을 다운 받으시겠습니까?',
+      TMsgDlgType.mtInformation, [mbOK, mbCancel], 0) = mrOk then
+    begin
+      ShellExecute(handle, 'open', PChar(ClientInfo.Url), nil, nil, SW_SHOWNORMAL);
+      Application.Terminate;
+      Exit;
+    end;
+  end;
+
+  dmDataProvider.Init;
   dmDataProvider.Tick;
 end;
 
@@ -502,16 +483,11 @@ end;
 
 procedure TfmMain.ServiceStatusTimerTimer(Sender: TObject);
 begin
-  UpdateServiceStatus(DATA_SERVICE_CODE, FOldDataStatus, actStartCoinDataSvc,
-    actStopCoinDataSvc, edtDataStatus);
+  UpdateServiceStatus(DATA_SERVICE_CODE, FOldDataStatus, actStartDataSvc, actStopDataSvc,
+    edtDataStatus);
 
-  UpdateServiceStatus(CORE_SERVICE_CODE, FOldCoreStatus, actStartCoinCoreSvc,
-    actStopCoinCoreSvc, edtCoreStatus);
-end;
-
-procedure TfmMain.SplitterMoved(Sender: TObject);
-begin
-  lblRecentOrder.Left := Splitter.Left;
+  UpdateServiceStatus(CORE_SERVICE_CODE, FOldCoreStatus, actStartCoreSvc, actStopCoreSvc,
+    edtCoreStatus);
 end;
 
 procedure TfmMain.tsPreferenceShow(Sender: TObject);
@@ -525,46 +501,6 @@ begin
 
   edtAccessToken.Text := 'AccessToken';
   edtSecretKey.Text := 'SecretKey';
-end;
-
-procedure TfmMain.UpdateServiceStatus(const ServiceName: String;
-  var OldStatus: TJclServiceState; StartAction, StopAction: TAction; StatusEdit: TLabeledEdit);
-var
-  Status: TJclServiceState;
-begin
-  Status := GetServiceStatusByName(LOCAL_SERVER, ServiceName);
-
-  if OldStatus = Status then
-    Exit;
-
-  OldStatus := Status;
-  StartAction.Enabled := false;
-  StopAction.Enabled := false;
-  case Status of
-    ssUnknown:
-      StatusEdit.Text := '알수없음(등록된 서비스가 없습니다).';
-    ssStopped:
-      begin
-        StatusEdit.Text := '중지됨.';
-        StartAction.Enabled := true;
-      end;
-    ssStartPending:
-      StatusEdit.Text := '시작 중...';
-    ssStopPending:
-      StatusEdit.Text := '멈추는 중...';
-    ssRunning:
-      begin
-        StatusEdit.Text := '시작됨.';
-        StopAction.Enabled := true;
-      end;
-    ssContinuePending:
-      StatusEdit.Text := '계속 중...';
-    ssPausePending:
-      StatusEdit.Text := '일시정지 중...';
-    ssPaused:
-      StatusEdit.Text := '일시정지됨.';
-  end;
-
 end;
 
 end.

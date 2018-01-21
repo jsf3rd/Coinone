@@ -8,11 +8,8 @@ uses
 const
   APPLICATION_CODE = 'CoinTrader';
   APPLICATION_TITLE = 'Coin Trader';
-  APPLICATION_VERSION = 'v1.0';
-  COPY_RIGHT_SIGN = '¨Ï 2017 playIoT';
+  COPY_RIGHT_SIGN = '¨Ï 2018 playIoT';
   HOME_PAGE_URL = 'http://www.playIoT.biz';
-
-  LOCAL_SERVER = '\\localhost';
 
 type
   TGlobal = class(TGlobalAbstract)
@@ -20,6 +17,7 @@ type
     FUserID: string;
   protected
     procedure SetExeName(const Value: String); override;
+    function GetLogName: string; override;
   public
     constructor Create; override;
     destructor Destroy; override;
@@ -88,6 +86,11 @@ begin
   ApplicationMessage(msDebug, 'Stop', 'StartTime=' + FStartTime.ToString);
 end;
 
+function TGlobal.GetLogName: string;
+begin
+  result := FLogName;
+end;
+
 procedure TGlobal.Initialize;
 begin
   if FIsfinalized then
@@ -96,10 +99,7 @@ begin
     Exit;
   FIsInitialized := true;
 
-  FUseCloudLog := TOption.Obj.UseCloudLog;
   FStartTime := now;
-  // FLogServer.StringValue := 'log.iccs.co.kr';
-
   FUserID := TOption.Obj.UserID;
 
 {$IFDEF WIN32}
@@ -122,10 +122,14 @@ procedure TGlobal.SetExeName(const Value: String);
 begin
   FExeName := Value;
   FLogName := ChangeFileExt(FExeName, '.log');
-  FLogName := GetEnvironmentVariable('LOCALAPPDATA') + '\playIoT\' + ExtractFileName(FLogName);
+  FLogName := GetEnvironmentVariable('LOCALAPPDATA') + '\playIoT\' + APPLICATION_CODE + '\' +
+    ExtractFileName(FLogName);
 
   if not TDirectory.Exists(ExtractFilePath(FLogName)) then
     TDirectory.CreateDirectory(ExtractFilePath(FLogName));
+
+  FUseCloudLog := TOption.Obj.UseCloudLog;
+  // FLogServer.StringValue := LOG_SERVER;
 end;
 
 initialization

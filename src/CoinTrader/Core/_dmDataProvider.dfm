@@ -140,6 +140,12 @@ object dmDataProvider: TdmDataProvider
     object mtTickerPeriodlow_price: TFloatField
       FieldName = 'low_price'
     end
+    object mtTickerPeriodhigh_volume: TFloatField
+      FieldName = 'high_volume'
+    end
+    object mtTickerPeriodlow_volume: TFloatField
+      FieldName = 'low_volume'
+    end
   end
   object DSRestConnection: TDSRestConnection
     Port = 80
@@ -176,7 +182,13 @@ object dmDataProvider: TdmDataProvider
       DisplayLabel = #49688#47049
       DisplayWidth = 15
       FieldName = 'amount'
-      DisplayFormat = '#,##0.00'
+      DisplayFormat = '#,##0.0000'
+    end
+    object mtBalanceavail: TFloatField
+      DisplayLabel = #44032#50857
+      DisplayWidth = 15
+      FieldName = 'avail'
+      DisplayFormat = '#,##0.0000'
     end
     object FloatField5: TFloatField
       DisplayLabel = #54788#51116#44032
@@ -229,7 +241,7 @@ object dmDataProvider: TdmDataProvider
     end
     object FloatField10: TFloatField
       DisplayLabel = #49688#47049
-      DisplayWidth = 10
+      DisplayWidth = 9
       FieldName = 'amount'
       DisplayFormat = '#,##0.0000'
     end
@@ -288,7 +300,7 @@ object dmDataProvider: TdmDataProvider
     end
     object FloatField13: TFloatField
       DisplayLabel = #49688#47049
-      DisplayWidth = 10
+      DisplayWidth = 9
       FieldName = 'amount'
       DisplayFormat = '#,##0.0000'
     end
@@ -318,16 +330,7 @@ object dmDataProvider: TdmDataProvider
     Top = 264
   end
   object mtStoch: TFDMemTable
-    Active = True
-    FieldDefs = <
-      item
-        Name = 'tick_stamp'
-        DataType = ftTimeStamp
-      end
-      item
-        Name = 'price_stoch'
-        DataType = ftFloat
-      end>
+    FieldDefs = <>
     IndexDefs = <>
     FetchOptions.AssignedValues = [evMode]
     FetchOptions.Mode = fmAll
@@ -344,6 +347,9 @@ object dmDataProvider: TdmDataProvider
     end
     object FloatField17: TFloatField
       FieldName = 'price_stoch'
+    end
+    object mtStochvolume_stoch: TFloatField
+      FieldName = 'volume_stoch'
     end
   end
   object mtOrder: TFDMemTable

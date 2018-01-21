@@ -6,7 +6,6 @@ uses
   Core in 'Core\Core.pas',
   ctGlobal in 'Global\ctGlobal.pas',
   ctOption in 'Global\ctOption.pas',
-  Coinone in '..\common\Coinone.pas',
   Common in '..\common\Common.pas',
   _dmDataProvider in 'Core\_dmDataProvider.pas' {dmDataProvider: TDataModule},
   ClientClassesUnit in 'Global\ClientClassesUnit.pas';

@@ -74,6 +74,10 @@ type
     FloatField2: TFloatField;
     FloatField3: TFloatField;
     WideStringField7: TWideStringField;
+    mtTickerPeriodhigh_volume: TFloatField;
+    mtTickerPeriodlow_volume: TFloatField;
+    mtStochvolume_stoch: TFloatField;
+    mtBalanceavail: TFloatField;
     procedure mtTickerCalcFields(DataSet: TDataSet);
     procedure DataModuleCreate(Sender: TObject);
     procedure mtTickerPeriodCalcFields(DataSet: TDataSet);
@@ -98,6 +102,7 @@ type
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
 
+    procedure Init;
     procedure Tick;
     procedure ChartData(AChartDay, AStochHour: Integer);
 
@@ -112,6 +117,8 @@ type
     procedure LimitOrders;
     procedure CancelOrder;
     procedure CompleteOrders(ACurrency: string);
+
+    function GetClientInfo: TClientInfo;
 
     property InstanceOwner: Boolean read FInstanceOwner write FInstanceOwner;
     property smDataProviderClient: TsmDataProviderClient read GetsmDataProviderClient
@@ -184,7 +191,7 @@ var
 
   I: Integer;
   BookMark: TBookmark;
-  Amount, Price: double;
+  Amount, Price, Avail: double;
   KRW, Total: double;
 begin
   result := 0;
@@ -214,6 +221,7 @@ begin
         _Balance := JSONObject.GetJSONObject(Coins[I]);
 
         Amount := _Balance.GetString('balance').ToDouble;
+        Avail := _Balance.GetString('avail').ToDouble;
         KRW := Price * Amount;
         Total := Total + KRW;
 
@@ -223,7 +231,7 @@ begin
 
         mtBalance.FieldByName('coin').AsString := Coins[I];
         mtBalance.FieldByName('amount').AsFloat := Amount;
-
+        mtBalance.FieldByName('avail').AsFloat := Avail;
         mtBalance.FieldByName('last').AsFloat := Price;
         mtBalance.FieldByName('krw').AsFloat := KRW;
         mtBalance.CommitUpdates;
@@ -313,8 +321,10 @@ procedure TdmDataProvider.ChartData(AChartDay, AStochHour: Integer);
     result.AddPair('begin_time', IncDay(Now, -AChartDay).ToISO8601);
     result.AddPair('end_time', Now.ToISO8601);
 
-    result.AddPair('high_period', Format('%0.2d:00:00', [AStochHour]));
-    result.AddPair('low_period', Format('%0.2d:00:00', [AStochHour]));
+    result.AddPair('high_price_period', Format('%0.2d:00:00', [AStochHour]));
+    result.AddPair('low_price_period', Format('%0.2d:00:00', [AStochHour]));
+    result.AddPair('high_volume_period', Format('%0.2d:00:00', [AStochHour]));
+    result.AddPair('low_volume_period', Format('%0.2d:00:00', [AStochHour]));
   end;
 
   procedure Complete(ACurrency: string);
@@ -442,8 +452,6 @@ procedure TdmDataProvider.DataModuleCreate(Sender: TObject);
 begin
   mtTicker.Open;
   mtBalance.Open;
-
-  FCoinone := TCoinone.Create(TOption.Obj.AccessToken, TOption.Obj.SecretKey);
 end;
 
 destructor TdmDataProvider.Destroy;
@@ -461,6 +469,11 @@ begin
     FsmDataProviderClient := TsmDataProviderClient.Create(DSRestConnection, FInstanceOwner);
 
   result := FsmDataProviderClient;
+end;
+
+procedure TdmDataProvider.Init;
+begin
+  FCoinone := TCoinone.Create(TOption.Obj.AccessToken, TOption.Obj.SecretKey);
 end;
 
 function TdmDataProvider.LimitAsk(APrice, ACount: double): Boolean;
@@ -592,9 +605,9 @@ end;
 
 procedure TdmDataProvider.mtTickerPeriodCalcFields(DataSet: TDataSet);
 var
-  Price: double;
+  Price, Volume: double;
   Max, Min: double;
-  Stoch: double;
+  PriceStoch, VolumeStoch: double;
 begin
 
   if DataSet.FieldByName('tick_stamp').AsSQLTimeStamp.Minute mod 30 <> 0 then
@@ -604,14 +617,23 @@ begin
   Max := DataSet.FieldByName('high_price').AsFloat;
   Min := DataSet.FieldByName('low_price').AsFloat;
   if Max = Min then
-    Stoch := 0
+    PriceStoch := 0
   else
-    Stoch := (Price - Min) / (Max - Min) * 100;
+    PriceStoch := (Price - Min) / (Max - Min) * 100;
+
+  Volume := DataSet.FieldByName('volume').AsFloat;
+  Max := DataSet.FieldByName('high_volume').AsFloat;
+  Min := DataSet.FieldByName('low_volume').AsFloat;
+  if Max = Min then
+    VolumeStoch := 0
+  else
+    VolumeStoch := (Volume - Min) / (Max - Min) * 100;
 
   mtStoch.Insert;
   mtStoch.FieldByName('tick_stamp').AsSQLTimeStamp := DataSet.FieldByName('tick_stamp')
     .AsSQLTimeStamp;
-  mtStoch.FieldByName('price_stoch').AsFloat := Stoch;
+  mtStoch.FieldByName('price_stoch').AsFloat := PriceStoch;
+  mtStoch.FieldByName('volume_stoch').AsFloat := VolumeStoch;
   mtStoch.CommitUpdates;
 end;
 
@@ -664,6 +686,17 @@ begin
   finally
     JSONObject.Free;
   end;
+end;
+
+function TdmDataProvider.GetClientInfo: TClientInfo;
+begin
+  try
+    result := TJson.JsonToRecord<TClientInfo>(smDataProviderClient.GetClientInfo);
+  except
+    on E: Exception do
+      TGlobal.Obj.ApplicationMessage(msError, 'GetClientInfo', E.Message);
+  end;
+
 end;
 
 function TdmDataProvider.GetsmDataLoaderClient: TsmDataLoaderClient;

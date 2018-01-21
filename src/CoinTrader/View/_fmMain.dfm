@@ -3,8 +3,10 @@ object fmMain: TfmMain
   Top = 0
   Caption = 'Templete Form'
   ClientHeight = 773
-  ClientWidth = 864
+  ClientWidth = 884
   Color = clBtnFace
+  Constraints.MinHeight = 700
+  Constraints.MinWidth = 800
   Font.Charset = HANGEUL_CHARSET
   Font.Color = clWindowText
   Font.Height = -13
@@ -22,7 +24,7 @@ object fmMain: TfmMain
   object PageControl: TPageControl
     Left = 0
     Top = 0
-    Width = 864
+    Width = 884
     Height = 754
     ActivePage = tsTrad
     Align = alClient
@@ -33,7 +35,7 @@ object fmMain: TfmMain
       object Panel2: TPanel
         Left = 0
         Top = 0
-        Width = 856
+        Width = 876
         Height = 312
         Align = alTop
         Caption = 'Panel2'
@@ -41,7 +43,7 @@ object fmMain: TfmMain
         object grdMain: TDBGrid
           Left = 1
           Top = 81
-          Width = 854
+          Width = 874
           Height = 230
           Align = alClient
           Constraints.MinHeight = 230
@@ -58,7 +60,7 @@ object fmMain: TfmMain
         object Panel1: TPanel
           Left = 1
           Top = 1
-          Width = 854
+          Width = 874
           Height = 80
           Align = alTop
           TabOrder = 1
@@ -109,7 +111,7 @@ object fmMain: TfmMain
       object Panel3: TPanel
         Left = 0
         Top = 312
-        Width = 856
+        Width = 876
         Height = 410
         Align = alClient
         Caption = 'Panel3'
@@ -118,7 +120,7 @@ object fmMain: TfmMain
         object Splitter2: TSplitter
           Left = 1
           Top = 205
-          Width = 854
+          Width = 874
           Height = 3
           Cursor = crVSplit
           Align = alBottom
@@ -128,7 +130,7 @@ object fmMain: TfmMain
         object chtMain: TDBChart
           Left = 1
           Top = 1
-          Width = 854
+          Width = 874
           Height = 204
           Title.Font.Color = clBlack
           Title.Font.Height = -16
@@ -229,7 +231,7 @@ object fmMain: TfmMain
         object chtStoch: TDBChart
           Left = 1
           Top = 208
-          Width = 854
+          Width = 874
           Height = 201
           Title.Font.Color = clBlack
           Title.Font.Height = -16
@@ -238,7 +240,11 @@ object fmMain: TfmMain
             'BTC')
           Title.Visible = False
           BottomAxis.DateTimeFormat = 'DD hh:nn'
+          BottomAxis.LabelStyle = talValue
+          Legend.Symbol.Shadow.HorizSize = 3
+          Legend.Symbol.Shadow.VertSize = 3
           RightAxis.Grid.Visible = False
+          TopAxis.Visible = False
           View3D = False
           Align = alBottom
           TabOrder = 1
@@ -247,7 +253,7 @@ object fmMain: TfmMain
           ColorPaletteIndex = 13
           object Series4: TLineSeries
             DataSource = dmDataProvider.mtStoch
-            Title = 'Stoch'
+            Title = 'PriceStoch'
             VertAxis = aRightAxis
             Brush.BackColor = clDefault
             Pointer.InflateMargins = True
@@ -260,9 +266,25 @@ object fmMain: TfmMain
             YValues.Order = loNone
             YValues.ValueSource = 'price_stoch'
           end
+          object Series10: TLineSeries
+            DataSource = dmDataProvider.mtStoch
+            Title = 'VolumeStoch'
+            VertAxis = aRightAxis
+            Brush.BackColor = clDefault
+            Pointer.InflateMargins = True
+            Pointer.Style = psRectangle
+            XValues.DateTime = True
+            XValues.Name = 'X'
+            XValues.Order = loAscending
+            XValues.ValueSource = 'tick_stamp'
+            YValues.Name = 'Y'
+            YValues.Order = loNone
+            YValues.ValueSource = 'volume_stoch'
+          end
           object Series8: TPointSeries
             Marks.Transparency = 20
             Marks.Visible = True
+            Marks.Style = smsLabelValue
             Marks.Arrow.Color = 4079359
             Marks.Arrow.Visible = False
             Marks.Callout.Arrow.Color = 4079359
@@ -271,6 +293,7 @@ object fmMain: TfmMain
             Marks.Callout.Length = 18
             DataSource = dmDataProvider.mtComplete
             Title = 'Complete'
+            XLabelsSource = 'order_type'
             ClickableLine = False
             Pointer.Brush.Color = clRed
             Pointer.InflateMargins = True
@@ -315,8 +338,8 @@ object fmMain: TfmMain
       ImageIndex = 1
       object Splitter1: TSplitter
         Left = 0
-        Top = 370
-        Width = 856
+        Top = 380
+        Width = 876
         Height = 3
         Cursor = crVSplit
         Align = alTop
@@ -327,8 +350,8 @@ object fmMain: TfmMain
       object Panel4: TPanel
         Left = 0
         Top = 0
-        Width = 856
-        Height = 370
+        Width = 876
+        Height = 380
         Align = alTop
         TabOrder = 0
         object Button4: TButton
@@ -445,8 +468,8 @@ object fmMain: TfmMain
         end
         object dbgBalance: TDBGrid
           Left = 1
-          Top = 127
-          Width = 854
+          Top = 137
+          Width = 874
           Height = 242
           Align = alBottom
           DataSource = dmDataProvider.dsBalance
@@ -462,18 +485,17 @@ object fmMain: TfmMain
       end
       object Panel5: TPanel
         Left = 0
-        Top = 373
-        Width = 856
-        Height = 349
+        Top = 383
+        Width = 876
+        Height = 339
         Align = alClient
         TabOrder = 1
         OnResize = Panel5Resize
         object Splitter: TSplitter
-          Left = 401
+          Left = 397
           Top = 42
-          Height = 306
+          Height = 296
           Align = alRight
-          OnMoved = SplitterMoved
           ExplicitLeft = 535
           ExplicitTop = 44
           ExplicitHeight = 190
@@ -481,7 +503,7 @@ object fmMain: TfmMain
         object pnlLimitOrderTitle: TPanel
           Left = 1
           Top = 1
-          Width = 854
+          Width = 874
           Height = 41
           Align = alTop
           Alignment = taLeftJustify
@@ -504,11 +526,11 @@ object fmMain: TfmMain
             TabOrder = 0
           end
         end
-        object dbgLimitOrder: TDBGrid
+        object dbgLimitOrder: TJvDBGrid
           Left = 1
           Top = 42
-          Width = 400
-          Height = 306
+          Width = 396
+          Height = 296
           Align = alClient
           DataSource = dmDataProvider.dsLimitOrders
           Options = [dgTitles, dgIndicator, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgRowSelect, dgAlwaysShowSelection, dgConfirmDelete, dgCancelOnExit, dgTitleClick, dgTitleHotTrack]
@@ -518,14 +540,19 @@ object fmMain: TfmMain
           TitleFont.Height = -13
           TitleFont.Name = #47569#51008' '#44256#46357
           TitleFont.Style = []
+          SelectColumnsDialogStrings.Caption = 'Select columns'
+          SelectColumnsDialogStrings.OK = '&OK'
+          SelectColumnsDialogStrings.NoSelectionWarning = 'At least one column must be visible!'
+          EditControls = <>
+          RowsHeight = 21
+          TitleRowHeight = 21
         end
-        object dbgRecentOrders: TDBGrid
-          Left = 404
+        object dbgRecentOrders: TJvDBGrid
+          Left = 400
           Top = 42
-          Width = 451
-          Height = 306
+          Width = 475
+          Height = 296
           Align = alRight
-          Constraints.MinWidth = 200
           DataSource = dmDataProvider.dsCompleteOrders
           Options = [dgTitles, dgIndicator, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgRowSelect, dgAlwaysShowSelection, dgConfirmDelete, dgCancelOnExit, dgTitleClick, dgTitleHotTrack]
           TabOrder = 2
@@ -534,6 +561,12 @@ object fmMain: TfmMain
           TitleFont.Height = -13
           TitleFont.Name = #47569#51008' '#44256#46357
           TitleFont.Style = []
+          SelectColumnsDialogStrings.Caption = 'Select columns'
+          SelectColumnsDialogStrings.OK = '&OK'
+          SelectColumnsDialogStrings.NoSelectionWarning = 'At least one column must be visible!'
+          EditControls = <>
+          RowsHeight = 21
+          TitleRowHeight = 21
         end
       end
     end
@@ -544,7 +577,7 @@ object fmMain: TfmMain
       object Panel6: TPanel
         Left = 0
         Top = 0
-        Width = 856
+        Width = 876
         Height = 722
         Align = alClient
         TabOrder = 0
@@ -639,7 +672,7 @@ object fmMain: TfmMain
             Top = 25
             Width = 85
             Height = 25
-            Action = actStartCoinDataSvc
+            Action = actStartDataSvc
             TabOrder = 1
           end
           object Button9: TButton
@@ -647,7 +680,7 @@ object fmMain: TfmMain
             Top = 25
             Width = 85
             Height = 25
-            Action = actStopCoinDataSvc
+            Action = actStopDataSvc
             TabOrder = 2
           end
           object edtDataStatus: TLabeledEdit
@@ -673,7 +706,7 @@ object fmMain: TfmMain
             Top = 57
             Width = 85
             Height = 25
-            Action = actStartCoinCoreSvc
+            Action = actStartCoreSvc
             TabOrder = 3
           end
           object Button11: TButton
@@ -681,7 +714,7 @@ object fmMain: TfmMain
             Top = 56
             Width = 85
             Height = 25
-            Action = actStopCoinCoreSvc
+            Action = actStopCoreSvc
             TabOrder = 4
           end
           object edtCoreStatus: TLabeledEdit
@@ -709,7 +742,7 @@ object fmMain: TfmMain
   object StatusBar: TStatusBar
     Left = 0
     Top = 754
-    Width = 864
+    Width = 884
     Height = 19
     Panels = <
       item
@@ -764,11 +797,6 @@ object fmMain: TfmMain
       Caption = '&About'
       OnExecute = actAboutExecute
     end
-    object actClearLog: TAction
-      Caption = '&Clear Log'
-      ShortCut = 16472
-      OnExecute = actClearLogExecute
-    end
     object actExit: TAction
       Caption = '&Exit'
       ShortCut = 16465
@@ -815,29 +843,29 @@ object fmMain: TfmMain
       Caption = #51452#47928#52712#49548
       OnExecute = actCancelOrderExecute
     end
-    object actStartCoinDataSvc: TAction
+    object actStartDataSvc: TAction
       Caption = #49436#48708#49828' '#49884#51089
-      OnExecute = actStartCoinDataSvcExecute
+      Enabled = False
+      OnExecute = actStartDataSvcExecute
     end
-    object actStopCoinDataSvc: TAction
+    object actStopDataSvc: TAction
       Caption = #49436#48708#49828' '#51473#51648
-      OnExecute = actStopCoinDataSvcExecute
+      Enabled = False
+      OnExecute = actStopDataSvcExecute
     end
-    object actStartCoinCoreSvc: TAction
+    object actStartCoreSvc: TAction
       Caption = #49436#48708#49828' '#49884#51089
-      OnExecute = actStartCoinCoreSvcExecute
+      Enabled = False
+      OnExecute = actStartCoreSvcExecute
     end
-    object actStopCoinCoreSvc: TAction
+    object actStopCoreSvc: TAction
       Caption = #49436#48708#49828' '#51473#51648
-      OnExecute = actStopCoinCoreSvcExecute
+      Enabled = False
+      OnExecute = actStopCoreSvcExecute
     end
     object actSaveConfig: TAction
       Caption = #51200#51109
       OnExecute = actSaveConfigExecute
-    end
-    object actCopyTraderOption: TAction
-      Caption = #53364#47549#48372#46300' '#48373#49324
-      OnExecute = actCopyTraderOptionExecute
     end
   end
   object ServiceStatusTimer: TTimer
