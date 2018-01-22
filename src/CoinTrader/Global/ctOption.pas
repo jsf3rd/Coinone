@@ -23,6 +23,10 @@ type
     procedure SetSecretKey(const Value: string);
     function GetUseCloudLog: boolean;
     procedure SetUseCloudLog(const Value: boolean);
+    function GetChartDay: Integer;
+    procedure SetChartDay(const Value: Integer);
+    function GetStochHour: Integer;
+    procedure SetStochHour(const Value: Integer);
   public
     class function Obj: TOption;
 
@@ -38,6 +42,9 @@ type
     property UserID: string read GetUserID write SetUserID;
 
     property UseCloudLog: boolean read GetUseCloudLog write SetUseCloudLog;
+
+    property ChartDay: Integer read GetChartDay write SetChartDay;
+    property StochHour: Integer read GetStochHour write SetStochHour;
   end;
 
 implementation
@@ -81,6 +88,11 @@ begin
   result := FIniFile.ReadString('Config', 'AppName', APPLICATION_TITLE);
 end;
 
+function TOption.GetChartDay: Integer;
+begin
+  result := FIniFile.ReadInteger('Config', 'ChartDay', 2);
+end;
+
 function TOption.GetConnInfo: TConninfo;
 begin
   result.StringValue := FIniFile.ReadString('DataSnap', 'Host', '127.0.0.1');
@@ -90,6 +102,11 @@ end;
 function TOption.GetSecretKey: string;
 begin
   result := DecodeKey(FIniFile.ReadString('Auth', 'SecretKey', 'SecretKey'));
+end;
+
+function TOption.GetStochHour: Integer;
+begin
+  result := FIniFile.ReadInteger('Config', 'StochHour', 7);
 end;
 
 function TOption.GetUseCloudLog: boolean;
@@ -121,6 +138,11 @@ begin
   FIniFile.WriteString('Config', 'AppName', Value);
 end;
 
+procedure TOption.SetChartDay(const Value: Integer);
+begin
+  FIniFile.WriteInteger('Config', 'ChartDay', Value);
+end;
+
 procedure TOption.SetConnInfo(const Value: TConninfo);
 begin
   FIniFile.WriteString('DataSnap', 'Host', Value.StringValue);
@@ -130,6 +152,11 @@ end;
 procedure TOption.SetSecretKey(const Value: string);
 begin
   FIniFile.WriteString('Auth', 'SecretKey', EncodeKey(Value));
+end;
+
+procedure TOption.SetStochHour(const Value: Integer);
+begin
+  FIniFile.WriteInteger('Config', 'StochHour', Value);
 end;
 
 procedure TOption.SetUseCloudLog(const Value: boolean);

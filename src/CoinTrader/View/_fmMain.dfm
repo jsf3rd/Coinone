@@ -26,7 +26,7 @@ object fmMain: TfmMain
     Top = 0
     Width = 884
     Height = 754
-    ActivePage = tsTrad
+    ActivePage = tsMain
     Align = alClient
     TabOrder = 0
     OnChange = PageControlChange
@@ -36,7 +36,7 @@ object fmMain: TfmMain
         Left = 0
         Top = 0
         Width = 876
-        Height = 312
+        Height = 317
         Align = alTop
         Caption = 'Panel2'
         TabOrder = 0
@@ -44,9 +44,9 @@ object fmMain: TfmMain
           Left = 1
           Top = 81
           Width = 874
-          Height = 230
+          Height = 235
           Align = alClient
-          Constraints.MinHeight = 230
+          Constraints.MinHeight = 235
           DataSource = dmDataProvider.dsTicker
           Options = [dgTitles, dgIndicator, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgRowSelect, dgAlwaysShowSelection, dgConfirmDelete, dgCancelOnExit, dgTitleClick, dgTitleHotTrack]
           TabOrder = 0
@@ -75,7 +75,7 @@ object fmMain: TfmMain
           object GroupBox3: TGroupBox
             Left = 104
             Top = 7
-            Width = 257
+            Width = 273
             Height = 67
             Caption = #52264#53944#49444#51221
             TabOrder = 1
@@ -84,22 +84,22 @@ object fmMain: TfmMain
               Top = 30
               Width = 48
               Height = 25
-              EditLabel.Width = 57
+              EditLabel.Width = 59
               EditLabel.Height = 17
-              EditLabel.Caption = #52264#53944' '#44592#44036
+              EditLabel.Caption = 'Chart Day'
               LabelPosition = lpLeft
               NumbersOnly = True
               TabOrder = 0
               Text = '2'
             end
             object edtStochHour: TLabeledEdit
-              Left = 195
+              Left = 211
               Top = 30
               Width = 48
               Height = 25
-              EditLabel.Width = 59
+              EditLabel.Width = 68
               EditLabel.Height = 17
-              EditLabel.Caption = 'Stoch'#49884#44036
+              EditLabel.Caption = 'Stoch Hour'
               LabelPosition = lpLeft
               NumbersOnly = True
               TabOrder = 1
@@ -110,16 +110,16 @@ object fmMain: TfmMain
       end
       object Panel3: TPanel
         Left = 0
-        Top = 312
+        Top = 317
         Width = 876
-        Height = 410
+        Height = 405
         Align = alClient
         Caption = 'Panel3'
         TabOrder = 1
         OnResize = Panel3Resize
         object Splitter2: TSplitter
           Left = 1
-          Top = 205
+          Top = 200
           Width = 874
           Height = 3
           Cursor = crVSplit
@@ -131,7 +131,7 @@ object fmMain: TfmMain
           Left = 1
           Top = 1
           Width = 874
-          Height = 204
+          Height = 199
           Title.Font.Color = clBlack
           Title.Font.Height = -16
           Title.Font.Style = [fsBold]
@@ -230,7 +230,7 @@ object fmMain: TfmMain
         end
         object chtStoch: TDBChart
           Left = 1
-          Top = 208
+          Top = 203
           Width = 874
           Height = 201
           Title.Font.Color = clBlack
@@ -338,7 +338,7 @@ object fmMain: TfmMain
       ImageIndex = 1
       object Splitter1: TSplitter
         Left = 0
-        Top = 380
+        Top = 390
         Width = 876
         Height = 3
         Cursor = crVSplit
@@ -351,130 +351,18 @@ object fmMain: TfmMain
         Left = 0
         Top = 0
         Width = 876
-        Height = 380
+        Height = 390
         Align = alTop
         TabOrder = 0
-        object Button4: TButton
-          Left = 15
-          Top = 10
-          Width = 75
-          Height = 25
-          Action = actBalance
-          TabOrder = 0
-        end
-        object GroupBox1: TGroupBox
-          Left = 104
-          Top = 8
-          Width = 241
-          Height = 123
-          Caption = #49884#51109#44032' '#44144#47000
-          TabOrder = 1
-          object Button2: TButton
-            Left = 159
-            Top = 22
-            Width = 75
-            Height = 25
-            Action = actMarketBID
-            TabOrder = 1
-          end
-          object Button3: TButton
-            Left = 159
-            Top = 53
-            Width = 75
-            Height = 25
-            Action = actMarketASK
-            TabOrder = 2
-          end
-          object edtKrwValue: TLabeledEdit
-            Left = 64
-            Top = 22
-            Width = 73
-            Height = 25
-            EditLabel.Width = 52
-            EditLabel.Height = 17
-            EditLabel.Caption = #51452#47928#44552#50529
-            LabelPosition = lpLeft
-            NumbersOnly = True
-            TabOrder = 0
-            Text = '0'
-          end
-        end
-        object GroupBox2: TGroupBox
-          Left = 351
-          Top = 8
-          Width = 258
-          Height = 123
-          Caption = #51648#51221#44032' '#44144#47000
-          TabOrder = 2
-          object Button6: TButton
-            Left = 169
-            Top = 51
-            Width = 75
-            Height = 25
-            Action = actLimitBID
-            TabOrder = 2
-          end
-          object Button7: TButton
-            Left = 169
-            Top = 82
-            Width = 75
-            Height = 25
-            Action = actLimitASK
-            TabOrder = 3
-          end
-          object edtLimitCount: TLabeledEdit
-            Left = 72
-            Top = 53
-            Width = 73
-            Height = 25
-            EditLabel.Width = 52
-            EditLabel.Height = 17
-            EditLabel.Caption = #51452#47928#49688#47049
-            LabelPosition = lpLeft
-            NumbersOnly = True
-            TabOrder = 0
-            Text = '0'
-            OnChange = edtLimitCountChange
-          end
-          object edtLimitPrice: TLabeledEdit
-            Left = 72
-            Top = 84
-            Width = 73
-            Height = 25
-            EditLabel.Width = 52
-            EditLabel.Height = 17
-            EditLabel.Caption = #51452#47928#44032#44201
-            LabelPosition = lpLeft
-            NumbersOnly = True
-            TabOrder = 1
-            Text = '10000'
-            OnChange = edtLimitCountChange
-          end
-          object edtKrwView: TLabeledEdit
-            Left = 72
-            Top = 22
-            Width = 73
-            Height = 25
-            Color = clSilver
-            EditLabel.Width = 52
-            EditLabel.Height = 17
-            EditLabel.Caption = #51452#47928#44552#50529
-            LabelPosition = lpLeft
-            NumbersOnly = True
-            ReadOnly = True
-            TabOrder = 4
-            Text = '0'
-          end
-        end
         object dbgBalance: TDBGrid
           Left = 1
           Top = 137
           Width = 874
-          Height = 242
-          Align = alBottom
+          Height = 252
+          Align = alClient
           DataSource = dmDataProvider.dsBalance
           Options = [dgTitles, dgIndicator, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgRowSelect, dgAlwaysShowSelection, dgConfirmDelete, dgCancelOnExit, dgTitleClick, dgTitleHotTrack]
-          TabOrder = 3
+          TabOrder = 0
           TitleFont.Charset = HANGEUL_CHARSET
           TitleFont.Color = clWindowText
           TitleFont.Height = -13
@@ -482,91 +370,287 @@ object fmMain: TfmMain
           TitleFont.Style = []
           OnDblClick = dbgBalanceDblClick
         end
-      end
-      object Panel5: TPanel
-        Left = 0
-        Top = 383
-        Width = 876
-        Height = 339
-        Align = alClient
-        TabOrder = 1
-        OnResize = Panel5Resize
-        object Splitter: TSplitter
-          Left = 397
-          Top = 42
-          Height = 296
-          Align = alRight
-          ExplicitLeft = 535
-          ExplicitTop = 44
-          ExplicitHeight = 190
-        end
-        object pnlLimitOrderTitle: TPanel
+        object Panel7: TPanel
           Left = 1
           Top = 1
           Width = 874
-          Height = 41
+          Height = 136
           Align = alTop
-          Alignment = taLeftJustify
-          BevelOuter = bvNone
-          Caption = #48120#52404#44208' '#45236#50669
-          TabOrder = 0
-          object lblRecentOrder: TLabel
-            Left = 396
-            Top = 15
-            Width = 88
-            Height = 17
-            Caption = #52572#44540' '#44144#47000' '#45236#50669
-          end
-          object Button5: TButton
-            Left = 84
-            Top = 7
+          TabOrder = 1
+          object Button4: TButton
+            Left = 15
+            Top = 10
             Width = 75
             Height = 25
-            Action = actCancelOrder
+            Action = actBalance
             TabOrder = 0
           end
+          object GroupBox1: TGroupBox
+            Left = 104
+            Top = 8
+            Width = 241
+            Height = 123
+            Caption = #49884#51109#44032' '#44144#47000
+            TabOrder = 1
+            object Button2: TButton
+              Left = 159
+              Top = 22
+              Width = 75
+              Height = 25
+              Action = actMarketBID
+              TabOrder = 1
+            end
+            object Button3: TButton
+              Left = 159
+              Top = 53
+              Width = 75
+              Height = 25
+              Action = actMarketASK
+              TabOrder = 2
+            end
+            object edtKrwValue: TLabeledEdit
+              Left = 64
+              Top = 22
+              Width = 73
+              Height = 25
+              EditLabel.Width = 52
+              EditLabel.Height = 17
+              EditLabel.Caption = #51452#47928#44552#50529
+              LabelPosition = lpLeft
+              NumbersOnly = True
+              TabOrder = 0
+              Text = '0'
+            end
+          end
+          object GroupBox2: TGroupBox
+            Left = 351
+            Top = 8
+            Width = 258
+            Height = 123
+            Caption = #51648#51221#44032' '#44144#47000
+            TabOrder = 2
+            object Button6: TButton
+              Left = 169
+              Top = 51
+              Width = 75
+              Height = 25
+              Action = actLimitBID
+              TabOrder = 2
+            end
+            object Button7: TButton
+              Left = 169
+              Top = 82
+              Width = 75
+              Height = 25
+              Action = actLimitASK
+              TabOrder = 3
+            end
+            object edtLimitCount: TLabeledEdit
+              Left = 72
+              Top = 53
+              Width = 73
+              Height = 25
+              EditLabel.Width = 52
+              EditLabel.Height = 17
+              EditLabel.Caption = #51452#47928#49688#47049
+              LabelPosition = lpLeft
+              NumbersOnly = True
+              TabOrder = 0
+              Text = '0'
+              OnChange = edtLimitCountChange
+            end
+            object edtLimitPrice: TLabeledEdit
+              Left = 72
+              Top = 84
+              Width = 73
+              Height = 25
+              EditLabel.Width = 52
+              EditLabel.Height = 17
+              EditLabel.Caption = #51452#47928#44032#44201
+              LabelPosition = lpLeft
+              NumbersOnly = True
+              TabOrder = 1
+              Text = '10000'
+              OnChange = edtLimitCountChange
+            end
+            object edtKrwView: TLabeledEdit
+              Left = 72
+              Top = 22
+              Width = 73
+              Height = 25
+              Color = clSilver
+              EditLabel.Width = 52
+              EditLabel.Height = 17
+              EditLabel.Caption = #51452#47928#44552#50529
+              LabelPosition = lpLeft
+              NumbersOnly = True
+              ReadOnly = True
+              TabOrder = 4
+              Text = '0'
+            end
+          end
         end
-        object dbgLimitOrder: TJvDBGrid
-          Left = 1
-          Top = 42
-          Width = 396
-          Height = 296
-          Align = alClient
-          DataSource = dmDataProvider.dsLimitOrders
-          Options = [dgTitles, dgIndicator, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgRowSelect, dgAlwaysShowSelection, dgConfirmDelete, dgCancelOnExit, dgTitleClick, dgTitleHotTrack]
-          TabOrder = 1
-          TitleFont.Charset = HANGEUL_CHARSET
-          TitleFont.Color = clWindowText
-          TitleFont.Height = -13
-          TitleFont.Name = #47569#51008' '#44256#46357
-          TitleFont.Style = []
-          SelectColumnsDialogStrings.Caption = 'Select columns'
-          SelectColumnsDialogStrings.OK = '&OK'
-          SelectColumnsDialogStrings.NoSelectionWarning = 'At least one column must be visible!'
-          EditControls = <>
-          RowsHeight = 21
-          TitleRowHeight = 21
+      end
+      object pcOrderDetail: TPageControl
+        Left = 0
+        Top = 393
+        Width = 876
+        Height = 329
+        ActivePage = tsChartCount
+        Align = alClient
+        TabOrder = 1
+        OnChange = pcOrderDetailChange
+        ExplicitTop = 383
+        ExplicitHeight = 339
+        object tsOrders: TTabSheet
+          Caption = #44144#47000#45236#50669
+          ExplicitHeight = 307
+          object Panel5: TPanel
+            Left = 0
+            Top = 0
+            Width = 868
+            Height = 297
+            Align = alClient
+            TabOrder = 0
+            OnResize = Panel5Resize
+            ExplicitHeight = 307
+            object Splitter: TSplitter
+              Left = 389
+              Top = 42
+              Height = 254
+              Align = alRight
+              ExplicitLeft = 535
+              ExplicitTop = 44
+              ExplicitHeight = 190
+            end
+            object pnlLimitOrderTitle: TPanel
+              Left = 1
+              Top = 1
+              Width = 866
+              Height = 41
+              Align = alTop
+              Alignment = taLeftJustify
+              BevelOuter = bvNone
+              Caption = #48120#52404#44208' '#45236#50669
+              TabOrder = 0
+              object lblRecentOrder: TLabel
+                Left = 396
+                Top = 15
+                Width = 88
+                Height = 17
+                Caption = #52572#44540' '#44144#47000' '#45236#50669
+              end
+              object Button5: TButton
+                Left = 84
+                Top = 7
+                Width = 75
+                Height = 25
+                Action = actCancelOrder
+                TabOrder = 0
+              end
+            end
+            object dbgLimitOrder: TJvDBGrid
+              Left = 1
+              Top = 42
+              Width = 388
+              Height = 254
+              Align = alClient
+              DataSource = dmDataProvider.dsLimitOrders
+              Options = [dgTitles, dgIndicator, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgRowSelect, dgAlwaysShowSelection, dgConfirmDelete, dgCancelOnExit, dgTitleClick, dgTitleHotTrack]
+              TabOrder = 1
+              TitleFont.Charset = HANGEUL_CHARSET
+              TitleFont.Color = clWindowText
+              TitleFont.Height = -13
+              TitleFont.Name = #47569#51008' '#44256#46357
+              TitleFont.Style = []
+              SelectColumnsDialogStrings.Caption = 'Select columns'
+              SelectColumnsDialogStrings.OK = '&OK'
+              SelectColumnsDialogStrings.NoSelectionWarning = 'At least one column must be visible!'
+              EditControls = <>
+              RowsHeight = 21
+              TitleRowHeight = 21
+            end
+            object dbgRecentOrders: TJvDBGrid
+              Left = 392
+              Top = 42
+              Width = 475
+              Height = 254
+              Align = alRight
+              DataSource = dmDataProvider.dsCompleteOrders
+              Options = [dgTitles, dgIndicator, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgRowSelect, dgAlwaysShowSelection, dgConfirmDelete, dgCancelOnExit, dgTitleClick, dgTitleHotTrack]
+              TabOrder = 2
+              TitleFont.Charset = HANGEUL_CHARSET
+              TitleFont.Color = clWindowText
+              TitleFont.Height = -13
+              TitleFont.Name = #47569#51008' '#44256#46357
+              TitleFont.Style = []
+              SelectColumnsDialogStrings.Caption = 'Select columns'
+              SelectColumnsDialogStrings.OK = '&OK'
+              SelectColumnsDialogStrings.NoSelectionWarning = 'At least one column must be visible!'
+              EditControls = <>
+              RowsHeight = 21
+              TitleRowHeight = 21
+            end
+          end
         end
-        object dbgRecentOrders: TJvDBGrid
-          Left = 400
-          Top = 42
-          Width = 475
-          Height = 296
-          Align = alRight
-          DataSource = dmDataProvider.dsCompleteOrders
-          Options = [dgTitles, dgIndicator, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgRowSelect, dgAlwaysShowSelection, dgConfirmDelete, dgCancelOnExit, dgTitleClick, dgTitleHotTrack]
-          TabOrder = 2
-          TitleFont.Charset = HANGEUL_CHARSET
-          TitleFont.Color = clWindowText
-          TitleFont.Height = -13
-          TitleFont.Name = #47569#51008' '#44256#46357
-          TitleFont.Style = []
-          SelectColumnsDialogStrings.Caption = 'Select columns'
-          SelectColumnsDialogStrings.OK = '&OK'
-          SelectColumnsDialogStrings.NoSelectionWarning = 'At least one column must be visible!'
-          EditControls = <>
-          RowsHeight = 21
-          TitleRowHeight = 21
+        object tsChartCount: TTabSheet
+          Caption = #44144#47000#48516#49437
+          ImageIndex = 1
+          ExplicitHeight = 307
+          object chtCoinCount: TDBChart
+            Left = 0
+            Top = 0
+            Width = 868
+            Height = 297
+            Title.Font.Color = clBlack
+            Title.Font.Height = -16
+            Title.Font.Style = [fsBold]
+            Title.Text.Strings = (
+              'BTC')
+            BottomAxis.DateTimeFormat = 'mm-dd'
+            BottomAxis.LabelStyle = talValue
+            RightAxis.Grid.Visible = False
+            View3D = False
+            Align = alClient
+            TabOrder = 0
+            ExplicitHeight = 307
+            DefaultCanvas = 'TGDIPlusCanvas'
+            ColorPaletteIndex = 13
+            object Series9: TLineSeries
+              Marks.Visible = True
+              Marks.Arrow.Visible = False
+              Marks.Callout.Arrow.Visible = False
+              Marks.Callout.Distance = 8
+              DataSource = dmDataProvider.mtDailyBalance
+              Title = #53076#51064' '#44060#49688
+              XLabelsSource = 'coin_count'
+              Brush.BackColor = clDefault
+              Pointer.InflateMargins = True
+              Pointer.Style = psRectangle
+              XValues.DateTime = True
+              XValues.Name = 'X'
+              XValues.Order = loAscending
+              XValues.ValueSource = 'time_stamp'
+              YValues.Name = 'Y'
+              YValues.Order = loNone
+              YValues.ValueSource = 'coin_count'
+            end
+            object Series11: TLineSeries
+              DataSource = dmDataProvider.mtDailyBalance
+              Title = #52509#54217#44032#50529
+              VertAxis = aRightAxis
+              Brush.BackColor = clDefault
+              Pointer.InflateMargins = True
+              Pointer.Style = psRectangle
+              XValues.DateTime = True
+              XValues.Name = 'X'
+              XValues.Order = loAscending
+              XValues.ValueSource = 'time_stamp'
+              YValues.Name = 'Y'
+              YValues.Order = loNone
+              YValues.ValueSource = 'total_value'
+            end
+          end
         end
       end
     end
@@ -756,8 +840,8 @@ object fmMain: TfmMain
       end>
   end
   object MainMenu: TMainMenu
-    Left = 776
-    Top = 232
+    Left = 808
+    Top = 288
     object File1: TMenuItem
       Caption = '&File'
       object Exit1: TMenuItem
@@ -787,12 +871,12 @@ object fmMain: TfmMain
   end
   object ApplicationEvents: TApplicationEvents
     OnException = ApplicationEventsException
-    Left = 688
-    Top = 232
+    Left = 720
+    Top = 288
   end
   object ActionList: TActionList
-    Left = 688
-    Top = 176
+    Left = 720
+    Top = 232
     object actAbout: TAction
       Caption = '&About'
       OnExecute = actAboutExecute
@@ -872,7 +956,7 @@ object fmMain: TfmMain
     Enabled = False
     Interval = 500
     OnTimer = ServiceStatusTimerTimer
-    Left = 776
-    Top = 176
+    Left = 808
+    Top = 232
   end
 end

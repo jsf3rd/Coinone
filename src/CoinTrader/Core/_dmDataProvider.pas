@@ -78,6 +78,10 @@ type
     mtTickerPeriodlow_volume: TFloatField;
     mtStochvolume_stoch: TFloatField;
     mtBalanceavail: TFloatField;
+    mtDailyBalance: TFDMemTable;
+    SQLTimeStampField4: TSQLTimeStampField;
+    FloatField7: TFloatField;
+    FloatField14: TFloatField;
     procedure mtTickerCalcFields(DataSet: TDataSet);
     procedure DataModuleCreate(Sender: TObject);
     procedure mtTickerPeriodCalcFields(DataSet: TDataSet);
@@ -117,6 +121,7 @@ type
     procedure LimitOrders;
     procedure CancelOrder;
     procedure CompleteOrders(ACurrency: string);
+    procedure DailyCount;
 
     function GetClientInfo: TClientInfo;
 
@@ -236,6 +241,8 @@ begin
         mtBalance.FieldByName('krw').AsFloat := KRW;
         mtBalance.CommitUpdates;
       end;
+
+      mtBalance.First;
     finally
       mtBalance.EnableControls;
     end;
@@ -428,24 +435,70 @@ begin
   mtCompleteOrders.Close;
   mtCompleteOrders.Open;
 
-  for MyOrder in Orders do
-  begin
-    _Order := MyOrder as TJSONObject;
-    DateTime := UnixToDateTime(_Order.GetString('timestamp').ToInteger);
-    DateTime := IncHour(DateTime, 9);
+  mtCompleteOrders.DisableControls;
+  try
 
-    mtCompleteOrders.Append;
-    mtCompleteOrders.FieldByName('order_stamp').AsSQLTimeStamp :=
-      DateTimeToSQLTimeStamp(DateTime);
-    mtCompleteOrders.FieldByName('price').AsFloat := _Order.GetString('price').ToDouble;
-    mtCompleteOrders.FieldByName('amount').AsFloat := _Order.GetString('qty').ToDouble;
-    mtCompleteOrders.FieldByName('order_type').AsString := _Order.GetString('type');
-    mtCompleteOrders.FieldByName('order_id').AsString := _Order.GetString('orderId');
-    mtCompleteOrders.FieldByName('fee').AsString := _Order.GetString('fee');
-    mtCompleteOrders.FieldByName('coin').AsString := ACurrency;
-    mtCompleteOrders.CommitUpdates;
+    for MyOrder in Orders do
+    begin
+      _Order := MyOrder as TJSONObject;
+      DateTime := UnixToDateTime(_Order.GetString('timestamp').ToInteger);
+      DateTime := IncHour(DateTime, 9);
+
+      mtCompleteOrders.Append;
+      mtCompleteOrders.FieldByName('order_stamp').AsSQLTimeStamp :=
+        DateTimeToSQLTimeStamp(DateTime);
+      mtCompleteOrders.FieldByName('price').AsFloat := _Order.GetString('price').ToDouble;
+      mtCompleteOrders.FieldByName('amount').AsFloat := _Order.GetString('qty').ToDouble;
+      mtCompleteOrders.FieldByName('order_type').AsString := _Order.GetString('type');
+      mtCompleteOrders.FieldByName('order_id').AsString := _Order.GetString('orderId');
+      mtCompleteOrders.FieldByName('fee').AsString := _Order.GetString('fee');
+      mtCompleteOrders.FieldByName('coin').AsString := ACurrency;
+      mtCompleteOrders.CommitUpdates;
+    end;
+    mtCompleteOrders.First;
+  finally
+    mtCompleteOrders.EnableControls;
   end;
-  mtCompleteOrders.First;
+end;
+
+procedure TdmDataProvider.DailyCount;
+var
+  CoinCode: string;
+  JSONObject, _Balance: TJSONObject;
+  DailyBalance: TJSONArray;
+  I: Integer;
+  DateTime: TDateTime;
+begin
+  CoinCode := mtBalance.FieldByName('coin').AsString;
+
+  mtDailyBalance.Close;
+  mtDailyBalance.Open;
+
+  JSONObject := FCoinone.AccountInfo(rtDailyBalance);
+  try
+    DailyBalance := JSONObject.GetJSONArray('dailyBalance');
+
+    for I := 0 to DailyBalance.Count - 1 do
+    begin
+      _Balance := DailyBalance.Items[I] as TJSONObject;
+
+      DateTime := UnixToDateTime(_Balance.GetString('timestamp').ToInteger);
+
+      if DateTime < IncMonth(Now, -1) then
+        Break;
+
+      mtDailyBalance.Append;
+      mtDailyBalance.FieldByName('time_stamp').AsSQLTimeStamp :=
+        DateTimeToSQLTimeStamp(DateTime);
+      mtDailyBalance.FieldByName('coin_count').AsFloat := _Balance.GetString(CoinCode)
+        .ToDouble;
+      mtDailyBalance.FieldByName('total_value').AsFloat := _Balance.GetString('value')
+        .ToInteger;
+    end;
+    mtDailyBalance.CommitUpdates;
+  finally
+    JSONObject.Free;
+  end;
 end;
 
 procedure TdmDataProvider.DataModuleCreate(Sender: TObject);
@@ -609,10 +662,6 @@ var
   Max, Min: double;
   PriceStoch, VolumeStoch: double;
 begin
-
-  if DataSet.FieldByName('tick_stamp').AsSQLTimeStamp.Minute mod 30 <> 0 then
-    Exit;
-
   Price := DataSet.FieldByName('price').AsFloat;
   Max := DataSet.FieldByName('high_price').AsFloat;
   Min := DataSet.FieldByName('low_price').AsFloat;

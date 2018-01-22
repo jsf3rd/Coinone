@@ -103,6 +103,13 @@ type
     Series10: TLineSeries;
     dbgLimitOrder: TJvDBGrid;
     dbgRecentOrders: TJvDBGrid;
+    pcOrderDetail: TPageControl;
+    tsOrders: TTabSheet;
+    tsChartCount: TTabSheet;
+    chtCoinCount: TDBChart;
+    Series9: TLineSeries;
+    Series11: TLineSeries;
+    Panel7: TPanel;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure actAboutExecute(Sender: TObject);
@@ -134,6 +141,7 @@ type
     procedure tsPreferenceShow(Sender: TObject);
     procedure actSaveConfigExecute(Sender: TObject);
     procedure Panel5Resize(Sender: TObject);
+    procedure pcOrderDetailChange(Sender: TObject);
 
   private
     FOldDataStatus: TJclServiceState;
@@ -157,6 +165,20 @@ implementation
 {$R *.dfm}
 
 uses JdcGlobal, ctGlobal, ctOption, JdcView, Core, System.UITypes;
+
+procedure ResizeAxis(AChart: TDBChart; Axis: TChartAxis);
+var
+  Diff, Max, Min: double;
+begin
+  Axis.Automatic := true;
+  AChart.Refresh;
+  Max := Axis.Maximum;
+  Min := Axis.Minimum;
+  Diff := Max - Min;
+  Axis.Automatic := false;
+  Axis.Maximum := Max + Diff * 0.15;
+  Axis.Minimum := Min - Diff * 0.15;
+end;
 
 procedure TfmMain.actAboutExecute(Sender: TObject);
 begin
@@ -308,8 +330,18 @@ end;
 
 procedure TfmMain.dbgBalanceDblClick(Sender: TObject);
 begin
+  chtCoinCount.Title.Caption := dmDataProvider.mtBalance.FieldByName('coin').Text;
+
   dmDataProvider.LimitOrders;
   dmDataProvider.CompleteOrders(dmDataProvider.mtBalance.FieldByName('coin').AsString);
+
+  chtCoinCount.SeriesList.ClearValues;
+
+  dmDataProvider.DailyCount;
+
+  chtCoinCount.RefreshData;
+  ResizeAxis(chtCoinCount, chtCoinCount.LeftAxis);
+  ResizeAxis(chtCoinCount, chtCoinCount.RightAxis);
 
   dbgRecentOrders.ScrollBars := ssNone;
   dbgRecentOrders.ScrollBars := ssVertical;
@@ -355,21 +387,6 @@ begin
 end;
 
 procedure TfmMain.grdMainDblClick(Sender: TObject);
-
-  procedure ResizeAxis(AChart: TDBChart; Axis: TChartAxis);
-  var
-    Diff, Max, Min: double;
-  begin
-    Axis.Automatic := true;
-    AChart.Refresh;
-    Max := Axis.Maximum;
-    Min := Axis.Minimum;
-    Diff := Max - Min;
-    Axis.Automatic := false;
-    Axis.Maximum := Max + Diff * 0.15;
-    Axis.Minimum := Min - Diff * 0.15;
-  end;
-
 var
   StochHour: Integer;
 
@@ -425,6 +442,17 @@ begin
   lblRecentOrder.Left := Splitter.Left;
 end;
 
+procedure TfmMain.pcOrderDetailChange(Sender: TObject);
+begin
+  if pcOrderDetail.ActivePageIndex = 1 then
+  begin
+    dmDataProvider.DailyCount;
+    chtCoinCount.RefreshData;
+    ResizeAxis(chtCoinCount, chtCoinCount.LeftAxis);
+    ResizeAxis(chtCoinCount, chtCoinCount.RightAxis);
+  end;
+end;
+
 procedure TfmMain.rp_ErrorMessage(APacket: TValueList);
 begin
   MessageDlg('¿À·ù : ' + APacket.Values['Name'] + #13#10 + APacket.Values['Msg'],
@@ -437,6 +465,7 @@ var
 begin
   Caption := TOption.Obj.AppName + ' ' + FileVersion(Application.ExeName);
   PageControl.ActivePageIndex := 0;
+  pcOrderDetail.ActivePageIndex := 0;
 
   ClientInfo := dmDataProvider.GetClientInfo;
   if (ClientInfo.Version <> FileVersion(TGlobal.Obj.ExeName)) and (ClientInfo.Url <> '') then
@@ -449,6 +478,9 @@ begin
       Exit;
     end;
   end;
+
+  edtChartDay.Text := IntToStr(TOption.Obj.ChartDay);
+  edtStochHour.Text := IntToStr(TOption.Obj.StochHour);
 
   dmDataProvider.Init;
   dmDataProvider.Tick;
@@ -473,6 +505,9 @@ end;
 
 procedure TfmMain.rp_Terminate(APacket: TValueList);
 begin
+  TOption.Obj.ChartDay := StrToIntDef(edtChartDay.Text, 2);
+  TOption.Obj.StochHour := StrToIntDef(edtStochHour.Text, 7);
+
   Application.Terminate;
 end;
 

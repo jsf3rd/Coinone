@@ -98,14 +98,14 @@
         <DCC_DebugInformation>0</DCC_DebugInformation>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2_Win32)'!=''">
-        <VerInfo_Release>1</VerInfo_Release>
+        <VerInfo_Release>2</VerInfo_Release>
         <AppEnableAdministrator>true</AppEnableAdministrator>
         <Icon_MainIcon>CoinTrader_Icon.ico</Icon_MainIcon>
         <AppEnableRuntimeThemes>true</AppEnableRuntimeThemes>
         <DCC_ExeOutput>..\bin\$(Config)\CoinTrader</DCC_ExeOutput>
         <VerInfo_Locale>1033</VerInfo_Locale>
         <DCC_DcuOutput>.\DCUs</DCC_DcuOutput>
-        <VerInfo_Keys>CompanyName=playIoT.;FileDescription=Coin Trader;FileVersion=1.0.1.0;InternalName=Coin Trader;LegalCopyright=(c)2018 playIoT.;LegalTrademarks=;OriginalFilename=;ProductName=Coin Trader;ProductVersion=1.0.0.0;Comments=Coinone Coin Trading Application.</VerInfo_Keys>
+        <VerInfo_Keys>CompanyName=playIoT.;FileDescription=Coin Trader;FileVersion=1.0.2.0;InternalName=Coin Trader;LegalCopyright=(c)2018 playIoT.;LegalTrademarks=;OriginalFilename=;ProductName=Coin Trader;ProductVersion=1.0.0.0;Comments=Coinone Coin Trading Application.</VerInfo_Keys>
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
     </PropertyGroup>
     <ItemGroup>

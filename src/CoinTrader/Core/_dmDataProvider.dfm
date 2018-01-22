@@ -1,8 +1,8 @@
 object dmDataProvider: TdmDataProvider
   OldCreateOrder = False
   OnCreate = DataModuleCreate
-  Height = 404
-  Width = 484
+  Height = 517
+  Width = 734
   object mtTicker: TFDMemTable
     OnCalcFields = mtTickerCalcFields
     FieldDefs = <>
@@ -416,6 +416,37 @@ object dmDataProvider: TdmDataProvider
       FieldName = 'order_type'
       OnGetText = mtLimitOrdersorder_typeGetText
       Size = 16
+    end
+  end
+  object mtDailyBalance: TFDMemTable
+    OnCalcFields = mtTickerCalcFields
+    FetchOptions.AssignedValues = [evMode]
+    FetchOptions.Mode = fmAll
+    ResourceOptions.AssignedValues = [rvSilentMode]
+    ResourceOptions.SilentMode = True
+    UpdateOptions.AssignedValues = [uvCheckRequired, uvAutoCommitUpdates]
+    UpdateOptions.CheckRequired = False
+    UpdateOptions.AutoCommitUpdates = True
+    Left = 288
+    Top = 360
+    object SQLTimeStampField4: TSQLTimeStampField
+      Alignment = taCenter
+      DisplayLabel = #49884#44036
+      DisplayWidth = 18
+      FieldName = 'time_stamp'
+      DisplayFormat = 'YYYY-MM-DD hh:nn:ss'
+    end
+    object FloatField7: TFloatField
+      DisplayLabel = #54217#44032#50529
+      DisplayWidth = 10
+      FieldName = 'total_value'
+      DisplayFormat = '#,##0'
+    end
+    object FloatField14: TFloatField
+      DisplayLabel = #49688#47049
+      DisplayWidth = 9
+      FieldName = 'coin_count'
+      DisplayFormat = '#,##0.0000'
     end
   end
 end
