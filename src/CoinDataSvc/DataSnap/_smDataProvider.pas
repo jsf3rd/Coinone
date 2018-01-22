@@ -45,7 +45,6 @@ begin
   try
     Conn := ServerContainer.GetIdleConnection;
     try
-
       qryHighLow.Connection := Conn;
       qryHighLow.ParamByName('coin_code').AsString := ACoin;
       qryHighLow.ParamByName('begin_time').AsSQLTimeStamp := DateTimeToSQLTimeStamp(APeriod);
