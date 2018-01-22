@@ -7,8 +7,7 @@ uses
   cdOption in 'Global\cdOption.pas',
   Common in '..\common\Common.pas',
   _smDataLoader in 'DataSnap\_smDataLoader.pas' {smDataLoader: TDSServerModule},
-  cdGlobal in 'Global\cdGlobal.pas',
-  Coinone in '..\common\Coinone.pas';
+  cdGlobal in 'Global\cdGlobal.pas';
 
 {$R *.RES}
 

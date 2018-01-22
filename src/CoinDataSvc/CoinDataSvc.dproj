@@ -93,10 +93,11 @@
         <DCC_DebugInformation>0</DCC_DebugInformation>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2_Win32)'!=''">
+        <VerInfo_Release>1</VerInfo_Release>
         <DCC_ExeOutput>..\bin\$(Config)\CoinDataSvc</DCC_ExeOutput>
         <Icon_MainIcon>default.ico</Icon_MainIcon>
         <VerInfo_Locale>1033</VerInfo_Locale>
-        <VerInfo_Keys>CompanyName=playIoT.;FileDescription=CoinDataSvc;FileVersion=1.0.0.0;InternalName=CoinDataSvc;LegalCopyright=(c)playIoT.;LegalTrademarks=;OriginalFilename=;ProductName=CoinDataSvc;ProductVersion=1.0.0.0;Comments=DB Service For Coin24</VerInfo_Keys>
+        <VerInfo_Keys>CompanyName=playIoT.;FileDescription=CoinDataSvc;FileVersion=1.0.1.0;InternalName=CoinDataSvc;LegalCopyright=(c)playIoT.;LegalTrademarks=;OriginalFilename=;ProductName=CoinDataSvc;ProductVersion=1.0.0.0;Comments=DB Service For Coin24</VerInfo_Keys>
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
         <AppEnableRuntimeThemes>true</AppEnableRuntimeThemes>
         <AppEnableHighDPI>true</AppEnableHighDPI>
@@ -123,7 +124,6 @@
             <DesignClass>TDSServerModule</DesignClass>
         </DCCReference>
         <DCCReference Include="Global\cdGlobal.pas"/>
-        <DCCReference Include="..\common\Coinone.pas"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>
@@ -153,7 +153,7 @@
                 </Excluded_Packages>
             </Delphi.Personality>
             <Deployment Version="2">
-                <DeployFile LocalName="..\bin\Release\CoinDataSvc.exe" Configuration="Release" Class="ProjectOutput">
+                <DeployFile LocalName="..\bin\Release\CoinDataSvc\CoinDataSvc.exe" Configuration="Release" Class="ProjectOutput">
                     <Platform Name="Win32">
                         <RemoteName>CoinDataSvc.exe</RemoteName>
                         <Overwrite>true</Overwrite>
