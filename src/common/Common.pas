@@ -9,27 +9,24 @@ const
   DATA_SERVICE_CODE = 'CoinDataSvc';
   CORE_SERVICE_CODE = 'CoinCoreSvc';
 
+  ShortPoint = 0.02;
+  LongPoint = 0.1;
+
 type
   TStochType = (stNormal, stOverBought, stOverSold);
   TPriceState = (psStable, psIncrease, psDecrease);
 
-  TCoinInfo = record
-    Currency: String; // btc, xrp, qtum...
-    ShortPoint: Double; // 단타 등락율
-    LongPoint: Double; // 장타 등락율
-    StochHour: Integer; // Stoch 최고/최저값 구간
-    MinCount: Double; // 최소 가용 코인수
-    ShortDeal: Double; // 단타 최초매수매도 량 - 가용코인수 * ShortDeal
-    Oper: string; // 가동 - enable, disable, test
-    function ToString: string;
-    function ShortState(ARate: Double): TPriceState;
-    function LongState(ARate: Double): TPriceState;
-  end;
+  TDealMode = (dmShort, dmLong);
 
-const
-  OPER_ENABLE = 'enable';
-  OPER_DISABLE = 'disable';
-  OPER_TEST = 'test';
+  TTraderOption = record
+    Currency: String; // btc, xrp, qtum...
+    ShortStoch: Integer;
+    LongStoch: Integer;
+    Deal: double;
+    function ShortState(ARate: double): TPriceState;
+    function LongState(ARate: double): TPriceState;
+    function ToString: string;
+  end;
 
 function EncodeKey(const AKey: string): string;
 function DecodeKey(const AEncoded: string): string;
@@ -90,34 +87,32 @@ begin
   result := BytesToHex(Bytes, '').Substring(4);
 end;
 
-{ TCoinInfo }
+{ TTraderOption }
 
-function TCoinInfo.LongState(ARate: Double): TPriceState;
+function TTraderOption.LongState(ARate: double): TPriceState;
 begin
-  if ARate > Self.LongPoint then
+  if ARate > LongPoint then
     result := psIncrease
-  else if ARate < -Self.LongPoint then
+  else if ARate < -LongPoint then
     result := psDecrease
   else
     result := psStable;
 end;
 
-function TCoinInfo.ShortState(ARate: Double): TPriceState;
+function TTraderOption.ShortState(ARate: double): TPriceState;
 begin
-  if ARate > Self.ShortPoint + Sqr(Self.ShortPoint) then
+  if ARate > ShortPoint then
     result := psIncrease
-  else if ARate < -Self.ShortPoint then
+  else if ARate < -ShortPoint then
     result := psDecrease
   else
     result := psStable;
 end;
 
-function TCoinInfo.ToString: string;
+function TTraderOption.ToString: string;
 begin
-  result := format
-    ('Currency=%s,ShortPoint=%.2f,LongPoint=%.2f,StochHour=%d,MinCount=%.4f,ShortDeal=%.2f,Oper=%s',
-    [Self.Currency, Self.ShortPoint, Self.LongPoint, Self.StochHour, Self.MinCount,
-    Self.ShortDeal, Self.Oper]);
+  result := format('Currency=%s,ShortStoch=%d,LongStoch=%d,Deal=%.2f',
+    [Self.Currency, Self.ShortStoch, Self.LongStoch, Self.Deal]);
 end;
 
 end.

@@ -25,8 +25,10 @@ type
     procedure SetUseCloudLog(const Value: boolean);
     function GetChartDay: Integer;
     procedure SetChartDay(const Value: Integer);
-    function GetStochHour: Integer;
-    procedure SetStochHour(const Value: Integer);
+    function GetShortStoch: String;
+    procedure SetShortStoch(const Value: String);
+    function GetLongStoch: string;
+    procedure SetLongStoch(const Value: string);
   public
     class function Obj: TOption;
 
@@ -44,7 +46,8 @@ type
     property UseCloudLog: boolean read GetUseCloudLog write SetUseCloudLog;
 
     property ChartDay: Integer read GetChartDay write SetChartDay;
-    property StochHour: Integer read GetStochHour write SetStochHour;
+    property ShortStoch: String read GetShortStoch write SetShortStoch;
+    property LongStoch: string read GetLongStoch write SetLongStoch;
   end;
 
 implementation
@@ -99,14 +102,19 @@ begin
   result.IntegerValue := FIniFile.ReadInteger('DataSnap', 'Port', 80);
 end;
 
+function TOption.GetLongStoch: string;
+begin
+  result := FIniFile.ReadString('Config', 'LongStoch', '3 day');
+end;
+
 function TOption.GetSecretKey: string;
 begin
   result := DecodeKey(FIniFile.ReadString('Auth', 'SecretKey', 'SecretKey'));
 end;
 
-function TOption.GetStochHour: Integer;
+function TOption.GetShortStoch: String;
 begin
-  result := FIniFile.ReadInteger('Config', 'StochHour', 7);
+  result := FIniFile.ReadString('Config', 'ShortStoch', '7 hour');
 end;
 
 function TOption.GetUseCloudLog: boolean;
@@ -149,14 +157,19 @@ begin
   FIniFile.WriteInteger('DataSnap', 'Port', Value.IntegerValue);
 end;
 
+procedure TOption.SetLongStoch(const Value: string);
+begin
+  FIniFile.WriteString('Config', 'LongStoch', Value);
+end;
+
 procedure TOption.SetSecretKey(const Value: string);
 begin
   FIniFile.WriteString('Auth', 'SecretKey', EncodeKey(Value));
 end;
 
-procedure TOption.SetStochHour(const Value: Integer);
+procedure TOption.SetShortStoch(const Value: String);
 begin
-  FIniFile.WriteInteger('Config', 'StochHour', Value);
+  FIniFile.WriteString('Config', 'ShortStoch', Value);
 end;
 
 procedure TOption.SetUseCloudLog(const Value: boolean);

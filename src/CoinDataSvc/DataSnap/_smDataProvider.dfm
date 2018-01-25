@@ -7,20 +7,20 @@ object smDataProvider: TsmDataProvider
       'select t1.*,'
       
         '(select Max(t2.price) from ticker_tab t2 where t2.coin_code = t1' +
-        '.coin_code and t2.tick_stamp > (t1.tick_stamp - :high_price_peri' +
-        'od) and t2.tick_stamp <= t1.tick_stamp ) high_price,'
+        '.coin_code and t2.tick_stamp > (t1.tick_stamp - %short_period%) ' +
+        'and t2.tick_stamp <= t1.tick_stamp ) short_high_price,'
       
         '(select Min(t2.price) from ticker_tab t2 where t2.coin_code = t1' +
-        '.coin_code and t2.tick_stamp > (t1.tick_stamp - :low_price_perio' +
-        'd) and t2.tick_stamp <= t1.tick_stamp ) low_price,'
+        '.coin_code and t2.tick_stamp > (t1.tick_stamp - %short_period%) ' +
+        'and t2.tick_stamp <= t1.tick_stamp ) short_low_price,'
       
-        '(select Max(t2.volume) from ticker_tab t2 where t2.coin_code = t' +
-        '1.coin_code and t2.tick_stamp > (t1.tick_stamp - :high_volume_pe' +
-        'riod) and t2.tick_stamp <= t1.tick_stamp ) high_volume,'
+        '(select Max(t2.price) from ticker_tab t2 where t2.coin_code = t1' +
+        '.coin_code and t2.tick_stamp > (t1.tick_stamp - %long_period%) a' +
+        'nd t2.tick_stamp <= t1.tick_stamp ) long_high_price,'
       
-        '(select Min(t2.volume) from ticker_tab t2 where t2.coin_code = t' +
-        '1.coin_code and t2.tick_stamp > (t1.tick_stamp - :low_volume_per' +
-        'iod) and t2.tick_stamp <= t1.tick_stamp ) low_volume'
+        '(select Min(t2.price) from ticker_tab t2 where t2.coin_code = t1' +
+        '.coin_code and t2.tick_stamp > (t1.tick_stamp - %long_period%) a' +
+        'nd t2.tick_stamp <= t1.tick_stamp ) long_low_price'
       'from ticker_tab t1'
       'where t1.coin_code = :coin_code and'
       ':begin_time <= t1.tick_stamp and :end_time >= t1.tick_stamp'
@@ -28,26 +28,6 @@ object smDataProvider: TsmDataProvider
     Left = 56
     Top = 16
     ParamData = <
-      item
-        Name = 'HIGH_PRICE_PERIOD'
-        DataType = ftTime
-        ParamType = ptInput
-      end
-      item
-        Name = 'LOW_PRICE_PERIOD'
-        DataType = ftTime
-        ParamType = ptInput
-      end
-      item
-        Name = 'HIGH_VOLUME_PERIOD'
-        DataType = ftTime
-        ParamType = ptInput
-      end
-      item
-        Name = 'LOW_VOLUME_PERIOD'
-        DataType = ftTime
-        ParamType = ptInput
-      end
       item
         Name = 'COIN_CODE'
         DataType = ftWideString
@@ -70,8 +50,7 @@ object smDataProvider: TsmDataProvider
   end
   object qryHighLow: TFDQuery
     SQL.Strings = (
-      'select Max(price) high_price, Min(price) low_price,'
-      'Max(volume) high_volume, Min(volume) low_volume'
+      'select Max(price) high_price, Min(price) low_price'
       'from ticker_tab'
       'where coin_code = :coin_code '
       'and tick_stamp > :begin_time'

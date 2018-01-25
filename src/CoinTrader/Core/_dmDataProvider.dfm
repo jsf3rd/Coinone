@@ -125,26 +125,26 @@ object dmDataProvider: TdmDataProvider
     end
     object mtTickerPeriodstoch: TFloatField
       FieldKind = fkCalculated
-      FieldName = 'price_stoch'
+      FieldName = 'short_stoch'
       Calculated = True
     end
     object mtTickerPeriodvolume_avg: TFloatField
       FieldKind = fkCalculated
-      FieldName = 'volume_stoch'
+      FieldName = 'long_stoch'
       LookupDataSet = mtTicker
       Calculated = True
     end
     object mtTickerPeriodhigh_price: TFloatField
-      FieldName = 'high_price'
+      FieldName = 'short_high_price'
     end
     object mtTickerPeriodlow_price: TFloatField
-      FieldName = 'low_price'
+      FieldName = 'short_low_price'
     end
     object mtTickerPeriodhigh_volume: TFloatField
-      FieldName = 'high_volume'
+      FieldName = 'long_high_price'
     end
     object mtTickerPeriodlow_volume: TFloatField
-      FieldName = 'low_volume'
+      FieldName = 'long_low_price'
     end
   end
   object DSRestConnection: TDSRestConnection
@@ -205,8 +205,8 @@ object dmDataProvider: TdmDataProvider
   end
   object dsBalance: TDataSource
     DataSet = mtBalance
-    Left = 384
-    Top = 112
+    Left = 392
+    Top = 120
   end
   object mtLimitOrders: TFDMemTable
     OnCalcFields = mtTickerCalcFields
@@ -328,29 +328,6 @@ object dmDataProvider: TdmDataProvider
     DataSet = mtCompleteOrders
     Left = 384
     Top = 264
-  end
-  object mtStoch: TFDMemTable
-    FieldDefs = <>
-    IndexDefs = <>
-    FetchOptions.AssignedValues = [evMode]
-    FetchOptions.Mode = fmAll
-    ResourceOptions.AssignedValues = [rvSilentMode]
-    ResourceOptions.SilentMode = True
-    UpdateOptions.AssignedValues = [uvCheckRequired, uvAutoCommitUpdates]
-    UpdateOptions.CheckRequired = False
-    UpdateOptions.AutoCommitUpdates = True
-    StoreDefs = True
-    Left = 128
-    Top = 192
-    object SQLTimeStampField2: TSQLTimeStampField
-      FieldName = 'tick_stamp'
-    end
-    object FloatField17: TFloatField
-      FieldName = 'price_stoch'
-    end
-    object mtStochvolume_stoch: TFloatField
-      FieldName = 'volume_stoch'
-    end
   end
   object mtOrder: TFDMemTable
     FetchOptions.AssignedValues = [evMode]

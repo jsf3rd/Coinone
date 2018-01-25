@@ -26,7 +26,7 @@ object fmMain: TfmMain
     Top = 0
     Width = 884
     Height = 754
-    ActivePage = tsMain
+    ActivePage = tsTrad
     Align = alClient
     TabOrder = 0
     OnChange = PageControlChange
@@ -36,7 +36,7 @@ object fmMain: TfmMain
         Left = 0
         Top = 0
         Width = 876
-        Height = 317
+        Height = 290
         Align = alTop
         Caption = 'Panel2'
         TabOrder = 0
@@ -44,9 +44,8 @@ object fmMain: TfmMain
           Left = 1
           Top = 81
           Width = 874
-          Height = 235
+          Height = 208
           Align = alClient
-          Constraints.MinHeight = 235
           DataSource = dmDataProvider.dsTicker
           Options = [dgTitles, dgIndicator, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgRowSelect, dgAlwaysShowSelection, dgConfirmDelete, dgCancelOnExit, dgTitleClick, dgTitleHotTrack]
           TabOrder = 0
@@ -55,6 +54,7 @@ object fmMain: TfmMain
           TitleFont.Height = -13
           TitleFont.Name = #47569#51008' '#44256#46357
           TitleFont.Style = []
+          OnDrawColumnCell = dbgBalanceDrawColumnCell
           OnDblClick = grdMainDblClick
         end
         object Panel1: TPanel
@@ -75,15 +75,16 @@ object fmMain: TfmMain
           object GroupBox3: TGroupBox
             Left = 104
             Top = 7
-            Width = 273
+            Width = 433
             Height = 67
             Caption = #52264#53944#49444#51221
             TabOrder = 1
             object edtChartDay: TLabeledEdit
               Left = 73
               Top = 30
-              Width = 48
+              Width = 55
               Height = 25
+              Alignment = taCenter
               EditLabel.Width = 59
               EditLabel.Height = 17
               EditLabel.Caption = 'Chart Day'
@@ -92,34 +93,49 @@ object fmMain: TfmMain
               TabOrder = 0
               Text = '2'
             end
-            object edtStochHour: TLabeledEdit
+            object edtShortStoch: TLabeledEdit
               Left = 211
               Top = 30
-              Width = 48
+              Width = 55
               Height = 25
-              EditLabel.Width = 68
+              Alignment = taCenter
+              EditLabel.Width = 65
               EditLabel.Height = 17
-              EditLabel.Caption = 'Stoch Hour'
+              EditLabel.Caption = 'ShortStoch'
               LabelPosition = lpLeft
-              NumbersOnly = True
               TabOrder = 1
-              Text = '7'
+              Text = '7 hour'
+            end
+            object edtLongStoch: TLabeledEdit
+              Left = 347
+              Top = 30
+              Width = 55
+              Height = 25
+              Alignment = taCenter
+              EditLabel.Width = 63
+              EditLabel.Height = 17
+              EditLabel.Caption = 'LongStoch'
+              LabelPosition = lpLeft
+              TabOrder = 2
+              Text = '2 day'
             end
           end
         end
       end
       object Panel3: TPanel
         Left = 0
-        Top = 317
+        Top = 290
         Width = 876
-        Height = 405
+        Height = 432
         Align = alClient
         Caption = 'Panel3'
         TabOrder = 1
         OnResize = Panel3Resize
+        ExplicitTop = 317
+        ExplicitHeight = 405
         object Splitter2: TSplitter
           Left = 1
-          Top = 200
+          Top = 227
           Width = 874
           Height = 3
           Cursor = crVSplit
@@ -131,7 +147,7 @@ object fmMain: TfmMain
           Left = 1
           Top = 1
           Width = 874
-          Height = 199
+          Height = 226
           Title.Font.Color = clBlack
           Title.Font.Height = -16
           Title.Font.Style = [fsBold]
@@ -143,6 +159,7 @@ object fmMain: TfmMain
           Align = alClient
           TabOrder = 0
           Constraints.MinHeight = 150
+          ExplicitHeight = 199
           DefaultCanvas = 'TGDIPlusCanvas'
           ColorPaletteIndex = 13
           object Series1: TLineSeries
@@ -175,23 +192,6 @@ object fmMain: TfmMain
             YValues.Name = 'Y'
             YValues.Order = loNone
             YValues.ValueSource = 'volume'
-          end
-          object Series5: TLineSeries
-            Active = False
-            Marks.DrawEvery = 3
-            DataSource = dmDataProvider.mtTickerPeriod
-            Title = 'Stoch'
-            VertAxis = aRightAxis
-            Brush.BackColor = clDefault
-            Pointer.InflateMargins = True
-            Pointer.Style = psRectangle
-            XValues.DateTime = True
-            XValues.Name = 'X'
-            XValues.Order = loAscending
-            XValues.ValueSource = 'tick_stamp'
-            YValues.Name = 'Y'
-            YValues.Order = loNone
-            YValues.ValueSource = 'price_stoch'
           end
           object Series7: TPointSeries
             DataSource = dmDataProvider.mtComplete
@@ -230,7 +230,7 @@ object fmMain: TfmMain
         end
         object chtStoch: TDBChart
           Left = 1
-          Top = 203
+          Top = 230
           Width = 874
           Height = 201
           Title.Font.Color = clBlack
@@ -249,11 +249,12 @@ object fmMain: TfmMain
           Align = alBottom
           TabOrder = 1
           Constraints.MinHeight = 150
+          ExplicitTop = 203
           DefaultCanvas = 'TGDIPlusCanvas'
           ColorPaletteIndex = 13
           object Series4: TLineSeries
-            DataSource = dmDataProvider.mtStoch
-            Title = 'PriceStoch'
+            DataSource = dmDataProvider.mtTickerPeriod
+            Title = 'Short Stoch'
             VertAxis = aRightAxis
             Brush.BackColor = clDefault
             Pointer.InflateMargins = True
@@ -264,11 +265,11 @@ object fmMain: TfmMain
             XValues.ValueSource = 'tick_stamp'
             YValues.Name = 'Y'
             YValues.Order = loNone
-            YValues.ValueSource = 'price_stoch'
+            YValues.ValueSource = 'short_stoch'
           end
           object Series10: TLineSeries
-            DataSource = dmDataProvider.mtStoch
-            Title = 'VolumeStoch'
+            DataSource = dmDataProvider.mtTickerPeriod
+            Title = 'Long Stoch'
             VertAxis = aRightAxis
             Brush.BackColor = clDefault
             Pointer.InflateMargins = True
@@ -279,7 +280,7 @@ object fmMain: TfmMain
             XValues.ValueSource = 'tick_stamp'
             YValues.Name = 'Y'
             YValues.Order = loNone
-            YValues.ValueSource = 'volume_stoch'
+            YValues.ValueSource = 'long_stoch'
           end
           object Series8: TPointSeries
             Marks.Transparency = 20
@@ -338,7 +339,7 @@ object fmMain: TfmMain
       ImageIndex = 1
       object Splitter1: TSplitter
         Left = 0
-        Top = 390
+        Top = 360
         Width = 876
         Height = 3
         Cursor = crVSplit
@@ -351,14 +352,14 @@ object fmMain: TfmMain
         Left = 0
         Top = 0
         Width = 876
-        Height = 390
+        Height = 360
         Align = alTop
         TabOrder = 0
         object dbgBalance: TDBGrid
           Left = 1
           Top = 137
           Width = 874
-          Height = 252
+          Height = 222
           Align = alClient
           DataSource = dmDataProvider.dsBalance
           Options = [dgTitles, dgIndicator, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgRowSelect, dgAlwaysShowSelection, dgConfirmDelete, dgCancelOnExit, dgTitleClick, dgTitleHotTrack]
@@ -368,6 +369,7 @@ object fmMain: TfmMain
           TitleFont.Height = -13
           TitleFont.Name = #47569#51008' '#44256#46357
           TitleFont.Style = []
+          OnDrawColumnCell = dbgBalanceDrawColumnCell
           OnDblClick = dbgBalanceDblClick
         end
         object Panel7: TPanel
@@ -493,31 +495,31 @@ object fmMain: TfmMain
       end
       object pcOrderDetail: TPageControl
         Left = 0
-        Top = 393
+        Top = 363
         Width = 876
-        Height = 329
+        Height = 359
         ActivePage = tsChartCount
         Align = alClient
         TabOrder = 1
         OnChange = pcOrderDetailChange
-        ExplicitTop = 383
-        ExplicitHeight = 339
+        ExplicitTop = 393
+        ExplicitHeight = 329
         object tsOrders: TTabSheet
           Caption = #44144#47000#45236#50669
-          ExplicitHeight = 307
+          ExplicitHeight = 297
           object Panel5: TPanel
             Left = 0
             Top = 0
             Width = 868
-            Height = 297
+            Height = 327
             Align = alClient
             TabOrder = 0
             OnResize = Panel5Resize
-            ExplicitHeight = 307
+            ExplicitHeight = 297
             object Splitter: TSplitter
               Left = 389
               Top = 42
-              Height = 254
+              Height = 284
               Align = alRight
               ExplicitLeft = 535
               ExplicitTop = 44
@@ -553,7 +555,7 @@ object fmMain: TfmMain
               Left = 1
               Top = 42
               Width = 388
-              Height = 254
+              Height = 284
               Align = alClient
               DataSource = dmDataProvider.dsLimitOrders
               Options = [dgTitles, dgIndicator, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgRowSelect, dgAlwaysShowSelection, dgConfirmDelete, dgCancelOnExit, dgTitleClick, dgTitleHotTrack]
@@ -563,6 +565,7 @@ object fmMain: TfmMain
               TitleFont.Height = -13
               TitleFont.Name = #47569#51008' '#44256#46357
               TitleFont.Style = []
+              OnDrawColumnCell = dbgRecentOrdersDrawColumnCell
               SelectColumnsDialogStrings.Caption = 'Select columns'
               SelectColumnsDialogStrings.OK = '&OK'
               SelectColumnsDialogStrings.NoSelectionWarning = 'At least one column must be visible!'
@@ -574,7 +577,7 @@ object fmMain: TfmMain
               Left = 392
               Top = 42
               Width = 475
-              Height = 254
+              Height = 284
               Align = alRight
               DataSource = dmDataProvider.dsCompleteOrders
               Options = [dgTitles, dgIndicator, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgRowSelect, dgAlwaysShowSelection, dgConfirmDelete, dgCancelOnExit, dgTitleClick, dgTitleHotTrack]
@@ -584,6 +587,7 @@ object fmMain: TfmMain
               TitleFont.Height = -13
               TitleFont.Name = #47569#51008' '#44256#46357
               TitleFont.Style = []
+              OnDrawColumnCell = dbgRecentOrdersDrawColumnCell
               SelectColumnsDialogStrings.Caption = 'Select columns'
               SelectColumnsDialogStrings.OK = '&OK'
               SelectColumnsDialogStrings.NoSelectionWarning = 'At least one column must be visible!'
@@ -596,12 +600,12 @@ object fmMain: TfmMain
         object tsChartCount: TTabSheet
           Caption = #44144#47000#48516#49437
           ImageIndex = 1
-          ExplicitHeight = 307
+          ExplicitHeight = 297
           object chtCoinCount: TDBChart
             Left = 0
             Top = 0
             Width = 868
-            Height = 297
+            Height = 327
             Title.Font.Color = clBlack
             Title.Font.Height = -16
             Title.Font.Style = [fsBold]
@@ -613,7 +617,7 @@ object fmMain: TfmMain
             View3D = False
             Align = alClient
             TabOrder = 0
-            ExplicitHeight = 307
+            ExplicitHeight = 297
             DefaultCanvas = 'TGDIPlusCanvas'
             ColorPaletteIndex = 13
             object Series9: TLineSeries
@@ -621,6 +625,7 @@ object fmMain: TfmMain
               Marks.Arrow.Visible = False
               Marks.Callout.Arrow.Visible = False
               Marks.Callout.Distance = 8
+              Marks.Callout.Length = 14
               DataSource = dmDataProvider.mtDailyBalance
               Title = #53076#51064' '#44060#49688
               XLabelsSource = 'coin_count'
@@ -950,6 +955,11 @@ object fmMain: TfmMain
     object actSaveConfig: TAction
       Caption = #51200#51109
       OnExecute = actSaveConfigExecute
+    end
+    object actImmExit: TAction
+      Caption = #51593#49884#51333#47308
+      ShortCut = 32849
+      OnExecute = actImmExitExecute
     end
   end
   object ServiceStatusTimer: TTimer

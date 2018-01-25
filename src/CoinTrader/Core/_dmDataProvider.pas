@@ -9,7 +9,8 @@ uses
   FireDAC.DApt.Intf, FireDAC.Comp.DataSet, FireDAC.Comp.Client, Coinone, System.JSON,
   REST.JSON, JdcGlobal.ClassHelper, System.DateUtils, JdcGlobal.DSCommon,
   Datasnap.DSClientRest, FireDAC.Stan.StorageBin, System.Math, JdcView, JdcGlobal, ctGlobal,
-  Data.SqlTimSt, IdBaseComponent, IdComponent, IdTCPConnection, IdTCPClient, IdHTTP, ctOption;
+  Data.SqlTimSt, IdBaseComponent, IdComponent, IdTCPConnection, IdTCPClient, IdHTTP, ctOption,
+  System.StrUtils;
 
 type
   TdmDataProvider = class(TDataModule)
@@ -61,9 +62,6 @@ type
     mtCompleteOrderslast: TFloatField;
     mtTickerPeriodhigh_price: TFloatField;
     mtTickerPeriodlow_price: TFloatField;
-    mtStoch: TFDMemTable;
-    SQLTimeStampField2: TSQLTimeStampField;
-    FloatField17: TFloatField;
     mtOrder: TFDMemTable;
     mtOrderprice: TFloatField;
     mtOrderqty: TFloatField;
@@ -76,7 +74,6 @@ type
     WideStringField7: TWideStringField;
     mtTickerPeriodhigh_volume: TFloatField;
     mtTickerPeriodlow_volume: TFloatField;
-    mtStochvolume_stoch: TFloatField;
     mtBalanceavail: TFloatField;
     mtDailyBalance: TFDMemTable;
     SQLTimeStampField4: TSQLTimeStampField;
@@ -108,7 +105,7 @@ type
 
     procedure Init;
     procedure Tick;
-    procedure ChartData(AChartDay, AStochHour: Integer);
+    procedure ChartData(AChartDay: Integer; AShortStoch, ALongStoch: string);
 
     function Balance: Integer;
 
@@ -211,6 +208,9 @@ begin
     try
       for I := Low(Coins) to High(Coins) do
       begin
+        if MatchText(Coins[I], ['bch', 'btg']) then
+          Continue;
+
         if mtTicker.Locate('coin', Coins[I]) then
         begin
           Price := mtTicker.FieldByName('last').AsFloat;
@@ -319,19 +319,17 @@ begin
 
 end;
 
-procedure TdmDataProvider.ChartData(AChartDay, AStochHour: Integer);
+procedure TdmDataProvider.ChartData(AChartDay: Integer; AShortStoch, ALongStoch: string);
 
-  function CreateTickerParams(ACoin: string; AChartDay, AStochHour: Integer): TJSONObject;
+  function CreateTickerParams(ACoin: string): TJSONObject;
   begin
     result := TJSONObject.Create;
     result.AddPair('coin_code', UpperCase(ACoin));
     result.AddPair('begin_time', IncDay(Now, -AChartDay).ToISO8601);
     result.AddPair('end_time', Now.ToISO8601);
 
-    result.AddPair('high_price_period', Format('%0.2d:00:00', [AStochHour]));
-    result.AddPair('low_price_period', Format('%0.2d:00:00', [AStochHour]));
-    result.AddPair('high_volume_period', Format('%0.2d:00:00', [AStochHour]));
-    result.AddPair('low_volume_period', Format('%0.2d:00:00', [AStochHour]));
+    result.AddPair('short_period', AShortStoch);
+    result.AddPair('long_period', ALongStoch);
   end;
 
   procedure Complete(ACurrency: string);
@@ -379,11 +377,8 @@ begin
   FDownSum := 0;
   FOldPrice := 0;
 
-  mtStoch.Close;
-  mtStoch.Open;
-
   Coin := mtTicker.FieldByName('coin').AsString;
-  Params := CreateTickerParams(Coin, AChartDay, AStochHour);
+  Params := CreateTickerParams(Coin);
   mtTickerPeriod.LoadFromDSStream(smDataProviderClient.Ticker(Params));
 
   Params := TJSONObject.Create;
@@ -657,33 +652,27 @@ begin
 end;
 
 procedure TdmDataProvider.mtTickerPeriodCalcFields(DataSet: TDataSet);
+
+  function CalcStoch(APrice: double; HighName, LowName: string): double;
+  var
+    Max, Min: double;
+  begin
+    Max := DataSet.FieldByName(HighName).AsFloat;
+    Min := DataSet.FieldByName(LowName).AsFloat;
+    if Max = Min then
+      result := 0
+    else
+      result := (APrice - Min) / (Max - Min) * 100;
+  end;
+
 var
-  Price, Volume: double;
-  Max, Min: double;
-  PriceStoch, VolumeStoch: double;
+  Price: double;
 begin
   Price := DataSet.FieldByName('price').AsFloat;
-  Max := DataSet.FieldByName('high_price').AsFloat;
-  Min := DataSet.FieldByName('low_price').AsFloat;
-  if Max = Min then
-    PriceStoch := 0
-  else
-    PriceStoch := (Price - Min) / (Max - Min) * 100;
-
-  Volume := DataSet.FieldByName('volume').AsFloat;
-  Max := DataSet.FieldByName('high_volume').AsFloat;
-  Min := DataSet.FieldByName('low_volume').AsFloat;
-  if Max = Min then
-    VolumeStoch := 0
-  else
-    VolumeStoch := (Volume - Min) / (Max - Min) * 100;
-
-  mtStoch.Insert;
-  mtStoch.FieldByName('tick_stamp').AsSQLTimeStamp := DataSet.FieldByName('tick_stamp')
-    .AsSQLTimeStamp;
-  mtStoch.FieldByName('price_stoch').AsFloat := PriceStoch;
-  mtStoch.FieldByName('volume_stoch').AsFloat := VolumeStoch;
-  mtStoch.CommitUpdates;
+  DataSet.FieldByName('short_stoch').AsFloat := CalcStoch(Price, 'short_high_price',
+    'short_low_price');
+  DataSet.FieldByName('long_stoch').AsFloat := CalcStoch(Price, 'long_high_price',
+    'long_low_price');
 end;
 
 procedure TdmDataProvider.Tick;
@@ -705,7 +694,7 @@ begin
     try
       for I := Low(Coins) to High(Coins) do
       begin
-        if Coins[I] = 'krw' then
+        if MatchText(Coins[I], ['krw', 'bch', 'btg']) then
           Continue;
 
         if mtTicker.Locate('coin', Coins[I]) then

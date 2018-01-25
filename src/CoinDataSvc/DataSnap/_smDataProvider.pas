@@ -34,7 +34,10 @@ begin
     result := TJSON.RecordToJsonObject(TOption.Obj.ClientInfo);
   except
     on E: Exception do
+    begin
+      result := TJSONObject.Create;
       TGlobal.Obj.ApplicationMessage(msError, 'GetClientInfo', E.Message);
+    end;
   end;
 end;
 
@@ -77,15 +80,30 @@ begin
 end;
 
 function TsmDataProvider.Ticker(AParams: TJSONObject): TStream;
+var
+  MyQuery: TFDQuery;
+  sql: string;
 begin
+  sql := qryTicker.sql.Text;
+  sql := sql.Replace('%short_period%', 'interval ' + AParams.GetString('short_period')
+    .QuotedString, [rfReplaceAll, rfIgnoreCase]);
+  sql := sql.Replace('%long_period%', 'interval ' + AParams.GetString('long_period')
+    .QuotedString, [rfReplaceAll, rfIgnoreCase]);
+
+  MyQuery := qryTicker.Clone;
   try
-    result := ServerContainer.OpenInstantQuery(qryTicker, AParams, 'Ticker');
-  except
-    on E: Exception do
-    begin
-      TGlobal.Obj.ApplicationMessage(msError, 'Ticker', E.Message);
-      result := nil;
+    MyQuery.sql.Text := sql;
+    try
+      result := ServerContainer.OpenQuery(MyQuery, AParams, 'Ticker');
+    except
+      on E: Exception do
+      begin
+        TGlobal.Obj.ApplicationMessage(msError, 'Ticker', ',E=' + E.Message);
+        result := nil;
+      end;
     end;
+  finally
+    MyQuery.Free;
   end;
 end;
 

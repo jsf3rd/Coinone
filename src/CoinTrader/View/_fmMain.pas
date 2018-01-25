@@ -9,7 +9,7 @@ uses
   Vcl.Menus, Vcl.AppEvnts, Vcl.ExtCtrls, Vcl.StdCtrls, Data.DB, Vcl.Grids, Vcl.DBGrids,
   _dmDataProvider, VclTee.TeeGDIPlus, VclTee.TeEngine, VclTee.Series, VclTee.TeeProcs,
   VclTee.Chart, VclTee.DBChart, Vcl.ComCtrls, System.DateUtils, Vcl.Mask, JclSvcCtrl,
-  Vcl.CheckLst, Common, JvExDBGrids, JvDBGrid;
+  Vcl.CheckLst, Common, JvExDBGrids, JvDBGrid, FireDAC.Comp.Client;
 
 type
   TfmMain = class(TForm)
@@ -38,7 +38,6 @@ type
     Series2: TLineSeries;
     Panel2: TPanel;
     Panel3: TPanel;
-    Series5: TLineSeries;
     PageControl: TPageControl;
     tsMain: TTabSheet;
     tsTrad: TTabSheet;
@@ -72,7 +71,7 @@ type
     edtKrwView: TLabeledEdit;
     chtStoch: TDBChart;
     Series4: TLineSeries;
-    edtStochHour: TLabeledEdit;
+    edtShortStoch: TLabeledEdit;
     tsPreference: TTabSheet;
     Series7: TPointSeries;
     Series3: TPointSeries;
@@ -110,6 +109,8 @@ type
     Series9: TLineSeries;
     Series11: TLineSeries;
     Panel7: TPanel;
+    actImmExit: TAction;
+    edtLongStoch: TLabeledEdit;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure actAboutExecute(Sender: TObject);
@@ -142,6 +143,11 @@ type
     procedure actSaveConfigExecute(Sender: TObject);
     procedure Panel5Resize(Sender: TObject);
     procedure pcOrderDetailChange(Sender: TObject);
+    procedure dbgRecentOrdersDrawColumnCell(Sender: TObject; const [Ref] Rect: TRect;
+      DataCol: Integer; Column: TColumn; State: TGridDrawState);
+    procedure dbgBalanceDrawColumnCell(Sender: TObject; const [Ref] Rect: TRect;
+      DataCol: Integer; Column: TColumn; State: TGridDrawState);
+    procedure actImmExitExecute(Sender: TObject);
 
   private
     FOldDataStatus: TJclServiceState;
@@ -229,6 +235,11 @@ end;
 procedure TfmMain.actExitExecute(Sender: TObject);
 begin
   Close;
+end;
+
+procedure TfmMain.actImmExitExecute(Sender: TObject);
+begin
+  TCore.Obj.Finalize;
 end;
 
 procedure TfmMain.actLimitASKExecute(Sender: TObject);
@@ -347,6 +358,44 @@ begin
   dbgRecentOrders.ScrollBars := ssVertical;
 end;
 
+procedure TfmMain.dbgBalanceDrawColumnCell(Sender: TObject; const [Ref] Rect: TRect;
+  DataCol: Integer; Column: TColumn; State: TGridDrawState);
+var
+  DataSet: TFDMemTable;
+begin
+  DataSet := TDBGrid(Sender).DataSource.DataSet as TFDMemTable;
+  if Odd(DataSet.RecNo) then
+    TDBGrid(Sender).Canvas.Brush.Color := $00EFEFEF;
+
+  if gdSelected in State then
+  begin
+    TDBGrid(Sender).Canvas.Brush.Color := clSkyBlue;
+  end;
+
+  TDBGrid(Sender).DefaultDrawColumnCell(Rect, DataCol, Column, State);
+end;
+
+procedure TfmMain.dbgRecentOrdersDrawColumnCell(Sender: TObject; const [Ref] Rect: TRect;
+  DataCol: Integer; Column: TColumn; State: TGridDrawState);
+var
+  DataSet: TFDMemTable;
+begin
+  DataSet := TDBGrid(Sender).DataSource.DataSet as TFDMemTable;
+  if DataSet.FieldByName('order_type').AsString = 'bid' then
+  begin
+    TDBGrid(Sender).Canvas.Font.Color := clBlue;
+  end
+  else
+    TDBGrid(Sender).Canvas.Font.Color := clRed;
+
+  if gdSelected in State then
+  begin
+    TDBGrid(Sender).Canvas.Brush.Color := clSkyBlue;
+  end;
+
+  TDBGrid(Sender).DefaultDrawColumnCell(Rect, DataCol, Column, State);
+end;
+
 procedure TfmMain.edtLimitCountChange(Sender: TObject);
 begin
   edtKrwView.Text := FormatFloat('#,##0', StrToFloatDef(edtLimitCount.Text, 0) *
@@ -387,21 +436,14 @@ begin
 end;
 
 procedure TfmMain.grdMainDblClick(Sender: TObject);
-var
-  StochHour: Integer;
-
 begin
   chtMain.Title.Caption := dmDataProvider.mtTicker.FieldByName('coin').Text;
-
-  StochHour := StrToIntDef(edtStochHour.Text, 7);
-  if StochHour > 23 then
-    StochHour := 23;
-  edtStochHour.Text := StochHour.ToString;
 
   chtMain.SeriesList.ClearValues;
   chtStoch.SeriesList.ClearValues;
 
-  dmDataProvider.ChartData(StrToIntDef(edtChartDay.Text, 2), StochHour);
+  dmDataProvider.ChartData(StrToIntDef(edtChartDay.Text, 2), edtShortStoch.Text,
+    edtLongStoch.Text);
   chtMain.RefreshData;
   ResizeAxis(chtMain, chtMain.LeftAxis);
   ResizeAxis(chtMain, chtMain.RightAxis);
@@ -474,13 +516,14 @@ begin
       TMsgDlgType.mtInformation, [mbOK, mbCancel], 0) = mrOk then
     begin
       ShellExecute(handle, 'open', PChar(ClientInfo.Url), nil, nil, SW_SHOWNORMAL);
-      Application.Terminate;
+      TCore.Obj.Finalize;
       Exit;
     end;
   end;
 
   edtChartDay.Text := IntToStr(TOption.Obj.ChartDay);
-  edtStochHour.Text := IntToStr(TOption.Obj.StochHour);
+  edtShortStoch.Text := TOption.Obj.ShortStoch;
+  edtLongStoch.Text := TOption.Obj.LongStoch;
 
   dmDataProvider.Init;
   dmDataProvider.Tick;
@@ -506,7 +549,8 @@ end;
 procedure TfmMain.rp_Terminate(APacket: TValueList);
 begin
   TOption.Obj.ChartDay := StrToIntDef(edtChartDay.Text, 2);
-  TOption.Obj.StochHour := StrToIntDef(edtStochHour.Text, 7);
+  TOption.Obj.ShortStoch := edtShortStoch.Text;
+  TOption.Obj.LongStoch := edtLongStoch.Text;
 
   Application.Terminate;
 end;

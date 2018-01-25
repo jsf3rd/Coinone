@@ -19,7 +19,6 @@ type
 
     function GetsmDataProviderClient: TsmDataProviderClient;
     function GetsmDataLoaderClient: TsmDataLoaderClient;
-    function GetHighLow(ACoin: string; AHour: Integer): THighLow;
 
     procedure OnNewOrder(AParams: TJSONObject);
     procedure OnCancelOrder(AID: string);
@@ -31,6 +30,7 @@ type
     procedure Execute(ATicker, ABalance: TJSONObject);
 
     function Count: Integer;
+    function GetHighLow(ACoin: string; AHour: Integer): THighLow;
 
     property InstanceOwner: Boolean read FInstanceOwner write FInstanceOwner;
     property smDataProviderClient: TsmDataProviderClient read GetsmDataProviderClient
@@ -86,33 +86,26 @@ end;
 
 procedure TdmTrader.Init;
 var
-  Options: TStrings;
-  MyOption: string;
-  MyCoin: TCoinInfo;
+  Currency: TStrings;
+  MyCurrency: string;
   MyTrader: TTrader;
+
 begin
   DSRestConnection.Host := TGlobal.Obj.ConnInfo.StringValue;
   DSRestConnection.Port := TGlobal.Obj.ConnInfo.IntegerValue;
 
-  Options := TStringList.Create;
+  Currency := TStringList.Create;
   try
-    TOption.Obj.IniFile.ReadSection('TraderOption', Options);
-    for MyOption in Options do
+    Currency.CommaText := TGlobal.Obj.TraderOption.Currency;
+    for MyCurrency in Currency do
     begin
-      MyCoin := TOption.Obj.CoinInfo[MyOption];
-      if (MyCoin.Oper <> OPER_ENABLE) and (MyCoin.Oper <> OPER_TEST) then
-      begin
-        TGlobal.Obj.ApplicationMessage(msInfo, 'Disabled', MyCoin.ToString);
-        Continue;
-      end;
-
-      MyTrader := TTrader.Create(MyCoin);
+      MyTrader := TTrader.Create(MyCurrency);
       MyTrader.OnNewOrder := OnNewOrder;
       MyTrader.OnCancelOrder := OnCancelOrder;
-      FCoinTrader.Add(MyCoin.Currency, MyTrader);
+      FCoinTrader.Add(MyCurrency, MyTrader);
     end;
   finally
-    Options.Free;
+    Currency.Free;
   end;
 end;
 
@@ -153,18 +146,17 @@ end;
 
 procedure TdmTrader.Execute(ATicker, ABalance: TJSONObject);
 var
-  MyTrader: TPair<String, TTrader>;
+  MyTrader: TTrader;
   Last: Integer;
-  HighLow: THighLow;
   Avail: double;
 begin
-  for MyTrader in FCoinTrader do
+  for MyTrader in FCoinTrader.Values do
   begin
     try
-      HighLow := GetHighLow(MyTrader.Key, MyTrader.Value.CoinInfo.StochHour);
-      Last := ATicker.GetJSONObject(MyTrader.Key).GetString('last').ToInteger;
-      Avail := ABalance.GetJSONObject(MyTrader.Key).GetString('avail').ToDouble;
-      MyTrader.Value.Execute(Last, HighLow, Avail);
+      Last := ATicker.GetJSONObject(MyTrader.Currency).GetString('last').ToInteger;
+      Avail := ABalance.GetJSONObject(MyTrader.Currency).GetString('avail').ToDouble;
+
+      MyTrader.Execute(Last, Avail);
     except
       on E: Exception do
         TGlobal.Obj.ApplicationMessage(msError, 'Execute', E.Message);
