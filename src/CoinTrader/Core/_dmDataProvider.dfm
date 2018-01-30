@@ -36,6 +36,7 @@ object dmDataProvider: TdmDataProvider
       DisplayWidth = 15
       FieldKind = fkCalculated
       FieldName = 'price_rate'
+      OnGetText = mtTickerprice_rateGetText
       DisplayFormat = '#0.00'
       Calculated = True
     end
@@ -44,6 +45,7 @@ object dmDataProvider: TdmDataProvider
       DisplayWidth = 15
       FieldKind = fkCalculated
       FieldName = 'volume_rate'
+      OnGetText = mtTickerprice_rateGetText
       DisplayFormat = '#0.00'
       Calculated = True
     end

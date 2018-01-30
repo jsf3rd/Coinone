@@ -89,7 +89,7 @@ begin
   FUseUploadTicker := TOption.Obj.UseUploadTicker;
   FConnInfo := TOption.Obj.ConnInfo;
   FUserID := TOption.Obj.UserID;
-  FTraderOption := TOption.Obj.CoinInfo;
+  FTraderOption := TOption.Obj.TraderOption;
 end;
 
 class function TGlobal.Obj: TGlobal;

@@ -11,6 +11,7 @@ type
 
   TLongOverException = class(Exception);
   TLongDealException = class(Exception);
+  TLongPointException = class(Exception);
 
   TPriceInfo = record
     Last: Integer;
@@ -34,7 +35,6 @@ type
     FTrader: TTrader;
     procedure MarketSell(AInfo: TPriceInfo; LastOrder: TOrder);
     procedure MarketBuy(AInfo: TPriceInfo; LastOrder: TOrder);
-
   public
     procedure OverBought(AInfo: TPriceInfo; LastOrder: TOrder); virtual;
     procedure OverSold(AInfo: TPriceInfo; LastOrder: TOrder); virtual;
@@ -46,6 +46,7 @@ type
   public
     procedure OverBought(AInfo: TPriceInfo; LastOrder: TOrder); override;
     procedure OverSold(AInfo: TPriceInfo; LastOrder: TOrder); override;
+    procedure Normal(AInfo: TPriceInfo; LastOrder: TOrder); override;
   end;
 
   TStateOverBought = class(TState)
@@ -299,14 +300,14 @@ var
     if AMode = dmLong then
     begin
       Stoch := Option.LongStoch;
-      Point := LongPoint;
+      Point := Option.LongPoint;
       State := FLongState;
       Title := 'LongTicker';
     end
     else if AMode = dmShort then
     begin
       Stoch := Option.ShortStoch;
-      Point := ShortPoint;
+      Point := Option.ShortPoint;
       State := FShortState;
       Title := 'ShortTicker';
     end
@@ -338,6 +339,12 @@ begin
   try
     Deal(dmLong);
   except
+    on E: TLongPointException do
+    begin
+      TGlobal.Obj.ApplicationMessage(msDebug, E.Message);
+      Exit;
+    end;
+
     on E: TLongDealException do
     begin
       TGlobal.Obj.ApplicationMessage(msDebug, E.Message);
@@ -430,6 +437,12 @@ end;
 
 { TStateNormal }
 
+procedure TStateNormal.Normal(AInfo: TPriceInfo; LastOrder: TOrder);
+begin
+  if (AInfo.Mode = dmLong) and (AInfo.State <> psStable) then
+    raise TLongPointException.Create('OverLongPoint');
+end;
+
 procedure TStateNormal.OverBought(AInfo: TPriceInfo; LastOrder: TOrder);
 begin
   FTrader.State[AInfo.Mode] := FTrader.StateOverBought;
@@ -462,7 +475,6 @@ begin
     if AInfo.Mode = dmLong then
       raise TLongDealException.Create('MarketSell');
   end;
-
 end;
 
 procedure TStateOverBought.OverBought(AInfo: TPriceInfo; LastOrder: TOrder);

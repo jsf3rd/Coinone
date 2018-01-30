@@ -94,6 +94,8 @@ begin
   DSRestConnection.Host := TGlobal.Obj.ConnInfo.StringValue;
   DSRestConnection.Port := TGlobal.Obj.ConnInfo.IntegerValue;
 
+  TGlobal.Obj.ApplicationMessage(msDebug, 'TraderOption', TGlobal.Obj.TraderOption.ToString);
+
   Currency := TStringList.Create;
   try
     Currency.CommaText := TGlobal.Obj.TraderOption.Currency;

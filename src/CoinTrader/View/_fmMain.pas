@@ -148,6 +148,8 @@ type
     procedure dbgBalanceDrawColumnCell(Sender: TObject; const [Ref] Rect: TRect;
       DataCol: Integer; Column: TColumn; State: TGridDrawState);
     procedure actImmExitExecute(Sender: TObject);
+    procedure grdMainDrawColumnCell(Sender: TObject; const [Ref] Rect: TRect; DataCol: Integer;
+      Column: TColumn; State: TGridDrawState);
 
   private
     FOldDataStatus: TJclServiceState;
@@ -364,12 +366,17 @@ var
   DataSet: TFDMemTable;
 begin
   DataSet := TDBGrid(Sender).DataSource.DataSet as TFDMemTable;
+
   if Odd(DataSet.RecNo) then
     TDBGrid(Sender).Canvas.Brush.Color := $00EFEFEF;
 
   if gdSelected in State then
-  begin
     TDBGrid(Sender).Canvas.Brush.Color := clSkyBlue;
+
+  if (DataSet.FieldByName('krw').AsFloat > 1000) and
+    (DataSet.FieldByName('coin').AsString <> 'krw') then
+  begin
+    TDBGrid(Sender).Canvas.Font.Color := clRed;
   end;
 
   TDBGrid(Sender).DefaultDrawColumnCell(Rect, DataCol, Column, State);
@@ -461,6 +468,26 @@ begin
   chtStoch.TopAxis.Minimum := chtStoch.BottomAxis.Minimum;
 end;
 
+procedure TfmMain.grdMainDrawColumnCell(Sender: TObject; const [Ref] Rect: TRect;
+  DataCol: Integer; Column: TColumn; State: TGridDrawState);
+var
+  DataSet: TFDMemTable;
+begin
+  DataSet := TDBGrid(Sender).DataSource.DataSet as TFDMemTable;
+
+  if gdSelected in State then
+    TDBGrid(Sender).Canvas.Brush.Color := clSkyBlue;
+
+  if DataSet.FieldByName('price_rate').AsFloat = 0 then
+    TDBGrid(Sender).Canvas.Font.Color := clGray
+  else if DataSet.FieldByName('price_rate').AsFloat > 0 then
+    TDBGrid(Sender).Canvas.Font.Color := clRed
+  else if DataSet.FieldByName('price_rate').AsFloat < 0 then
+    TDBGrid(Sender).Canvas.Font.Color := clBlue;
+
+  TDBGrid(Sender).DefaultDrawColumnCell(Rect, DataCol, Column, State);
+end;
+
 procedure TfmMain.PageControlChange(Sender: TObject);
 begin
   ServiceStatusTimer.Enabled := false;
@@ -537,7 +564,10 @@ begin
   StatusBar.Panels[1].Text := '평가액 : ' + FormatFloat('#,##0', Value);
 
   rate := (Value - dmDataProvider.YesterDayValue) / dmDataProvider.YesterDayValue * 100;
-  StatusBar.Panels[2].Text := '전일대비 : ' + FormatFloat('0.00', rate);
+  if rate > 0 then
+    StatusBar.Panels[2].Text := '전일대비 : +' + FormatFloat('0.00', rate)
+  else
+    StatusBar.Panels[2].Text := '전일대비 : ' + FormatFloat('0.00', rate)
 end;
 
 procedure TfmMain.rp_LogMessage(APacket: TValueList);

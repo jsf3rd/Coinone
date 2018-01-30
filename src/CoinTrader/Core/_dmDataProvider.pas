@@ -85,6 +85,8 @@ type
     procedure mtLimitOrdersorder_typeGetText(Sender: TField; var Text: string;
       DisplayText: Boolean);
     procedure mtTickercoinGetText(Sender: TField; var Text: string; DisplayText: Boolean);
+    procedure mtTickerprice_rateGetText(Sender: TField; var Text: string;
+      DisplayText: Boolean);
   private
     FCoinone: TCoinone;
 
@@ -673,6 +675,15 @@ begin
     'short_low_price');
   DataSet.FieldByName('long_stoch').AsFloat := CalcStoch(Price, 'long_high_price',
     'long_low_price');
+end;
+
+procedure TdmDataProvider.mtTickerprice_rateGetText(Sender: TField; var Text: string;
+  DisplayText: Boolean);
+begin
+  if Sender.AsFloat < 0 then
+    Text := Format('%.2f', [Sender.AsFloat])
+  else
+    Text := Format('+%.2f', [Sender.AsFloat]);
 end;
 
 procedure TdmDataProvider.Tick;

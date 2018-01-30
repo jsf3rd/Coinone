@@ -104,7 +104,7 @@ end;
 
 function TOption.GetLongStoch: string;
 begin
-  result := FIniFile.ReadString('Config', 'LongStoch', '3 day');
+  result := FIniFile.ReadString('Config', 'LongStoch', '2 day');
 end;
 
 function TOption.GetSecretKey: string;
@@ -114,7 +114,7 @@ end;
 
 function TOption.GetShortStoch: String;
 begin
-  result := FIniFile.ReadString('Config', 'ShortStoch', '7 hour');
+  result := FIniFile.ReadString('Config', 'ShortStoch', '4 hour');
 end;
 
 function TOption.GetUseCloudLog: boolean;

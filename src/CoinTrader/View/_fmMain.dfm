@@ -26,7 +26,7 @@ object fmMain: TfmMain
     Top = 0
     Width = 884
     Height = 754
-    ActivePage = tsTrad
+    ActivePage = tsMain
     Align = alClient
     TabOrder = 0
     OnChange = PageControlChange
@@ -54,7 +54,7 @@ object fmMain: TfmMain
           TitleFont.Height = -13
           TitleFont.Name = #47569#51008' '#44256#46357
           TitleFont.Style = []
-          OnDrawColumnCell = dbgBalanceDrawColumnCell
+          OnDrawColumnCell = grdMainDrawColumnCell
           OnDblClick = grdMainDblClick
         end
         object Panel1: TPanel
@@ -131,8 +131,6 @@ object fmMain: TfmMain
         Caption = 'Panel3'
         TabOrder = 1
         OnResize = Panel3Resize
-        ExplicitTop = 317
-        ExplicitHeight = 405
         object Splitter2: TSplitter
           Left = 1
           Top = 227
@@ -159,7 +157,6 @@ object fmMain: TfmMain
           Align = alClient
           TabOrder = 0
           Constraints.MinHeight = 150
-          ExplicitHeight = 199
           DefaultCanvas = 'TGDIPlusCanvas'
           ColorPaletteIndex = 13
           object Series1: TLineSeries
@@ -249,7 +246,6 @@ object fmMain: TfmMain
           Align = alBottom
           TabOrder = 1
           Constraints.MinHeight = 150
-          ExplicitTop = 203
           DefaultCanvas = 'TGDIPlusCanvas'
           ColorPaletteIndex = 13
           object Series4: TLineSeries
@@ -502,11 +498,8 @@ object fmMain: TfmMain
         Align = alClient
         TabOrder = 1
         OnChange = pcOrderDetailChange
-        ExplicitTop = 393
-        ExplicitHeight = 329
         object tsOrders: TTabSheet
           Caption = #44144#47000#45236#50669
-          ExplicitHeight = 297
           object Panel5: TPanel
             Left = 0
             Top = 0
@@ -515,7 +508,6 @@ object fmMain: TfmMain
             Align = alClient
             TabOrder = 0
             OnResize = Panel5Resize
-            ExplicitHeight = 297
             object Splitter: TSplitter
               Left = 389
               Top = 42
@@ -600,7 +592,6 @@ object fmMain: TfmMain
         object tsChartCount: TTabSheet
           Caption = #44144#47000#48516#49437
           ImageIndex = 1
-          ExplicitHeight = 297
           object chtCoinCount: TDBChart
             Left = 0
             Top = 0
@@ -617,7 +608,6 @@ object fmMain: TfmMain
             View3D = False
             Align = alClient
             TabOrder = 0
-            ExplicitHeight = 297
             DefaultCanvas = 'TGDIPlusCanvas'
             ColorPaletteIndex = 13
             object Series9: TLineSeries

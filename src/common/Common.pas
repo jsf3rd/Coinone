@@ -9,9 +9,6 @@ const
   DATA_SERVICE_CODE = 'CoinDataSvc';
   CORE_SERVICE_CODE = 'CoinCoreSvc';
 
-  ShortPoint = 0.02;
-  LongPoint = 0.1;
-
 type
   TStochType = (stNormal, stOverBought, stOverSold);
   TPriceState = (psStable, psIncrease, psDecrease);
@@ -23,6 +20,8 @@ type
     ShortStoch: Integer;
     LongStoch: Integer;
     Deal: double;
+    ShortPoint: double;
+    LongPoint: double;
     function ShortState(ARate: double): TPriceState;
     function LongState(ARate: double): TPriceState;
     function ToString: string;
@@ -111,8 +110,10 @@ end;
 
 function TTraderOption.ToString: string;
 begin
-  result := format('Currency=%s,ShortStoch=%d,LongStoch=%d,Deal=%.2f',
-    [Self.Currency, Self.ShortStoch, Self.LongStoch, Self.Deal]);
+  result := format
+    ('Currency=%s,ShortStoch=%d,LongStoch=%d,Deal=%.2f,ShortPoint=%.2f,LongPoint=%.2f',
+    [Self.Currency, Self.ShortStoch, Self.LongStoch, Self.Deal, Self.ShortPoint,
+    Self.LongPoint]);
 end;
 
 end.
