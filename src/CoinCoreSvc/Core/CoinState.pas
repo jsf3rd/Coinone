@@ -534,12 +534,11 @@ var
   Deal: double;
 begin
   Deal := TGlobal.Obj.TraderOption.Deal;
-  Result := (Self.Avail - ALastOrder.qty.ToDouble) * Deal;
+  Result := Self.Avail * Deal;
 
   if ALastOrder.WasSold then
   begin
     LastValueCount := ALastOrder.GetValue / Self.Last;
-
     MaxCount := Self.Avail * (Deal * 2);
     MinCount := Self.Avail * Deal;
     TGlobal.Obj.ApplicationMessage(msInfo, 'CalcBuyCount',
@@ -575,7 +574,7 @@ begin
   begin
     LastCount := ALastOrder.qty.ToDouble;
     MaxCount := Self.Avail * (Deal * 2);
-    MinCount := (Self.Avail - ALastOrder.qty.ToDouble) * Deal; // 이전 거래 증가분 적용
+    MinCount := Self.Avail * Deal;
     TGlobal.Obj.ApplicationMessage(msInfo, 'CalcSellCount',
       'LastOrder=%0.4f,MaxCalc=%0.4f,MinCalc=%0.4f', [LastCount, MaxCount, MinCount]);
 
