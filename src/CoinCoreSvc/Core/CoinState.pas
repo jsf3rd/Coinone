@@ -479,8 +479,8 @@ end;
 
 procedure TStateOverBought.OverBought(AInfo: TPriceInfo; LastOrder: TOrder);
 begin
-  if AInfo.Mode = dmLong then
-    raise TLongOverException.Create('InOverBought');
+  if (AInfo.Mode = dmLong) and (AInfo.Stoch > 0.9) then
+    raise TLongOverException.Create('InVeryOverBought');
 end;
 
 procedure TStateOverBought.OverSold(AInfo: TPriceInfo; LastOrder: TOrder);
@@ -513,8 +513,8 @@ end;
 
 procedure TStateOverSold.OverSold(AInfo: TPriceInfo; LastOrder: TOrder);
 begin
-  if AInfo.Mode = dmLong then
-    raise TLongOverException.Create('InOverSold');
+  if (AInfo.Mode = dmLong) and (AInfo.Stoch < 0.1) then
+    raise TLongOverException.Create('InVeryOverSold');
 end;
 
 { TPriceInfo }
