@@ -13,17 +13,10 @@ type
   TStochType = (stNormal, stOverBought, stOverSold);
   TPriceState = (psStable, psIncrease, psDecrease);
 
-  TDealMode = (dmShort, dmLong);
-
   TTraderOption = record
-    Currency: String; // btc, xrp, qtum...
-    ShortStoch: Integer;
-    LongStoch: Integer;
-    Deal: double;
-    ShortPoint: double;
-    LongPoint: double;
-    function ShortState(ARate: double): TPriceState;
-    function LongState(ARate: double): TPriceState;
+    Currency: String;
+    Stoch: Integer;
+    BuyCount: double;
     function ToString: string;
   end;
 
@@ -88,32 +81,10 @@ end;
 
 { TTraderOption }
 
-function TTraderOption.LongState(ARate: double): TPriceState;
-begin
-  if ARate > LongPoint then
-    result := psIncrease
-  else if ARate < -LongPoint then
-    result := psDecrease
-  else
-    result := psStable;
-end;
-
-function TTraderOption.ShortState(ARate: double): TPriceState;
-begin
-  if ARate > ShortPoint then
-    result := psIncrease
-  else if ARate < -ShortPoint then
-    result := psDecrease
-  else
-    result := psStable;
-end;
-
 function TTraderOption.ToString: string;
 begin
-  result := format
-    ('Currency=%s,ShortStoch=%d,LongStoch=%d,Deal=%.2f,ShortPoint=%.2f,LongPoint=%.2f',
-    [Self.Currency, Self.ShortStoch, Self.LongStoch, Self.Deal, Self.ShortPoint,
-    Self.LongPoint]);
+  result := format('Currency=%s,StochHour=%d,BuyCount=%.2f',
+    [Self.Currency, Self.Stoch, Self.BuyCount]);
 end;
 
 end.

@@ -94,14 +94,12 @@ begin
   DSRestConnection.Host := TGlobal.Obj.ConnInfo.StringValue;
   DSRestConnection.Port := TGlobal.Obj.ConnInfo.IntegerValue;
 
-  TGlobal.Obj.ApplicationMessage(msDebug, 'TraderOption', TGlobal.Obj.TraderOption.ToString);
-
   Currency := TStringList.Create;
   try
-    Currency.CommaText := TGlobal.Obj.TraderOption.Currency;
+    TOption.Obj.IniFile.ReadSection('TraderOption', Currency);
     for MyCurrency in Currency do
     begin
-      MyTrader := TTrader.Create(MyCurrency);
+      MyTrader := TTrader.Create(TOption.Obj.TraderOption[MyCurrency]);
       MyTrader.OnNewOrder := OnNewOrder;
       MyTrader.OnCancelOrder := OnCancelOrder;
       FCoinTrader.Add(MyCurrency, MyTrader);
@@ -155,8 +153,8 @@ begin
   for MyTrader in FCoinTrader.Values do
   begin
     try
-      Last := ATicker.GetJSONObject(MyTrader.Currency).GetString('last').ToInteger;
-      Avail := ABalance.GetJSONObject(MyTrader.Currency).GetString('avail').ToDouble;
+      Last := ATicker.GetJSONObject(MyTrader.Option.Currency).GetString('last').ToInteger;
+      Avail := ABalance.GetJSONObject(MyTrader.Option.Currency).GetString('avail').ToDouble;
 
       MyTrader.Execute(Last, Avail);
     except

@@ -21,7 +21,7 @@ type
     procedure SetConnInfo(const Value: TConninfo);
     function GetUserID: string;
     procedure SetUserID(const Value: string);
-    function GetTraderOption: TTraderOption;
+    function GetTraderOption(ACurrency: string): TTraderOption;
     function GetUseCloudLog: boolean;
     procedure SetUseCloudLog(const Value: boolean);
   public
@@ -31,7 +31,7 @@ type
     property AccessToken: string read GetAccessToken;
     property SecretKey: string read GetSecretKey;
 
-    property TraderOption: TTraderOption read GetTraderOption;
+    property TraderOption[ACurrency: string]: TTraderOption read GetTraderOption;
     property UseUploadTicker: boolean read GetUseUploadTicker write SetUseUploadTicker;
     property ConnInfo: TConninfo read GetConnInfo write SetConnInfo;
     property UserID: string read GetUserID write SetUserID;
@@ -78,14 +78,12 @@ begin
   result := DecodeKey(FIniFile.ReadString('Auth', 'AccessToken', ''));
 end;
 
-function TOption.GetTraderOption: TTraderOption;
+function TOption.GetTraderOption(ACurrency: string): TTraderOption;
+var
+  Str: string;
 begin
-  result.Currency := FIniFile.ReadString('TraderOption', 'Currency', '');
-  result.ShortStoch := FIniFile.ReadInteger('TraderOption', 'ShortStoch', 4);
-  result.LongStoch := FIniFile.ReadInteger('TraderOption', 'LongStoch', 48);
-  result.Deal := FIniFile.ReadFloat('TraderOption', 'Deal', 0.2);
-  result.ShortPoint := FIniFile.ReadFloat('TraderOption', 'ShortPoint', 0.03);
-  result.LongPoint := FIniFile.ReadFloat('TraderOption', 'LongPoint', 0.1);
+  Str := FIniFile.ReadString('TraderOption', ACurrency, '');
+  result := TJson.JsonToRecord<TTraderOption>(Str);
 end;
 
 function TOption.GetConnInfo: TConninfo;

@@ -16,7 +16,6 @@ type
     FConnInfo: TConnInfo;
 
     FUserID: string;
-    FTraderOption: TTraderOption;
   protected
     procedure SetExeName(const Value: String); override;
   public
@@ -31,7 +30,6 @@ type
     property UseUploadTicker: boolean read FUseUploadTicker write FUseUploadTicker;
     property ConnInfo: TConnInfo read FConnInfo write FConnInfo;
     property UserID: string read FUserID write FUserID;
-    property TraderOption: TTraderOption read FTraderOption write FTraderOption;
   end;
 
   THighLow = record
@@ -89,7 +87,6 @@ begin
   FUseUploadTicker := TOption.Obj.UseUploadTicker;
   FConnInfo := TOption.Obj.ConnInfo;
   FUserID := TOption.Obj.UserID;
-  FTraderOption := TOption.Obj.TraderOption;
 end;
 
 class function TGlobal.Obj: TGlobal;
