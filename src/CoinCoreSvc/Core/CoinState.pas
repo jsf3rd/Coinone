@@ -183,6 +183,9 @@ begin
     _printLog(FTrader.Option.Currency, 'MinusDeal', 'Max=%.3f,DiffRate=%.3f',
       [MaxRate, DiffRate]);
     MarketSell(AInfo);
+
+    if True then
+
     FTrader.MinusDeal := true;
   end
   else if FTrader.HighPrice < AInfo.Last then
@@ -320,7 +323,7 @@ begin
 
     HighLow := dmTrader.GetHighLow(FOption.Currency, Option.Stoch);
     PriceInfo.SetLowStoch(HighLow);
-    HighLow := dmTrader.GetHighLow(FOption.Currency, Option.Stoch * 2);
+    HighLow := dmTrader.GetHighLow(FOption.Currency, Option.Stoch * 3);
     PriceInfo.SetHighStoch(HighLow);
 
     _printLog(FOption.Currency, 'Ticker', 'Coin=%s,%s,HighPrice=%d',
@@ -334,7 +337,7 @@ begin
 
     if PriceInfo.LowStoch <= 0 then
       FState.OverSold(PriceInfo)
-    else if PriceInfo.HighStoch > 0.8 then
+    else if PriceInfo.HighStoch > 0.75 then
       FState.OverBought(PriceInfo)
     else
       FState.Normal(PriceInfo);
