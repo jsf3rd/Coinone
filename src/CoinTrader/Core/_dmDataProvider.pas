@@ -181,10 +181,15 @@ function TdmDataProvider.Balance: Integer;
     DailyBalance: TJSONArray;
   begin
     JSONObject := FCoinone.AccountInfo(rtDailyBalance);
+    TGlobal.Obj.ApplicationMessage(msDebug, 'DailyBalance', JSONObject.ToString);
     try
       DailyBalance := JSONObject.GetJSONArray('dailyBalance');
       _Balance := DailyBalance.Items[0] as TJSONObject;
-      result := _Balance.GetString('value').ToInteger;
+
+      if Assigned(_Balance) then
+        result := _Balance.GetString('value').ToInteger
+      else
+        result := 0;
     finally
       JSONObject.Free;
     end;

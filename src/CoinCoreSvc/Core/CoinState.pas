@@ -12,14 +12,12 @@ type
   TPriceInfo = record
     Last: Integer;
     State: TPriceState;
-    LowStoch: double;
-    HighStoch: double;
+    Stoch: double;
     Avail: double;
     BuyPrice: Integer;
     Rate: double;
     function ToString: string;
-    procedure SetLowStoch(AHighLow: THighLow);
-    procedure SetHighStoch(AHighLow: THighLow);
+    procedure SetStoch(AHighLow: THighLow);
     procedure CalcRate;
   private
   end;
@@ -27,6 +25,7 @@ type
   TTrader = class;
 
   TState = class abstract
+  strict private
   strict protected
     FTrader: TTrader;
     procedure MarketSell(AInfo: TPriceInfo);
@@ -34,7 +33,8 @@ type
     procedure Deal(AInfo: TPriceInfo);
   public
     procedure OverSold(AInfo: TPriceInfo); virtual;
-    procedure OverBought(AInfo: TPriceInfo); virtual;
+    procedure UnderMiddle(AInfo: TPriceInfo); virtual;
+    procedure OverMiddle(AInfo: TPriceInfo); virtual;
     procedure Normal(AInfo: TPriceInfo); virtual;
     constructor Create(ATrader: TTrader);
   end;
@@ -42,23 +42,35 @@ type
   TStateInit = class(TState)
   public
     procedure Normal(AInfo: TPriceInfo); override;
-    procedure OverBought(AInfo: TPriceInfo); override;
     procedure OverSold(AInfo: TPriceInfo); override;
   end;
 
   TStateNormal = class(TState)
   public
-    procedure OverBought(AInfo: TPriceInfo); override;
-    procedure OverSold(AInfo: TPriceInfo); override;
+    procedure UnderMiddle(AInfo: TPriceInfo); override;
   end;
 
   TStateOverSold = class(TState)
   public
+    procedure OverMiddle(AInfo: TPriceInfo); override;
+  end;
+
+  TState2ndNormal = class(TState)
+  public
+    procedure OverSold(AInfo: TPriceInfo); override;
+  end;
+
+  TState2ndOverSold = class(TState)
+  public
+    procedure UnderMiddle(AInfo: TPriceInfo); override;
+    procedure OverMiddle(AInfo: TPriceInfo); override;
     procedure Normal(AInfo: TPriceInfo); override;
   end;
 
-  TStateOverBought = class(TState)
+  TStateDeal = class(TState)
   public
+    procedure UnderMiddle(AInfo: TPriceInfo); override;
+    procedure OverMiddle(AInfo: TPriceInfo); override;
     procedure Normal(AInfo: TPriceInfo); override;
   end;
 
@@ -69,20 +81,20 @@ type
     FStateInit: TState;
     FStateNormal: TState;
     FStateOverSold: TState;
-    FStateOverBought: TState;
+    FStateDeal: TState;
+    FState2ndNormal: TState;
+    FState2ndOverSold: TState;
 
     procedure SetState(AState: TState);
   strict private
     FCoinone: TCoinone;
     FOption: TTraderOption;
     FHighPrice: Integer;
-    FMinusDeal: boolean;
 
     FOnNewOrder: TOnJsonEvent;
     FOnCancelOrder: TOnStrEvent;
 
     function GetLastOrder: TOrder;
-
   public
     constructor Create(AOption: TTraderOption);
     destructor Destroy; override;
@@ -95,13 +107,14 @@ type
     property StateInit: TState read FStateInit write FStateInit;
     property StateNormal: TState read FStateNormal write FStateNormal;
     property StateOverSold: TState read FStateOverSold write FStateOverSold;
-    property StateOverBought: TState read FStateOverBought write FStateOverBought;
+    property StateDeal: TState read FStateDeal write FStateDeal;
+    property State2ndNormal: TState read FState2ndNormal write FState2ndNormal;
+    property State2ndOverSold: TState read FState2ndOverSold write FState2ndOverSold;
 
     property State: TState write SetState;
 
     property Option: TTraderOption read FOption;
     property HighPrice: Integer read FHighPrice write FHighPrice;
-    property MinusDeal: boolean read FMinusDeal write FMinusDeal;
     property OnNewOrder: TOnJsonEvent read FOnNewOrder write FOnNewOrder;
     property OnCancelOrder: TOnStrEvent read FOnCancelOrder write FOnCancelOrder;
   end;
@@ -131,22 +144,24 @@ begin
   FTrader.Order(rtLimitSell, AInfo.Last, AInfo.Avail);
 end;
 
+procedure TState.OverMiddle(AInfo: TPriceInfo);
+begin
+  Deal(AInfo);
+end;
+
 procedure TState.Normal(AInfo: TPriceInfo);
 begin
-  if AInfo.BuyPrice > 0 then
-    Deal(AInfo);
+  Deal(AInfo);
 end;
 
 procedure TState.OverSold(AInfo: TPriceInfo);
 begin
-  if AInfo.BuyPrice > 0 then
-    Deal(AInfo);
+  Deal(AInfo);
 end;
 
-procedure TState.OverBought(AInfo: TPriceInfo);
+procedure TState.UnderMiddle(AInfo: TPriceInfo);
 begin
-  if AInfo.BuyPrice > 0 then
-    Deal(AInfo);
+  Deal(AInfo);
 end;
 
 procedure TState.Deal(AInfo: TPriceInfo);
@@ -168,10 +183,9 @@ begin
   else
     DiffRate := abs(AInfo.Rate / MaxRate);
 
-  if ((DiffRate < 0.95) and (MaxRate > 0.05)) // 최대수익이 5% 이상인 경우 최대수익대비 95% 미만일경우 Deal
-    or ((DiffRate < 0.9) and (MaxRate > 0.04)) //
-    or ((DiffRate < 0.85) and (MaxRate > 0.03)) //
-    or ((DiffRate < 0.75) and (AInfo.Rate > 0.02)) // 현재수익이 2% 이상인 경우 최대수익대비 75% 미만일경우 Deal
+  if ((DiffRate < 0.9) and (MaxRate > 0.05)) // 최대수익이 5% 이상인 경우 최대수익대비 90% 미만일경우 Deal
+    or ((DiffRate < 0.8) and (MaxRate > 0.03)) //
+    or ((DiffRate < 0.7) and (MaxRate > 0.025)) // 현재수익이 2% 이상인 경우 최대수익대비 75% 미만일경우 Deal
   then
   begin
     _printLog(FTrader.Option.Currency, 'PlusDeal', 'Max=%.3f,DiffRate=%.3f',
@@ -183,10 +197,6 @@ begin
     _printLog(FTrader.Option.Currency, 'MinusDeal', 'Max=%.3f,DiffRate=%.3f',
       [MaxRate, DiffRate]);
     MarketSell(AInfo);
-
-    if True then
-
-    FTrader.MinusDeal := true;
   end
   else if FTrader.HighPrice < AInfo.Last then
     FTrader.HighPrice := AInfo.Last;
@@ -216,15 +226,15 @@ begin
   FOption := AOption;
   FStateInit := TStateInit.Create(Self);
   FStateNormal := TStateNormal.Create(Self);
-  FStateOverBought := TStateOverBought.Create(Self);
+  FStateDeal := TStateDeal.Create(Self);
   FStateOverSold := TStateOverSold.Create(Self);
+  FState2ndNormal := TState2ndNormal.Create(Self);
+  FState2ndOverSold := TState2ndOverSold.Create(Self);
 
   FCoinone := TCoinone.Create(TOption.Obj.AccessToken, TOption.Obj.SecretKey);
   FState := FStateInit;
 
   FHighPrice := 0;
-  FMinusDeal := False;
-
   TGlobal.Obj.ApplicationMessage(msInfo, 'InitTrader', FOption.ToString);
 end;
 
@@ -233,7 +243,10 @@ begin
   FCoinone.Free;
 
   FStateNormal.Free;
-  FStateOverBought.Free;
+  FStateOverSold.Free;
+  FStateDeal.Free;
+  FState2ndNormal.Free;
+  FState2ndOverSold.Free;
 
   inherited;
 end;
@@ -249,6 +262,15 @@ begin
 end;
 
 function TTrader.Order(AType: TRequestType; ALast: Integer; ACount: double): boolean;
+  function GetKrw: Integer;
+  var
+    JsonObject, _Balance: TJSONObject;
+  begin
+    JsonObject := FCoinone.AccountInfo(rtBalance);
+    _Balance := JsonObject.GetJSONObject('krw');
+    result := _Balance.GetString('avail').ToInteger;
+  end;
+
   function CreateNewOrderParams(AID: String): TJSONObject;
   begin
     result := TJSONObject.Create;
@@ -267,17 +289,37 @@ function TTrader.Order(AType: TRequestType; ALast: Integer; ACount: double): boo
 
 var
   Params, res, DSParams: TJSONObject;
-  MinOrderCount: double;
+  MinOrderCount, BuyValue: double;
+  krw: Integer;
+  LCount: string;
 begin
   result := False;
   MinOrderCount := TCoinone.MinOrderCount(FOption.Currency);
   if MinOrderCount > ACount then
     raise Exception.Create('Order Count Upper ' + MinOrderCount.ToString);
 
+  if AType = rtLimitBuy then
+  begin
+    BuyValue := ALast * ACount;
+    krw := GetKrw;
+    if BuyValue < krw then
+      LCount := Format('%.3f', [ACount - 0.0004])
+    else if krw > 100000 then
+      LCount := Format('%.3f', [(krw / ALast) - 0.0004])
+    else
+    begin
+      _printLog(FOption.Currency, 'Order', 'lack of balance,coin=%s,order=%.0f,krw=%d',
+        [FOption.Currency, BuyValue, krw]);
+      Exit;
+    end;
+  end
+  else
+    LCount := Format('%.3f', [ACount - 0.0004]);
+
   Params := TJSONObject.Create;
   try
     Params.AddPair('price', Format('%d', [ALast]));
-    Params.AddPair('qty', Format('%.3f', [ACount - 0.0004])); // 소수점 3자리에서 버림
+    Params.AddPair('qty', LCount); // 소수점 3자리에서 버림
     Params.AddPair('currency', FOption.Currency);
 
     _printLog(FOption.Currency, 'Order', 'Type=%s,Params=%s',
@@ -322,23 +364,17 @@ begin
     PriceInfo.Avail := Avail;
 
     HighLow := dmTrader.GetHighLow(FOption.Currency, Option.Stoch);
-    PriceInfo.SetLowStoch(HighLow);
-    HighLow := dmTrader.GetHighLow(FOption.Currency, Option.Stoch * 3);
-    PriceInfo.SetHighStoch(HighLow);
+    PriceInfo.SetStoch(HighLow);
 
     _printLog(FOption.Currency, 'Ticker', 'Coin=%s,%s,HighPrice=%d',
       [FOption.Currency, PriceInfo.ToString, FHighPrice]);
 
-    if FMinusDeal and (PriceInfo.LowStoch > 0.5) then
-      FMinusDeal := False;
-
-    if FMinusDeal then
-      Exit;
-
-    if PriceInfo.LowStoch <= 0 then
+    if PriceInfo.Stoch <= 0 then
       FState.OverSold(PriceInfo)
-    else if PriceInfo.HighStoch > 0.75 then
-      FState.OverBought(PriceInfo)
+    else if PriceInfo.Stoch < 0.2 then
+      FState.UnderMiddle(PriceInfo)
+    else if PriceInfo.Stoch > 0.4 then
+      FState.OverMiddle(PriceInfo)
     else
       FState.Normal(PriceInfo);
   except
@@ -349,7 +385,7 @@ end;
 
 function TTrader.ExistLimitOrder: boolean;
 var
-  JSONObject, Params: TJSONObject;
+  JsonObject, Params: TJSONObject;
   _MyOrder, res: TJSONObject;
   Orders: TJSONArray;
   I: Integer;
@@ -358,13 +394,13 @@ begin
   Params := TJSONObject.Create;
   try
     Params.AddPair('currency', FOption.Currency);
-    JSONObject := FCoinone.Order(rtMyLimitOrders, Params);
+    JsonObject := FCoinone.Order(rtMyLimitOrders, Params);
   finally
     Params.Free;
   end;
 
   try
-    Orders := JSONObject.GetJSONArray('limitOrders');
+    Orders := JsonObject.GetJSONArray('limitOrders');
     result := Orders.Count > 0;
 
     for I := 0 to Orders.Count - 1 do
@@ -409,13 +445,13 @@ begin
       end;
     end;
   finally
-    JSONObject.Free;
+    JsonObject.Free;
   end;
 end;
 
 function TTrader.GetLastOrder: TOrder;
 var
-  Params, JSONObject, LastOrder: TJSONObject;
+  Params, JsonObject, LastOrder: TJSONObject;
   Orders: TJSONArray;
   OrderLog: string;
 begin
@@ -423,20 +459,20 @@ begin
     Params := TJSONObject.Create;
     try
       Params.AddPair('currency', FOption.Currency);
-      JSONObject := FCoinone.Order(rtMyCompleteOrders, Params);
+      JsonObject := FCoinone.Order(rtMyCompleteOrders, Params);
     finally
       Params.Free;
     end;
 
     try
-      Orders := JSONObject.GetJSONArray('completeOrders');
+      Orders := JsonObject.GetJSONArray('completeOrders');
       LastOrder := Orders.Items[0] as TJSONObject;
       OrderLog := LastOrder.ToString;
 
       result := TJson.JsonToRecord<TOrder>(LastOrder);
       result.order_type := LastOrder.GetString('type');
     finally
-      JSONObject.Free;
+      JsonObject.Free;
     end;
   except
     on E: Exception do
@@ -457,52 +493,32 @@ begin
     Self.Rate := (Self.Last - Self.BuyPrice) / Self.BuyPrice;
 end;
 
-procedure TPriceInfo.SetHighStoch(AHighLow: THighLow);
+procedure TPriceInfo.SetStoch(AHighLow: THighLow);
 begin
   if AHighLow.high_price = AHighLow.low_price then
     raise Exception.Create('high_price = low_price, ' + AHighLow.low_price.ToString);
 
-  Self.HighStoch := (Self.Last - AHighLow.low_price) /
-    (AHighLow.high_price - AHighLow.low_price);
-end;
-
-procedure TPriceInfo.SetLowStoch(AHighLow: THighLow);
-begin
-  if AHighLow.high_price = AHighLow.low_price then
-    raise Exception.Create('high_price = low_price, ' + AHighLow.low_price.ToString);
-
-  Self.LowStoch := (Self.Last - AHighLow.low_price) /
-    (AHighLow.high_price - AHighLow.low_price);
+  Self.Stoch := (Self.Last - AHighLow.low_price) / (AHighLow.high_price - AHighLow.low_price);
 end;
 
 function TPriceInfo.ToString: string;
 begin
-  result := Format('Last=%d,LowStoch=%.3f,HighStoch=%.3f,Avail=%.4f,BuyPrice=%d,Rate=%.3f',
-    [Self.Last, Self.LowStoch, Self.HighStoch, Self.Avail, Self.BuyPrice, Self.Rate]);
+  result := Format('Last=%d,Stoch=%.3f,Avail=%.4f,BuyPrice=%d,Rate=%.3f',
+    [Self.Last, Self.Stoch, Self.Avail, Self.BuyPrice, Self.Rate]);
 end;
 
 { TStateNormal }
 
-procedure TStateNormal.OverBought(AInfo: TPriceInfo);
-begin
-  if AInfo.BuyPrice = 0 then
-    MarketBuy(AInfo);
-  FTrader.State := FTrader.StateOverBought;
-end;
-
-procedure TStateNormal.OverSold(AInfo: TPriceInfo);
+procedure TStateNormal.UnderMiddle(AInfo: TPriceInfo);
 begin
   FTrader.State := FTrader.StateOverSold;
 end;
 
 { TStateOverSold }
 
-procedure TStateOverSold.Normal(AInfo: TPriceInfo);
+procedure TStateOverSold.OverMiddle(AInfo: TPriceInfo);
 begin
-  if AInfo.BuyPrice = 0 then
-    MarketBuy(AInfo);
-
-  FTrader.State := FTrader.StateNormal;
+  FTrader.State := FTrader.State2ndNormal;
 end;
 
 { TStateInit }
@@ -512,21 +528,68 @@ begin
   FTrader.State := FTrader.StateNormal;
 end;
 
-procedure TStateInit.OverBought(AInfo: TPriceInfo);
-begin
-  FTrader.State := FTrader.StateOverBought;
-end;
-
 procedure TStateInit.OverSold(AInfo: TPriceInfo);
 begin
   FTrader.State := FTrader.StateOverSold;
 end;
 
-{ TStateOverBought }
+{ TStateDeal }
 
-procedure TStateOverBought.Normal(AInfo: TPriceInfo);
+procedure TStateDeal.Normal(AInfo: TPriceInfo);
 begin
-  FTrader.State := FTrader.StateNormal;
+  inherited;
+
+  if AInfo.BuyPrice = 0 then
+    FTrader.State := FTrader.StateNormal;
+end;
+
+procedure TStateDeal.OverMiddle(AInfo: TPriceInfo);
+begin
+  inherited;
+
+  if AInfo.BuyPrice = 0 then
+    FTrader.State := FTrader.StateNormal;
+end;
+
+procedure TStateDeal.UnderMiddle(AInfo: TPriceInfo);
+begin
+  inherited;
+
+  if AInfo.BuyPrice = 0 then
+    FTrader.State := FTrader.StateNormal;
+end;
+
+{ TState2ndOverSold }
+
+procedure TState2ndOverSold.Normal(AInfo: TPriceInfo);
+begin
+  if AInfo.BuyPrice = 0 then
+    MarketBuy(AInfo);
+
+  FTrader.State := FTrader.StateDeal;
+end;
+
+procedure TState2ndOverSold.OverMiddle(AInfo: TPriceInfo);
+begin
+  if AInfo.BuyPrice = 0 then
+    MarketBuy(AInfo);
+
+  FTrader.State := FTrader.StateDeal;
+end;
+
+procedure TState2ndOverSold.UnderMiddle(AInfo: TPriceInfo);
+begin
+  if AInfo.BuyPrice = 0 then
+    MarketBuy(AInfo);
+
+  FTrader.State := FTrader.StateDeal;
+end;
+
+{ TState2ndNormal }
+
+procedure TState2ndNormal.OverSold(AInfo: TPriceInfo);
+begin
+  FTrader.State := FTrader.State2ndOverSold;
 end;
 
 end.

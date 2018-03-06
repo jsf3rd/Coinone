@@ -45,6 +45,8 @@ type
     procedure UploadTicker(Ticker: TJSONObject);
     procedure ExecuteTrader(Ticker: TJSONObject);
   public
+    procedure UploadOrderRate(ATime: TDateTime); // TODO
+
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
     property InstanceOwner: Boolean read FInstanceOwner write FInstanceOwner;
@@ -145,6 +147,35 @@ begin
   end;
 end;
 
+procedure TdmDataLoader.UploadOrderRate(ATime: TDateTime);
+  function SumQty(JSONArray: TJSONArray): double;
+  var
+    MyElem: TJSONValue;
+  begin
+    result := 0;
+    for MyElem in JSONArray do
+      result := result + (MyElem as TJSONObject).GetString('qty').ToDouble;
+  end;
+
+var
+  OrderBook: TJSONObject;
+  I: Integer;
+  bid, ask: TJSONArray;
+  bidQty, askQty: double;
+  Rate: double;
+begin
+  for I := Low(Coins) to High(Coins) do
+  begin
+    OrderBook := FCoinone.PublicInfo(rtOrderbook, 'currency=' + Coins[I]);
+    bid := OrderBook.GetJSONArray('bid');
+    bidQty := SumQty(bid);
+    ask := OrderBook.GetJSONArray('ask');
+    askQty := SumQty(ask);
+    Rate := askQty / bidQty;
+    TGlobal.Obj.ApplicationMessage(msDebug, 'UploadOrderRate', Rate.ToString);
+  end;
+end;
+
 procedure TdmDataLoader.UploadTicker(Ticker: TJSONObject);
 var
   TickStamp: TDateTime;
@@ -154,11 +185,14 @@ begin
   TickStamp := UnixToDateTime(Ticker.GetString('timestamp').ToInteger);
   TickStamp := RecodeSecond(TickStamp, 0);
   TickStamp := IncHour(TickStamp, 9);
-  Params := CreateTickParams(TickStamp, Ticker);
   _Minute := MinuteOf(TickStamp);
 
   if (_Minute mod 5 = 0) then
+  begin
+    // UploadOrderRate(TickStamp);
+    Params := CreateTickParams(TickStamp, Ticker);
     smDataLoaderClient.UploadTicker(Params);
+  end;
 end;
 
 procedure TdmDataLoader.OnTicker;
@@ -168,7 +202,9 @@ begin
   Ticker := FCoinone.PublicInfo(rtTicker, 'currency=all');
   try
     if TGlobal.Obj.UseUploadTicker then
+    begin
       UploadTicker(Ticker);
+    end;
 
     if dmTrader.Count > 0 then
       ExecuteTrader(Ticker);

@@ -32,9 +32,6 @@ uses cbOption, JdcGlobal.ClassHelper, JdcGlobal;
 var
   MyObj: TCore = nil;
 
-  // const
-  // Coins: array [0 .. 8] of string = ();
-
   { TCore }
 constructor TCore.Create;
 begin
@@ -84,7 +81,7 @@ begin
       begin
         Sleep(100);
 
-        if Immediate or (SecondOf(Now) = FStandSec) then
+        if Immediate or ((SecondOf(Now) = FStandSec) and (MinuteOf(Now) mod 10 = 0)) then
         begin
           try
             Immediate := false;
