@@ -15,8 +15,8 @@ type
 
   TTraderOption = record
     Currency: String;
-    Stoch: Integer;
-    BuyCount: double;
+    DiffRate: double;
+    Deal: double;
     function ToString: string;
   end;
 
@@ -83,8 +83,8 @@ end;
 
 function TTraderOption.ToString: string;
 begin
-  result := format('Currency=%s,StochHour=%d,BuyCount=%.2f',
-    [Self.Currency, Self.Stoch, Self.BuyCount]);
+  result := format('Currency=%s,Deal=%.2f,DiffRate=%.2f',
+    [Self.Currency, Self.Deal, Self.DiffRate]);
 end;
 
 end.

@@ -81,7 +81,7 @@ begin
       begin
         Sleep(100);
 
-        if Immediate or ((SecondOf(Now) = FStandSec) and (MinuteOf(Now) mod 10 = 0)) then
+        if Immediate or ((SecondOf(Now) = FStandSec) and (MinuteOf(Now) mod 5 = 0)) then
         begin
           try
             Immediate := false;
